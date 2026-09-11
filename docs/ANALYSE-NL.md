@@ -1,5 +1,7 @@
 # Dispatch: Victoria als eerste markt
 
+> Vervolganalyse, 11 september 2026: de marktkeuze en commerciële aannames hieronder zijn opnieuw beoordeeld. Zie [het actuele onderzoek naar bronaanbod, concurrenten en de pilotkeuze](MARKTONDERZOEK-AU-2026-09-11.md). Victoria is technisch bruikbaar, maar dagelijks lokaal aanbod en betalingsbereidheid zijn nog niet bewezen; ACT is een nieuwe kandidaat.
+
 Onderzocht op 11 september 2026. Werknaam: Dispatch. Eerste product: Engelstalige, installeerbare webapp. Daarna iOS en Android. De gebruiker heeft Victoria bevestigd; South Australia is geen vervangende startmarkt.
 
 ## Besluit

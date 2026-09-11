@@ -1,0 +1,85 @@
+{
+  "method": "Manual one-off public HTTP fetches. Aggregated observations only; not daily totals or a historical archive. Times UTC. No cross-feed deduplication.",
+  "observations": [
+    {
+      "source": "VIC Events",
+      "url": "https://emergency.vic.gov.au/public/events-geojson.json",
+      "fetchedAt": "2026-09-11T14:28:12Z",
+      "sourceUpdated": "2026-09-11T14:27:42Z",
+      "rawRecords": 12,
+      "victoriaIncidents": 11,
+      "victoriaWarnings": 0,
+      "victoriaPlannedBurns": 2,
+      "victoriaOtherIncidents": 9,
+      "ordinaryIncidentsWithinMelbourne100km": 8,
+      "note": "Earlier check in this same conversation. Local Melbourne time 00:28 on 12 September."
+    },
+    {
+      "source": "VIC Events",
+      "url": "https://emergency.vic.gov.au/public/events-geojson.json",
+      "fetchedAt": "2026-09-11T14:42:23.274345Z",
+      "rawRecords": 13,
+      "rawCategory1": {"Planned Burn": 2, "Hazardous Material": 1, "Fire": 4, "Other": 5, "Accident / Rescue": 1},
+      "note": "Raw count includes cross-border data; not normalized or a count of new incidents since earlier check."
+    },
+    {
+      "source": "ACT ESA",
+      "url": "https://esa.act.gov.au/feeds/currentincidents.xml",
+      "fetchedAt": "2026-09-11T14:42:22.862019Z",
+      "records": 16,
+      "types": {"AMBULANCE RESPONSE": 14, "HAZARD REDUCTION BURN": 2}
+    },
+    {
+      "source": "ACT ESA",
+      "url": "https://esa.act.gov.au/feeds/currentincidents.xml",
+      "fetchedAt": "2026-09-11T14:44:38.646866Z",
+      "records": 15,
+      "types": {"AMBULANCE RESPONSE": 13, "HAZARD REDUCTION BURN": 2},
+      "localTimeOfCallDates": {"11 Sep 2026": 12, "12 Sep 2026": 3},
+      "note": "pubDate can reflect feed publication; distinguish description Time of Call and Updated fields."
+    },
+    {
+      "source": "NSW RFS",
+      "url": "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json",
+      "fetchedAt": "2026-09-11T14:42:23.065599Z",
+      "records": 55,
+      "categories": {"Advice": 22, "Planned Burn": 19, "Not Applicable": 14},
+      "typeBreakdownOnSubsequentSameSessionFetch": {"Bush Fire": 24, "Grass Fire": 5, "Hazard Reduction": 19, "MVA/Transport": 1, "Haystack fire": 1, "Planned Event": 3, "Burn off": 1, "Other": 1}
+    },
+    {
+      "source": "SA CFS",
+      "url": "https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.xml",
+      "fetchedAt": "2026-09-11T14:42:22.672780Z",
+      "records": 4,
+      "types": {"Prescribed Burn": 1, "Burn Off": 2, "Other": 1}
+    },
+    {
+      "source": "SA MFS",
+      "url": "https://cfs.geohub.sa.gov.au/server/rest/services/CFS_Incident_Read/MFS_Incidents/FeatureServer/0/query?f=json&where=1%3D1&outFields=id%2Cevent%2Cstatus%2Cfirst_report&returnGeometry=false",
+      "fetchedAt": "2026-09-11T14:43:25.221751Z",
+      "records": 3,
+      "types": {"Vehicle Accident": 1, "Building Fire": 1, "Burn Off": 1},
+      "statuses": {"GOING": 2, "CONTROLLED": 1},
+      "licenseMetadataUrl": "https://cfs.geohub.sa.gov.au/portal/sharing/rest/content/items/41d8ac28b9ba4a32918b933f6d6d3298?f=pjson",
+      "licenseInfo": ""
+    },
+    {
+      "source": "QLD QFD",
+      "url": "https://publiccontent-gis-psba-qld-gov-au.s3.amazonaws.com/content/Feeds/BushfireCurrentIncidents/bushfireAlert.json",
+      "fetchedAt": "2026-09-11T14:43:26.349789Z",
+      "records": 52,
+      "breakdownOnSubsequentSameSessionFetch": {"warningIdPrefixRecords": 6, "otherRecords": 46, "permittedBurnRecords": 5},
+      "groupedTypesOnSubsequentSameSessionFetch": {"Other": 1, "FIRE VEGETATION": 46, "FIRE PERMITTED BURN": 5},
+      "note": "WARN- prefix used to identify warning records. Warnings may describe the same event as incident records."
+    },
+    {
+      "source": "TFS legacy / TasALERT replacement",
+      "legacyUrl": "https://www.fire.tas.gov.au/Show?pageId=colBushfireSummariesRss",
+      "legacyHttpStatus": 410,
+      "replacementUrlFromHttpReason": "https://alert.tas.gov.au/data/incidents-and-alerts.xml",
+      "replacementObservedItemCount": 0,
+      "date": "2026-09-11",
+      "note": "Exact fetch time not recorded. Empty replacement RSS is not proof of no Tasmania incidents. Current TasALERT documentation requires permission for feed access; no further polling configured."
+    }
+  ]
+}
