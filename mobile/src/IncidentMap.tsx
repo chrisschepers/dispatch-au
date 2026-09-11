@@ -1,17 +1,11 @@
-import { useEffect, useRef } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
-import MapView, { Marker, Circle, Polygon } from "react-native-maps";
-import Constants from "expo-constants";
-import type { Incident } from "./domain/incidents";
-import type { Place } from "./domain/places";
-import { polygons } from "./geometry";
-import { rowColor, type Colours } from "./theme";
-const victoria = {
-  latitude: -37.2,
-  longitude: 145,
-  latitudeDelta: 6,
-  longitudeDelta: 6,
-};
+import { useEffect, useRef } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import MapView, { Marker, Circle, Polygon } from 'react-native-maps';
+import Constants from 'expo-constants';
+import { regions, type Incident, type Region } from './feed-model';
+import type { Place } from './domain/places';
+import { polygons } from './geometry';
+import { rowColor, type Colours } from './theme';
 export default function IncidentMap({
   rows,
   warnings,
@@ -20,6 +14,7 @@ export default function IncidentMap({
   onSelect,
   colors,
   dark,
+  area,
 }: {
   rows: Incident[];
   warnings: Incident[];
@@ -28,6 +23,7 @@ export default function IncidentMap({
   onSelect: (row: Incident) => void;
   colors: Colours;
   dark: boolean;
+  area: Region;
 }) {
   const ref = useRef<MapView>(null);
   const region = focus
@@ -44,24 +40,24 @@ export default function IncidentMap({
           latitudeDelta: Math.max(0.03, place.radius / 45),
           longitudeDelta: Math.max(0.03, place.radius / 36),
         }
-      : victoria;
+      : regions[area].centre;
   useEffect(() => {
     ref.current?.animateToRegion(region, 300);
-  }, [place?.lat, place?.lng, place?.radius, focus?.[0], focus?.[1]]);
+  }, [area, place?.lat, place?.lng, place?.radius, focus?.[0], focus?.[1]]);
   const available =
-    Platform.OS === "ios" ||
-    Constants.executionEnvironment === "storeClient" ||
+    Platform.OS === 'ios' ||
+    Constants.executionEnvironment === 'storeClient' ||
     Constants.expoConfig?.extra?.androidMapsConfigured === true;
   if (!available)
     return (
       <View style={s.unavailable}>
-        <Text style={{ color: colors.text, fontSize: 20, fontWeight: "700" }}>
+        <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>
           Map setup pending
         </Text>
         <Text
           style={{
             color: colors.secondary,
-            textAlign: "center",
+            textAlign: 'center',
             marginTop: 12,
           }}
         >
@@ -76,7 +72,7 @@ export default function IncidentMap({
         ref={ref}
         style={StyleSheet.absoluteFill}
         initialRegion={region}
-        userInterfaceStyle={dark ? "dark" : "light"}
+        userInterfaceStyle={dark ? 'dark' : 'light'}
         onMapReady={() => ref.current?.animateToRegion(region, 0)}
         showsUserLocation={false}
         showsMyLocationButton={false}
@@ -88,7 +84,7 @@ export default function IncidentMap({
               coordinates={p.coordinates}
               holes={p.holes}
               strokeColor={rowColor(row)}
-              fillColor={rowColor(row) + "24"}
+              fillColor={rowColor(row) + '24'}
               strokeWidth={2}
               tappable
               onPress={() => onSelect(row)}
@@ -133,11 +129,11 @@ const s = StyleSheet.create({
   unavailable: {
     flex: 1,
     padding: 30,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   caption: {
-    position: "absolute",
+    position: 'absolute',
     left: 12,
     right: 12,
     bottom: 112,

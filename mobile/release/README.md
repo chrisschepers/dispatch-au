@@ -2,8 +2,8 @@
 
 Target app: Dispatch Victoria (display name in the app: Dispatch)
 Bundle identifier: `com.chrisschepers.dispatchau`
-Marketing version: `0.1.2`
-Current build number: `3`
+Marketing version: `0.1.3`
+Current build number: `4`
 Audience: the owner's TestFlight testing; no public App Store release or external tester invitations have been requested.
 
 The local native iOS project is generated using Expo prebuild. Native source and build outputs are ignored by Git. Apple credentials, certificates and private keys must never enter this repository.
@@ -42,3 +42,12 @@ Three-tab simplification — 0.1.2 (3):
 - Nearby, Map and Settings only, following the owner’s 112 Meldingen layout.
 - Removed Pro marketing, the separate Places tab and large fixed feed headers. Region selection is a sheet; radius lives in Settings.
 - Standalone Release launch and main list/settings visual checks passed; see `../VERIFICATION.md` for limits. Apple processing is `VALID` and internal status is `IN_BETA_TESTING`. Build ID: `57950e3d-c0fc-4fe5-9ce2-106b84f9b4a2`. The owner’s group has access to this build.
+
+Incident history and ACT — 0.1.3 (4):
+
+- A separate persistent Railway collector now serves Victoria and ACT, including ACT ambulance incidents. Nearby can retain 24 hours, three days or seven days of collected history; the map excludes records no longer listed by their source.
+- Collection started 11 September 2026 at 15:19 UTC (12 September at 1:19 am in Melbourne/Canberra). This is not a historical backfill.
+- Native type checking, iOS/Android bundle export, mobile tests (4), collector tests (9), shared parser tests (9), lint and shared-domain synchronization passed.
+- A standalone Release simulator cold launch, live Victoria feed, ACT switch, ambulance filter, loaded Canberra Apple Maps view and persisted seven-day setting passed. The Expo native module-name startup fix remains present in the signed archive.
+- Signed archive and IPA export passed. Signature verification passed with keychain access. Apple accepted delivery `536eb96f-e7f4-4d14-9507-9100fb7dbc11`; build processing is `VALID`, internal state is `IN_BETA_TESTING`, and the existing Owner testing group contains build 4. No external tester group or public App Store release was submitted.
+- IPA: `~/Developer/dispatch-builds/ios/0.1.3-4/Dispatch.ipa`; checksum is stored beside it. The Sites web preview is unchanged; this release updates the native app and its feed service.

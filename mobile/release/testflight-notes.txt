@@ -1,7 +1,12 @@
-Dispatch Victoria — simpler navigation (0.1.2, build 3)
+Dispatch 0.1.3 (4)
 
-Only three tabs: Nearby, Map and Settings. A compact scrolling location/category header, quieter incident cards and a floating tab bar follow the 112 Meldingen layout. The map gets most of the screen. Choose your area in the location sheet and set its radius under Settings. No Pro promotions or separate Places tab.
+- Choose Victoria or Canberra / ACT in the area picker.
+- ACT now includes official public ambulance responses and an Ambulance filter.
+- Keep recent incidents for 24 hours, 3 days or 7 days in Settings.
+- Earlier incidents stay in Nearby with their last known status. The map shows incidents still listed by the source.
+- Incident history is collected continuously by our server, starting 12 September 2026 at 1:19 am Melbourne/Canberra time. This update cannot restore incidents from before collection began.
+- Nearby, Map and Settings remain the only three tabs.
 
-Please test cold launch, switching all three tabs, category filters, incident details, Show on map, area selection and radius, and light/dark appearance. Pull down the Nearby list to refresh.
+Please test area switching, ambulance filtering, map pins and history settings. Existing Victoria location preferences should be retained.
 
-Official warnings remain visible across Victoria regardless of incident filters. The independent preview refreshes while open and needs an internet connection. Always follow VicEmergency; call 000 in an emergency. Background alerts, cloud sync and purchases are not available.
+ACT official warnings remain available through ESA. No push notifications or subscriptions are enabled in this preview. In an emergency, call 000.

@@ -2,8 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "types": [
-      "react"
-    ]
+    "types": ["react"],
+    "allowImportingTsExtensions": true
   }
 }

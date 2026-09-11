@@ -1,4 +1,4 @@
-import type { Category, Incident } from './domain/incidents';
+import type { Category, Incident } from './feed-model';
 export const light = {
   background: '#f2f2f7',
   card: '#ffffff',
@@ -25,12 +25,14 @@ export type Colours = typeof light;
 export const categories: { id: Category | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'fire', label: 'Fire' },
+  { id: 'ambulance', label: 'Ambulance' },
   { id: 'rescue', label: 'Rescue' },
   { id: 'storm', label: 'Storm & flood' },
   { id: 'hazmat', label: 'Hazmat' },
   { id: 'planned', label: 'Planned burns' },
 ];
 export const categoryColors = {
+  ambulance: '#b17b08',
   fire: '#d83329',
   rescue: '#2678cc',
   storm: '#138779',
@@ -39,6 +41,7 @@ export const categoryColors = {
   other: '#727884',
 };
 export const categoryIcons = {
+  ambulance: 'medkit-outline',
   fire: 'flame-outline',
   rescue: 'help-buoy-outline',
   storm: 'rainy-outline',

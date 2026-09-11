@@ -1,15 +1,20 @@
 import type { Place } from './domain/places';
+import type { Region } from './feed-model';
 export type Preferences = {
   theme: 'system' | 'light' | 'dark';
   saved: Place[];
   active: Place | null;
   includePlanned: boolean;
+  region: Region;
+  historyHours: 24 | 72 | 168;
 };
 export const defaults: Preferences = {
   theme: 'system',
   saved: [],
   active: null,
   includePlanned: false,
+  region: 'vic',
+  historyHours: 24,
 };
 export function validPlace(value: unknown): value is Place {
   if (!value || typeof value !== 'object') return false;
@@ -43,6 +48,10 @@ export function parsePreferences(raw: string | null): Preferences {
         : [],
       active: validPlace(p.active) ? p.active : null,
       includePlanned: p.includePlanned === true,
+      region: p.region === 'act' ? 'act' : 'vic',
+      historyHours: [24, 72, 168].includes(p.historyHours)
+        ? p.historyHours
+        : 24,
     };
   } catch {
     return defaults;

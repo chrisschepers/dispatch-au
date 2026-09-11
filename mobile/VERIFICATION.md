@@ -29,3 +29,14 @@ Three-tab simplification — 0.1.2 (3):
 - Removed the branded header, Pro promotion, standalone Places tab, incident search and planned-feature screens. Active area persists automatically, with radius and appearance in Settings. The map uses most of its screen; incident detail can focus its location on the in-app map.
 - TypeScript and the existing three domain tests passed. The standalone Release simulator build cold-launched, loaded live incidents and visibly showed only Nearby, Map and Settings. A screenshot confirmed approximately six full incident rows in the viewport. Settings, the area sheet and Melbourne selection were exercised; the Mac then locked before the final map/radius visual check. Startup logs reported no missing native modules or unhandled JavaScript exceptions.
 - Signed device archive and App Store export passed. Exported IPA metadata retains the native startup fix and identifies version 0.1.2 (3). Apple processed build `57950e3d-c0fc-4fe5-9ce2-106b84f9b4a2` as `VALID`; it is assigned to the owner’s internal group with status `IN_BETA_TESTING`. GitHub Actions passed for commit `c83f8f27b5a56658d7e3945fad60850318268c99` (run `34605583720`).
+
+## 0.1.3 (4) — 11 September 2026
+
+- Mobile TypeScript check, 4 mobile model/preferences/geometry tests and iOS/Android production bundle export passed.
+- Backend: 9 tests passed, including invalid XML, Canberra DST conversion, public-field extraction, XML carriage returns, database persistence, legacy text repair, stale source retention, historical warnings and local HTTP API input validation.
+- Root lint, 9 shared parser tests, diff whitespace check and domain copy check passed.
+- Standalone Release on iPhone 17 Pro / iOS 26.5: cold launch without Metro; existing Melbourne 25 km preference retained; live Victoria incidents; ACT region selection; ambulance category selection; Canberra map tiles and pins loaded; seven-day history choice persisted across terminate/launch.
+- During UI checking, ACT encoded carriage returns were visible in suburb text. Fixed the source parser and repaired the one already historical record. The final live endpoint reports zero escaped suburb names.
+- Railway persistent volume retained original collection start times across deployments. At 15:28 UTC the seven-day endpoint contained 13 Victoria incidents (3 earlier) and 15 ACT incidents (1 earlier). Both sources were fresh. These counts include planned activities hidden by default and are snapshots, not daily totals.
+- iOS signed archive metadata is 0.1.3 (4), provider module DispatchVictoria. Export and code-signature verification passed; Apple reports VALID / IN_BETA_TESTING with access for the existing owner group.
+- Android bundle compilation passed; no physical Android runtime or Google Play distribution was tested. Android production maps still require the configured Google Maps key. Seven-day retention has unit coverage but cannot yet have seven days of live observations.

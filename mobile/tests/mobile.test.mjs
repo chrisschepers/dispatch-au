@@ -21,7 +21,14 @@ test('device preferences preserve the selected radius and reject corrupt storage
         includePlanned: true,
       }),
     ),
-    { theme: 'dark', saved: [p], active: p, includePlanned: true },
+    {
+      theme: 'dark',
+      saved: [p],
+      active: p,
+      includePlanned: true,
+      region: 'vic',
+      historyHours: 24,
+    },
   );
   assert.deepEqual(
     parsePreferences(
@@ -31,7 +38,14 @@ test('device preferences preserve the selected radius and reject corrupt storage
         active: { ...p, radius: -1 },
       }),
     ),
-    { theme: 'system', saved: [p], active: null, includePlanned: false },
+    {
+      theme: 'system',
+      saved: [p],
+      active: null,
+      includePlanned: false,
+      region: 'vic',
+      historyHours: 24,
+    },
   );
 });
 test('stored coordinates and radius must be valid numbers', () => {
@@ -71,4 +85,68 @@ test('native warning areas retain holes and do not invent pin locations', () => 
   assert.equal(areas[0].holes.length, 1);
   assert.deepEqual(polygons(null), []);
   assert.deepEqual(polygons({ type: 'Point', coordinates: [140, -37] }), []);
+});
+
+void test('regional feed validates input and keeps history separate from operational filtering', async () => {
+  const { parseFeed, filterIncidents, incidentTime, isStale } =
+    await import('../src/feed-model.ts');
+  const t = '2026-09-11T15:00:00.000Z';
+  const row = {
+    id: 'act:incident:1',
+    sourceId: '1',
+    sourceFeed: 'act-esa',
+    title: 'Ambulance response',
+    location: 'Canberra',
+    status: 'On Scene',
+    agency: 'ACT Ambulance',
+    category: 'ambulance',
+    kind: 'incident',
+    created: '2026-09-11T14:00:00.000Z',
+    updated: t,
+    firstSeen: t,
+    lastSeen: t,
+    listed: false,
+    point: [-35.3, 149.1],
+    geometry: null,
+  };
+  const raw = {
+    region: 'act',
+    incidents: [row],
+    warnings: [],
+    fetchedAt: t,
+    historyStartedAt: t,
+    historyHours: 24,
+    stale: false,
+    attribution: 'ACT ESA',
+    licenseUrl: 'https://esa.act.gov.au/',
+    coverageNote: null,
+  };
+  const feed = parseFeed(raw, 'act');
+  assert.throws(() => parseFeed(raw, 'vic'));
+  assert.throws(() =>
+    parseFeed({ ...raw, incidents: [{ ...row, id: 'vic:incident:1' }] }, 'act'),
+  );
+  assert.throws(() => parseFeed({ ...raw, attribution: {} }, 'act'));
+  assert.equal(incidentTime(feed.incidents[0]), row.created);
+  const filters = {
+    query: '',
+    category: 'ambulance',
+    includePlanned: false,
+    respondingOnly: false,
+    centre: null,
+    radius: 25,
+  };
+  assert.equal(filterIncidents(feed.incidents, filters).length, 1);
+  assert.equal(
+    filterIncidents(feed.incidents, { ...filters, respondingOnly: true })
+      .length,
+    0,
+  );
+  assert.equal(isStale(feed, Date.parse(t) + 360000), true);
+  assert.equal(isStale(feed, Date.parse(t)), false);
+  assert.equal(
+    parsePreferences(JSON.stringify({ region: 'act', historyHours: 168 }))
+      .historyHours,
+    168,
+  );
 });

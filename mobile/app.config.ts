@@ -12,7 +12,7 @@ if (
 const config: ExpoConfig = {
   name: 'Dispatch',
   slug: 'dispatch-victoria',
-  version: '0.1.2',
+  version: '0.1.3',
   scheme: 'dispatchau',
   platforms: ['ios', 'android'],
   orientation: 'portrait',
@@ -20,7 +20,7 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
-    buildNumber: '3',
+    buildNumber: '4',
     supportsTablet: true,
     infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },
@@ -54,6 +54,9 @@ const config: ExpoConfig = {
         ]
       : []),
   ],
-  extra: { androidMapsConfigured: Boolean(mapsKey) },
+  extra: {
+    androidMapsConfigured: Boolean(mapsKey),
+    feedApiUrl: 'https://incident-feed-production.up.railway.app',
+  },
 };
 export default config;
