@@ -41,4 +41,4 @@ Three-tab simplification — 0.1.2 (3):
 
 - Nearby, Map and Settings only, following the owner’s 112 Meldingen layout.
 - Removed Pro marketing, the separate Places tab and large fixed feed headers. Region selection is a sheet; radius lives in Settings.
-- Standalone Release launch and main list/settings visual checks passed; see `../VERIFICATION.md` for limits. TestFlight preparation is underway.
+- Standalone Release launch and main list/settings visual checks passed; see `../VERIFICATION.md` for limits. Apple processing is `VALID` and internal status is `IN_BETA_TESTING`. Build ID: `57950e3d-c0fc-4fe5-9ce2-106b84f9b4a2`. The owner’s group has access to this build.
