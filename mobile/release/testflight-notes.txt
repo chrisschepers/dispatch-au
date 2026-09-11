@@ -1,0 +1,12 @@
+Dispatch Victoria — first iOS beta (0.1.0)
+
+Please test:
+• Current public incident list and separate official Victoria warnings.
+• Category/search filters, Melbourne timestamps and incident details.
+• Apple Maps pins and warning areas.
+• Selecting a Victorian place and radius, saving/removing one place on this device.
+• Light/dark appearance and refreshing after returning to the app.
+
+This is an independent personal preview, not an emergency service. Current data needs an internet connection. Use VicEmergency for official advice and call 000 in an emergency.
+
+Not available in this beta: background push, incident history, cloud account synchronization and paid subscriptions. No purchases are enabled. Saved preferences remain on the device.

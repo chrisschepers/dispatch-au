@@ -33,6 +33,7 @@ const config: ExpoConfig = {
     },
   },
   plugins: [
+    './plugins/with-native-module-name.cjs',
     'expo-font',
     [
       'expo-location',

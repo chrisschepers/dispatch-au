@@ -9,9 +9,9 @@ Passed:
 - iOS and Android production JavaScript/Hermes exports. Each bundle is approximately 1.7 MB plus the single Ionicons font asset.
 - Existing web tests (9), types, lint and production build after adding the mobile directory.
 
-The iPhone 17 Pro simulator was available and the Expo CLI installed Expo Go and started the preview server. The Mac was locked when UI inspection was attempted. No rendered-screen, tap-flow, actual geolocation or on-device storage verification could therefore be completed. Android runtime testing has not been performed.
+The iPhone 17 Pro simulator (iOS 26.5) was visually tested through Expo Go after the Mac was unlocked: live list and official warnings, incident details, native Apple Maps, category filtering, Melbourne radius filtering, saving/removing a local place, and dark/system appearance all worked. The test place was removed and the app returned to All Victoria with system appearance. Location permission, persistence across a full process restart and Android runtime behaviour have not been tested. The local Expo connection required IPv4-first DNS resolution because localhost initially bound only to ::1 while the manifest advertised 127.0.0.1.
 
-No standalone iOS/Android native binary has been compiled or signed. Bundle export and Expo Doctor do not establish that an IPA/APK runs on a real device. No TestFlight or Play Store deployment, native purchase test or background push test has been performed.
+A standalone arm64 iOS Release archive (0.1.0, build 1) was successfully compiled locally with Xcode after fixing the app module name collision with Apple’s Dispatch module. The archive includes the production JavaScript bundle. It is unsigned and cannot yet be uploaded or installed through TestFlight. No Android native binary has been compiled, and no TestFlight or Play Store upload, native purchase test or background push test has been performed.
 
 The dependency audit reports ten moderate findings in the Expo build/config dependency chain involving xcode/uuid, with no high or critical findings. Its suggested forced remediation downgrades Expo to SDK 46 and is not a compatible fix for this SDK 57 app. No forced downgrade was applied. Recheck upstream fixes before a public release.
 
