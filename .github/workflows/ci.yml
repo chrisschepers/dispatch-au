@@ -24,3 +24,26 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run check:domain
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run export
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dispatch-mobile-bundles
+          path: mobile/dist
+          retention-days: 7

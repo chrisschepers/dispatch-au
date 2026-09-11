@@ -30,3 +30,7 @@ The public incident feed can be used without app sign-in. Saved places use the c
 ## Data and licence
 
 Source data belongs to its respective providers and is not licensed by this code repository. The combined feed's commercial reuse conditions still need confirmation; see the source analysis. Public repository visibility does not grant a licence to copy the proprietary application. Third-party packages retain their own licences.
+
+## iOS and Android
+
+The native first version is in [mobile/](mobile/README.md), using Expo SDK 57 and React Native 0.86. It includes live incidents, maps, filters and device-local preferences. [Mobile and Railway plan (Dutch)](docs/MOBILE-RAILWAY-NL.md). It currently reads the public source directly and does not depend on the private Sites preview or an existing Railway backend. Native subscriptions and background push are not active.
