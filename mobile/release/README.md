@@ -17,9 +17,13 @@ Release preparation on 11 September 2026:
 - EAS CLI is not signed in on this Mac.
 - The owner explicitly approved the existing App Store Connect API key for Dispatch setup, signing and upload. Apple API authentication succeeded.
 - Dispatch has its own registered bundle identifier, new distribution certificate and active App Store provisioning profile. No other app certificates were revoked. Signing material is stored outside the repository in a dedicated local keychain.
-- Apple validation reached App Store Connect but returned “No suitable application records were found” (-19000). A Dispatch app record still needs to be created through the website; the browser requires an Apple login and the Mac was locked. The IPA has not been uploaded and is not yet available in TestFlight.
+- Dispatch Victoria was created in App Store Connect with app ID `6811057872`, primary language English (Australia), and SKU `dispatch-victoria-ios`.
+- Apple accepted the signed IPA upload without errors on 11 September 2026 at 12:49 UTC. Delivery UUID: `6505df17-edf0-43f3-b03b-102b31e711cb`. Apple processing completed with `VALID`; internal testing is active (`IN_BETA_TESTING`).
+- The internal `Owner testing` group contains the account holder and build 0.1.0 (1). App Store Connect shows `Testing`. The English beta description and build test notes are saved. No public TestFlight link or external tester group was created.
 
-After the owner unlocks the Mac and signs in to App Store Connect, create the Dispatch Victoria app record with bundle identifier `com.chrisschepers.dispatchau`, primary language English (Australia), SKU `dispatch-victoria-ios`, then validate/upload the prepared IPA and check Apple's processing status. Set `ascAppId` only to the actual Dispatch record returned by Apple. Never reuse the 112 Meldingen app ID, bundle ID or provisioning profile.
+App Store Connect: https://appstoreconnect.apple.com/apps/6811057872/testflight
+
+The EAS production submit profile now points to the actual Dispatch app ID. Never reuse the 112 Meldingen app ID, bundle ID or provisioning profile.
 
 Test notes are in `testflight-notes.txt`. Do not send external invitations or submit a public App Store release as part of this upload.
 
