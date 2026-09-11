@@ -58,26 +58,34 @@ export function rowColor(r: Incident) {
         : '#a8810b'
     : categoryColors[r.category];
 }
-export function localTime(value: string | null, full = false) {
+export function localTime(
+  value: string | null,
+  full = false,
+  timeZone = 'Australia/Melbourne',
+) {
   if (!value) return 'Not supplied';
   return new Intl.DateTimeFormat('en-AU', {
-    timeZone: 'Australia/Melbourne',
+    timeZone,
     ...(full
       ? { dateStyle: 'medium', timeStyle: 'short' }
       : { hour: '2-digit', minute: '2-digit', hour12: false }),
   }).format(new Date(value));
 }
-export function dayLabel(value: string | null, now: number) {
+export function dayLabel(
+  value: string | null,
+  now: number,
+  timeZone = 'Australia/Melbourne',
+) {
   if (!value) return 'Time not supplied';
   const fmt = new Intl.DateTimeFormat('en-AU', {
-    timeZone: 'Australia/Melbourne',
+    timeZone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   });
   if (fmt.format(new Date(value)) === fmt.format(now)) return 'Today';
   return new Intl.DateTimeFormat('en-AU', {
-    timeZone: 'Australia/Melbourne',
+    timeZone,
     day: 'numeric',
     month: 'short',
     year: 'numeric',

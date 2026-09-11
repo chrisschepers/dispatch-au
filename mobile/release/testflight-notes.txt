@@ -1,12 +1,13 @@
-Dispatch 0.1.3 (4)
+Dispatch Australia 0.1.4 (5)
 
-- Choose Victoria or Canberra / ACT in the area picker.
-- ACT now includes official public ambulance responses and an Ambulance filter.
-- Keep recent incidents for 24 hours, 3 days or 7 days in Settings.
-- Earlier incidents stay in Nearby with their last known status. The map shows incidents still listed by the source.
-- Incident history is collected continuously by our server, starting 12 September 2026 at 1:19 am Melbourne/Canberra time. This update cannot restore incidents from before collection began.
+- New name: Dispatch Australia. Your existing installation and preferences are retained.
+- Choose Australia for a combined view of Victoria, ACT, New South Wales, Queensland and South Australia.
+- Fixed duplicate Victoria incidents when responsibility changes between emergency services.
+- Nearby now makes the selected radius and current/earlier counts clearer.
+- Incident times show Updated when only the source update time is known, or Seen when neither a call time nor update is supplied.
+- South Australia uses the official CFS incident list. Its feed does not provide coordinates, so choose All South Australia or All Australia without a distance filter to see these records.
 - Nearby, Map and Settings remain the only three tabs.
 
-Please test area switching, ambulance filtering, map pins and history settings. Existing Victoria location preferences should be retained.
+Please test area switching, cross-border incidents, warning details, radius filters and map pins. If your previous Melbourne radius is still selected, choose Australia > All Australia to explore the wider coverage.
 
-ACT official warnings remain available through ESA. No push notifications or subscriptions are enabled in this preview. In an emergency, call 000.
+Coverage depends on public feeds and does not include every emergency call. NSW and Queensland sources update about every 30 minutes. History begins when each source was connected; this is not a historical backfill. No push notifications or subscriptions are enabled in this preview. In an emergency, call 000.

@@ -13,7 +13,7 @@ export const defaults: Preferences = {
   saved: [],
   active: null,
   includePlanned: false,
-  region: 'vic',
+  region: 'au',
   historyHours: 24,
 };
 export function validPlace(value: unknown): value is Place {
@@ -48,7 +48,9 @@ export function parsePreferences(raw: string | null): Preferences {
         : [],
       active: validPlace(p.active) ? p.active : null,
       includePlanned: p.includePlanned === true,
-      region: p.region === 'act' ? 'act' : 'vic',
+      region: ['au', 'vic', 'act', 'nsw', 'qld', 'sa'].includes(p.region)
+        ? p.region
+        : 'au',
       historyHours: [24, 72, 168].includes(p.historyHours)
         ? p.historyHours
         : 24,

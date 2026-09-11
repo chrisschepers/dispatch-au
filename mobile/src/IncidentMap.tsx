@@ -44,6 +44,24 @@ export default function IncidentMap({
   useEffect(() => {
     ref.current?.animateToRegion(region, 300);
   }, [area, place?.lat, place?.lng, place?.radius, focus?.[0], focus?.[1]]);
+  if (area === 'sa')
+    return (
+      <View style={s.unavailable}>
+        <Text style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>
+          Locations not supplied
+        </Text>
+        <Text
+          style={{
+            color: colors.secondary,
+            textAlign: 'center',
+            marginTop: 12,
+          }}
+        >
+          The CFS feed has no map coordinates. Open Nearby and choose All South
+          Australia to read its incidents.
+        </Text>
+      </View>
+    );
   const available =
     Platform.OS === 'ios' ||
     Constants.executionEnvironment === 'storeClient' ||

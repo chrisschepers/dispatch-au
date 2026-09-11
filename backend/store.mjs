@@ -1,4 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
+import { canonicalVIC } from './regional.mjs';
 import { sources } from './feeds.mjs';
 
 export class IncidentStore {
@@ -10,6 +11,7 @@ export class IncidentStore {
       CREATE INDEX IF NOT EXISTS incidents_region_seen ON incidents(region,last_seen);
     `);
     this.repairLegacyACTText();
+    this.mergeVICIdentities();
   }
   // Repair carriage-return entities written by the first ACT parser without
   // changing incident status or the observation timestamps.
@@ -31,6 +33,54 @@ export class IncidentStore {
       }
     }
   }
+  mergeVICIdentities() {
+    const groups = new Map();
+    for (const r of this.db
+      .prepare("SELECT * FROM incidents WHERE region='vic'")
+      .all()) {
+      const row = JSON.parse(r.payload),
+        id = canonicalVIC(row);
+      if (!groups.has(id)) groups.set(id, []);
+      groups.get(id).push({ ...r, row });
+    }
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      for (const [id, records] of groups) {
+        if (records.length === 1 && records[0].id === id) continue;
+        records.sort(
+          (a, b) =>
+            b.last_seen.localeCompare(a.last_seen) || b.listed - a.listed,
+        );
+        const row = { ...records[0].row, id };
+        const created = records
+          .map((r) => r.row.created)
+          .filter(Boolean)
+          .sort();
+        if (created.length) row.created = created[0];
+        const first = records.map((r) => r.first_seen).sort()[0],
+          last = records
+            .map((r) => r.last_seen)
+            .sort()
+            .at(-1);
+        for (const r of records)
+          this.db.prepare('DELETE FROM incidents WHERE id=?').run(r.id);
+        this.db
+          .prepare('INSERT INTO incidents VALUES(?,?,?,?,?,?)')
+          .run(
+            id,
+            'vic',
+            JSON.stringify(row),
+            first,
+            last,
+            records.some((r) => r.listed) ? 1 : 0,
+          );
+      }
+      this.db.exec('COMMIT');
+    } catch (e) {
+      this.db.exec('ROLLBACK');
+      throw e;
+    }
+  }
   ingest(region, feed) {
     const now = feed.receivedAt || feed.fetchedAt;
     if (feed.stale) {
@@ -50,8 +100,17 @@ export class IncidentStore {
       const put = this.db.prepare(
         `INSERT INTO incidents VALUES(?,?,?,?,?,1) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,last_seen=excluded.last_seen,listed=1`,
       );
-      for (const row of [...feed.incidents, ...feed.warnings])
+      for (const sourceRow of [...feed.incidents, ...feed.warnings]) {
+        const row = { ...sourceRow };
+        if (region === 'vic') row.id = canonicalVIC(row);
+        const prior = this.db
+          .prepare('SELECT payload FROM incidents WHERE id=?')
+          .get(row.id);
+        const created = prior && JSON.parse(prior.payload).created;
+        if (created && (!row.created || created < row.created))
+          row.created = created;
         put.run(row.id, region, JSON.stringify(row), now, now);
+      }
       this.db
         .prepare(
           'UPDATE sources SET fetched_at=?,updated_at=?,stale=0,error=NULL WHERE region=?',
@@ -76,6 +135,43 @@ export class IncidentStore {
       .run(message, region);
   }
   feed(region, hours = 24, now = Date.now()) {
+    if (region === 'au') {
+      const feeds = Object.keys(sources).map((r) => this.feed(r, hours, now));
+      const present = feeds.filter(Boolean);
+      if (!present.length) return null;
+      return {
+        region,
+        incidents: present
+          .flatMap((f) => f.incidents)
+          .sort(
+            (a, b) =>
+              Date.parse(b.created || b.updated || b.firstSeen) -
+              Date.parse(a.created || a.updated || a.firstSeen),
+          ),
+        warnings: present.flatMap((f) => f.warnings),
+        source: 'Australian emergency sources',
+        attribution: present.map((f) => f.attribution).join('\n'),
+        adviceUrl: 'https://www.australia.gov.au/',
+        licenseUrl: 'https://www.australia.gov.au/',
+        coverageNote:
+          'Available coverage: Victoria, ACT, NSW, Queensland and South Australia. Sources differ; not every emergency call is published. NSW and Queensland sources update about every 30 minutes.',
+        fetchedAt: present
+          .map((f) => f.fetchedAt)
+          .sort()
+          .at(-1),
+        sourceUpdated: null,
+        historyStartedAt: present.map((f) => f.historyStartedAt).sort()[0],
+        historyHours: hours,
+        stale: feeds.some((f) => !f || f.stale),
+        staleAfterMs: 300000,
+        sources: Object.keys(sources).map((r, i) => ({
+          region: r,
+          ready: !!feeds[i],
+          stale: feeds[i]?.stale ?? true,
+          fetchedAt: feeds[i]?.fetchedAt ?? null,
+        })),
+      };
+    }
     const config = sources[region];
     if (!config) throw Error('Unknown region');
     const meta = this.db
@@ -103,15 +199,20 @@ export class IncidentStore {
     }
     incidents.sort(
       (a, b) =>
-        Date.parse(b.created || b.firstSeen) -
-          Date.parse(a.created || a.firstSeen) || a.id.localeCompare(b.id),
+        Date.parse(b.created || b.updated || b.firstSeen) -
+          Date.parse(a.created || a.updated || a.firstSeen) ||
+        a.id.localeCompare(b.id),
     );
     return {
       region,
       incidents,
       warnings,
       source: config.name,
-      attribution: config.attribution,
+      attribution:
+        config.attribution +
+        (region === 'sa'
+          ? ' Sourced ' + meta.fetched_at.slice(0, 10) + '.'
+          : ''),
       licenseUrl: config.licenseUrl,
       adviceUrl: config.adviceUrl,
       coverageNote: config.coverageNote || null,

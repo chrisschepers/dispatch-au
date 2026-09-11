@@ -39,7 +39,10 @@ export function createServer(store) {
       if (url.pathname !== '/v1/feed') return send(404, { error: 'Not found' });
       const region = url.searchParams.get('region') || 'vic';
       const hours = Number(url.searchParams.get('hours') || 24);
-      if (!Object.hasOwn(sources, region) || ![24, 72, 168].includes(hours))
+      if (
+        (region !== 'au' && !Object.hasOwn(sources, region)) ||
+        ![24, 72, 168].includes(hours)
+      )
         return send(400, { error: 'Invalid region or time window' });
       const result = store.feed(region, hours);
       if (!result)

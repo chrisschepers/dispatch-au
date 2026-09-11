@@ -31,6 +31,7 @@ import {
   filterIncidents,
   regions,
   incidentTime,
+  rowRegion,
   type Region,
   type Incident,
   type Category,
@@ -43,8 +44,8 @@ import {
   categoryIcons,
   categoryColors,
   rowColor,
-  localTime,
-  dayLabel,
+  localTime as formatLocalTime,
+  dayLabel as formatDayLabel,
   type Colours,
 } from './src/theme';
 import IncidentMap from './src/IncidentMap';
@@ -112,6 +113,7 @@ function AppContent() {
   const [tab, setTab] = useState<Tab>('nearby');
   const [category, setCategory] = useState<Category | 'all'>('all');
   const [responding, setResponding] = useState(false);
+  const [showWarnings, setShowWarnings] = useState(false);
   const [selected, setSelected] = useState<Incident | null>(null);
   const [mapFocus, setMapFocus] = useState<[number, number] | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
@@ -120,6 +122,10 @@ function AppContent() {
   const place = data.prefs.active;
   const region = data.prefs.region;
   const regionInfo = regions[region];
+  const localTime = (value: string | null, full = false) =>
+    formatLocalTime(value, full, regionInfo.timeZone);
+  const dayLabel = (value: string | null, now: number) =>
+    formatDayLabel(value, now, regionInfo.timeZone);
   const rows = useMemo(
     () =>
       filterIncidents(data.feed?.incidents ?? [], {
@@ -186,6 +192,7 @@ function AppContent() {
   function chooseRegion(next: Region) {
     data.setPrefs((old) => ({ ...old, region: next, active: null }));
     setCategory('all');
+    setShowWarnings(false);
     setSelected(null);
     setMapFocus(null);
     setPlaceQuery('');
@@ -223,6 +230,7 @@ function AppContent() {
           timer = setTimeout(() => reject(Error('Location timeout')), 20000);
         }),
       ]).finally(() => clearTimeout(timer));
+      data.setPrefs((old) => ({ ...old, region: 'au' }));
       choose({
         id: 'my-location',
         name: 'My location',
@@ -261,7 +269,10 @@ function AppContent() {
       contentContainerStyle={s.chips}
     >
       {categories
-        .filter((item) => item.id !== 'ambulance' || region === 'act')
+        .filter(
+          (item) =>
+            item.id !== 'ambulance' || region === 'act' || region === 'au',
+        )
         .map((item) => {
           const color = item.id === 'all' ? c.accent : categoryColors[item.id];
           const active = category === item.id;
@@ -304,7 +315,7 @@ function AppContent() {
     <Pressable
       key={w.id}
       accessibilityRole="button"
-      accessibilityLabel={`${w.level}, ${w.action || w.location}, official warning for Victoria`}
+      accessibilityLabel={`${w.level}, ${w.action || w.location}, official warning for ${regions[rowRegion(w)].label}`}
       onPress={() => setSelected(w)}
       style={[
         s.warning,
@@ -316,7 +327,7 @@ function AppContent() {
         <Text style={[s.warningTitle, { color: c.text }]}>
           {w.level}{' '}
           <Text style={{ color: c.secondary, fontWeight: '400' }}>
-            · Victoria
+            · {regions[rowRegion(w)].label}
           </Text>
         </Text>
         <Text
@@ -377,6 +388,36 @@ function AppContent() {
             <>
               {areaButton}
               {filters}
+              {region === 'sa' && (
+                <Text
+                  style={[s.small, { color: c.secondary, marginBottom: 12 }]}
+                >
+                  CFS incident list · No map coordinates supplied
+                </Text>
+              )}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                }}
+              >
+                <Text style={[s.small, { color: c.secondary }]}>
+                  {rows.filter((r) => r.listed).length} current ·{' '}
+                  {rows.filter((r) => !r.listed).length} earlier
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setPanel('area')}
+                >
+                  <Text style={[s.small, { color: c.accent }]}>
+                    {place
+                      ? `Within ${place.radius} km · Change`
+                      : 'Change area'}
+                  </Text>
+                </Pressable>
+              </View>
               {data.stale && (
                 <Text
                   accessibilityLiveRegion="polite"
@@ -385,7 +426,31 @@ function AppContent() {
                   Updates delayed · Check the official source for current advice
                 </Text>
               )}
-              {warningRows}
+              {warnings.length > 0 && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: showWarnings }}
+                  onPress={() => setShowWarnings((v) => !v)}
+                  style={[
+                    s.warning,
+                    { backgroundColor: c.card, borderColor: c.line },
+                  ]}
+                >
+                  <Ionicons name="warning-outline" size={20} color="#cb690b" />
+                  <Text style={[s.small, { color: c.text, flex: 1 }]}>
+                    {warnings.some((w) => w.level === 'Emergency Warning')
+                      ? 'Emergency Warning · '
+                      : warnings.some((w) => w.level === 'Watch and Act')
+                        ? 'Watch and Act · '
+                        : ''}
+                    {warnings.length} published warnings
+                  </Text>
+                  <Text style={[s.small, { color: c.accent }]}>
+                    {showWarnings ? 'Hide' : 'View'}
+                  </Text>
+                </Pressable>
+              )}
+              {showWarnings && warningRows}
               {errorNotice}
             </>
           }
@@ -397,7 +462,7 @@ function AppContent() {
                 section(dayLabel(incidentTime(item), data.now))}
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${item.title}, ${item.location}, ${item.status}, ${localTime(incidentTime(item))}`}
+                accessibilityLabel={`${item.title}, ${item.location}, ${item.listed ? item.status : 'Earlier, last known ' + item.status}, ${item.created ? '' : item.updated ? 'Updated ' : 'First seen '}${localTime(incidentTime(item))}`}
                 onPress={() => setSelected(item)}
                 style={({ pressed }) => [
                   s.incident,
@@ -439,6 +504,11 @@ function AppContent() {
                   </Text>
                 </View>
                 <View style={s.timeColumn}>
+                  {!item.created && (
+                    <Text style={{ fontSize: 10, color: c.secondary }}>
+                      {item.updated ? 'Updated' : 'Seen'}
+                    </Text>
+                  )}
                   <Text style={[s.time, { color: c.text }]}>
                     {localTime(incidentTime(item))}
                   </Text>
@@ -473,7 +543,10 @@ function AppContent() {
           ListFooterComponent={
             <Text style={[s.feedFoot, { color: c.secondary }]}>
               {data.feed
-                ? `Updated ${localTime(data.feed.fetchedAt)} · Melbourne/Canberra time\n`
+                ? `Updated ${localTime(data.feed.fetchedAt)} · ${regionInfo.timeLabel}\n`
+                : ''}
+              {place
+                ? `Within ${place.radius} km of ${place.name}. Change your area to see further away.\n`
                 : ''}
               {data.feed?.attribution || regionInfo.source}
               {data.feed?.coverageNote ? '\n' + data.feed.coverageNote : ''}
@@ -512,7 +585,8 @@ function AppContent() {
                   <Ionicons name="warning-outline" size={18} color="#a8810b" />
                   <Text style={[s.small, { color: c.text, flex: 1 }]}>
                     {warnings.length} official{' '}
-                    {warnings.length === 1 ? 'warning' : 'warnings'} · Victoria
+                    {warnings.length === 1 ? 'warning' : 'warnings'} ·{' '}
+                    {regionInfo.label}
                   </Text>
                   <Ionicons
                     name="chevron-forward"
@@ -715,21 +789,27 @@ function AppContent() {
           </View>
           {section('Information')}
           <View style={[s.group, { backgroundColor: c.card }]}>
+            {(region === 'au'
+              ? (['vic', 'act', 'nsw', 'qld', 'sa'] as const)
+              : [region]
+            ).map((id) => (
+              <SettingRow
+                key={id}
+                title={regions[id].source}
+                icon="open-outline"
+                onPress={() => void openUrl(regions[id].adviceUrl)}
+                colors={c}
+              />
+            ))}
             <SettingRow
-              title={regionInfo.source}
-              icon="open-outline"
-              onPress={() => void openUrl(regionInfo.adviceUrl)}
-              colors={c}
-            />
-            <SettingRow
-              title="About Dispatch"
+              title="About Dispatch Australia"
               icon="information-circle-outline"
               onPress={() => setPanel('about')}
               colors={c}
             />
           </View>
           <Text style={[s.settingsFoot, { color: c.secondary }]}>
-            Dispatch {Constants.expoConfig?.version}
+            Dispatch Australia {Constants.expoConfig?.version}
             {'\n'}In an emergency, call 000.
           </Text>
         </ScrollView>
@@ -792,7 +872,7 @@ function AppContent() {
                 ? 'Incident details'
                 : panel === 'area'
                   ? 'Your area'
-                  : 'About Dispatch'}
+                  : 'About Dispatch Australia'}
             </Text>
             <Pressable
               accessibilityRole="button"
@@ -809,17 +889,25 @@ function AppContent() {
           >
             {panel === 'area' && (
               <>
+                <Text
+                  style={[s.small, { color: c.secondary, marginBottom: 10 }]}
+                >
+                  Available coverage: VIC, ACT, NSW, QLD and SA. Choose
+                  Australia to include incidents across state borders.
+                </Text>
                 <View style={[s.group, { backgroundColor: c.card }]}>
-                  {(Object.keys(regions) as Region[]).map((id) => (
-                    <SettingRow
-                      key={id}
-                      title={regions[id].label}
-                      value={region === id ? 'Selected' : undefined}
-                      icon="globe-outline"
-                      onPress={() => chooseRegion(id)}
-                      colors={c}
-                    />
-                  ))}
+                  {(['au', 'vic', 'nsw', 'qld', 'act', 'sa'] as Region[]).map(
+                    (id) => (
+                      <SettingRow
+                        key={id}
+                        title={regions[id].label}
+                        value={region === id ? 'Selected' : undefined}
+                        icon="globe-outline"
+                        onPress={() => chooseRegion(id)}
+                        colors={c}
+                      />
+                    ),
+                  )}
                 </View>
                 <View style={[s.search, { backgroundColor: c.field }]}>
                   <Ionicons
@@ -876,10 +964,13 @@ function AppContent() {
             )}
             {panel === 'about' && (
               <>
-                <Text style={[s.pageTitle, { color: c.text }]}>Dispatch</Text>
+                <Text style={[s.pageTitle, { color: c.text }]}>
+                  Dispatch Australia
+                </Text>
                 <Text style={[s.body, { color: c.secondary }]}>
-                  Public incidents from VicEmergency and ACT Emergency Services
-                  Agency. Independent of the emergency services.
+                  Public incidents from Victoria, ACT, New South Wales and
+                  Queensland. Coverage differs by source and does not include
+                  every emergency call. Independent of the emergency services.
                 </Text>
                 <Text style={[s.body, { color: c.secondary }]}>
                   Incidents are collected in the background and recent records
@@ -895,9 +986,9 @@ function AppContent() {
                   Locations are approximate. Pins do not show affected areas.
                   The map shows currently listed incidents; earlier records
                   remain in the list. ACT warnings are available through the
-                  official ESA website. Times use Melbourne/Canberra time. This
-                  is a preview; source reuse conditions are being confirmed
-                  before a paid launch.
+                  official ESA website. Times use the selected region; Australia
+                  uses Sydney time. This is a preview; source reuse conditions
+                  are being confirmed before a paid launch.
                 </Text>
                 <SettingRow
                   title="Official emergency advice"
@@ -951,6 +1042,8 @@ function AppContent() {
                 <View style={[s.group, { backgroundColor: c.card }]}>
                   {[
                     ['Status', current.status],
+                    ...(current.level ? [['Alert level', current.level]] : []),
+                    ['Region', regions[rowRegion(current)].label],
                     ['Agency', current.agency],
                     ['Updated', localTime(current.updated, true)],
                     ['Reported', localTime(current.created, true)],
@@ -984,7 +1077,7 @@ function AppContent() {
                   ))}
                 </View>
                 <Text style={[s.detailFoot, { color: c.secondary }]}>
-                  Melbourne/Canberra time · Reported locations are approximate.
+                  {regionInfo.timeLabel} · Reported locations are approximate.
                 </Text>
                 <View style={[s.group, { backgroundColor: c.card }]}>
                   <SettingRow
@@ -1010,7 +1103,7 @@ function AppContent() {
                     icon="share-outline"
                     onPress={() =>
                       void Share.share({
-                        message: `${current.title} · ${current.location}\n${current.status}\nUpdated ${localTime(current.updated, true)} (Melbourne/Canberra time)\n${current.officialUrl}`,
+                        message: `${current.title} · ${current.location}\n${current.status}\nUpdated ${localTime(current.updated, true)} (${regionInfo.timeLabel})\n${current.officialUrl}`,
                       }).catch(() =>
                         Alert.alert('Could not share', 'Please try again.'),
                       )

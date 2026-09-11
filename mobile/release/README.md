@@ -1,9 +1,9 @@
 # TestFlight release status
 
-Target app: Dispatch Victoria (display name in the app: Dispatch)
+Target app: Dispatch Australia
 Bundle identifier: `com.chrisschepers.dispatchau`
-Marketing version: `0.1.3`
-Current build number: `4`
+Marketing version: `0.1.4`
+Current build number: `5`
 Audience: the owner's TestFlight testing; no public App Store release or external tester invitations have been requested.
 
 The local native iOS project is generated using Expo prebuild. Native source and build outputs are ignored by Git. Apple credentials, certificates and private keys must never enter this repository.
@@ -51,3 +51,14 @@ Incident history and ACT — 0.1.3 (4):
 - A standalone Release simulator cold launch, live Victoria feed, ACT switch, ambulance filter, loaded Canberra Apple Maps view and persisted seven-day setting passed. The Expo native module-name startup fix remains present in the signed archive.
 - Signed archive and IPA export passed. Signature verification passed with keychain access. Apple accepted delivery `536eb96f-e7f4-4d14-9507-9100fb7dbc11`; build processing is `VALID`, internal state is `IN_BETA_TESTING`, and the existing Owner testing group contains build 4. No external tester group or public App Store release was submitted.
 - IPA: `~/Developer/dispatch-builds/ios/0.1.3-4/Dispatch.ipa`; checksum is stored beside it. The Sites web preview is unchanged; this release updates the native app and its feed service.
+
+Dispatch Australia expansion — 0.1.4 (5):
+
+- Renamed the App Store Connect localization and installed app to Dispatch Australia while retaining the bundle identifier, owner group and saved preferences.
+- Added official NSW RFS, Queensland Fire Department and SA CFS collectors and an Australia overview, alongside Victoria and ACT. SA records have no coordinates and appear in unfiltered state/nationwide lists only.
+- Repaired agency-handoff duplicates using explicit Victoria CAD identifiers, including existing stored history. Added source-aware timestamps, current/earlier counts, a clearer radius indication and compact warnings.
+- Standalone iPhone Release cold launch, five-region list selection, cross-state Apple Maps and SA coordinate limitation were visually checked. Mobile/backend tests, types, lint and iOS/Android bundle export passed; see `../VERIFICATION.md`.
+- Signed archive and IPA export passed with the Expo provider startup correction intact. Apple processed build `d6e35532-df80-43b0-b3e4-be3b52e2d21d` as `VALID`; internal testing is `IN_BETA_TESTING` and the existing owner group contains build 5. Build notes and the TestFlight app description reflect the expanded coverage.
+- IPA: `~/Developer/dispatch-builds/ios/0.1.4-5/DispatchAustralia.ipa`, with SHA256.txt beside it, outside Git.
+- Railway deployment `62624f54-0b7f-416a-9259-b7eb9691cbdb` succeeded and all five live sources were ready/fresh after deployment. The existing persistent volume was retained.
+- The Sites preview and Android store distribution are unchanged. Public-feed coverage remains incomplete; this release does not enable paid subscriptions or push notifications.

@@ -26,7 +26,7 @@ test('device preferences preserve the selected radius and reject corrupt storage
       saved: [p],
       active: p,
       includePlanned: true,
-      region: 'vic',
+      region: 'au',
       historyHours: 24,
     },
   );
@@ -43,7 +43,7 @@ test('device preferences preserve the selected radius and reject corrupt storage
       saved: [p],
       active: null,
       includePlanned: false,
-      region: 'vic',
+      region: 'au',
       historyHours: 24,
     },
   );
@@ -148,5 +148,90 @@ void test('regional feed validates input and keeps history separate from operati
     parsePreferences(JSON.stringify({ region: 'act', historyHours: 168 }))
       .historyHours,
     168,
+  );
+});
+
+void test('Australia view accepts supported regions, retains source links and rejects unsupported rows', async () => {
+  const { parseFeed, regions } = await import('../src/feed-model.ts');
+  assert.equal(parsePreferences(null).region, 'au');
+  assert.equal(
+    parsePreferences(JSON.stringify({ region: 'qld', historyHours: 72 }))
+      .region,
+    'qld',
+  );
+  assert.equal(
+    parsePreferences(JSON.stringify({ region: 'vic', active: p })).region,
+    'vic',
+  );
+  assert.equal(regions.qld.timeZone, 'Australia/Brisbane');
+  const t = '2026-09-11T16:00:00.000Z';
+  const row = {
+    id: 'nsw:incident:1',
+    sourceId: '1',
+    sourceFeed: 'nsw',
+    title: 'Fire',
+    location: 'Test',
+    status: 'Advice',
+    agency: 'NSW RFS',
+    category: 'fire',
+    kind: 'incident',
+    firstSeen: t,
+    lastSeen: t,
+    listed: true,
+    point: null,
+  };
+  const raw = {
+    region: 'au',
+    incidents: [row],
+    warnings: [],
+    fetchedAt: t,
+    historyStartedAt: t,
+    historyHours: 24,
+    stale: false,
+    attribution: 'Sources',
+    licenseUrl: 'https://example.test',
+    coverageNote: null,
+  };
+  assert.equal(
+    parseFeed(raw, 'au').incidents[0].officialUrl,
+    regions.nsw.adviceUrl,
+  );
+  assert.throws(() =>
+    parseFeed({ ...raw, incidents: [{ ...row, id: 'wa:incident:1' }] }, 'au'),
+  );
+});
+
+void test('unknown call times use the source update before collector startup time for ordering', async () => {
+  const { incidentTime, filterIncidents } =
+    await import('../src/feed-model.ts');
+  const old = {
+    id: 'qld:incident:old',
+    title: 'Fire',
+    location: 'Test',
+    agency: 'QFD',
+    category: 'fire',
+    listed: true,
+    status: 'Patrolled',
+    created: null,
+    updated: '2026-08-01T00:00:00.000Z',
+    firstSeen: '2026-09-11T16:00:00.000Z',
+  };
+  const recent = {
+    ...old,
+    id: 'vic:incident:new',
+    created: '2026-09-11T15:00:00.000Z',
+    updated: null,
+  };
+  assert.equal(incidentTime(old), old.updated);
+  assert.equal(
+    filterIncidents([old, recent], {
+      query: '',
+      category: 'all',
+      includePlanned: false,
+      respondingOnly: false,
+      centre: null,
+      radius: 25,
+    })[0].id,
+    recent.id,
   );
 });

@@ -10,9 +10,9 @@ if (
   );
 }
 const config: ExpoConfig = {
-  name: 'Dispatch',
-  slug: 'dispatch-victoria',
-  version: '0.1.3',
+  name: 'Dispatch Australia',
+  slug: 'dispatch-australia',
+  version: '0.1.4',
   scheme: 'dispatchau',
   platforms: ['ios', 'android'],
   orientation: 'portrait',
@@ -20,7 +20,7 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
-    buildNumber: '4',
+    buildNumber: '5',
     supportsTablet: true,
     infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },

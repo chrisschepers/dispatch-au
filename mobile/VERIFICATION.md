@@ -40,3 +40,16 @@ Three-tab simplification — 0.1.2 (3):
 - Railway persistent volume retained original collection start times across deployments. At 15:28 UTC the seven-day endpoint contained 13 Victoria incidents (3 earlier) and 15 ACT incidents (1 earlier). Both sources were fresh. These counts include planned activities hidden by default and are snapshots, not daily totals.
 - iOS signed archive metadata is 0.1.3 (4), provider module DispatchVictoria. Export and code-signature verification passed; Apple reports VALID / IN_BETA_TESTING with access for the existing owner group.
 - Android bundle compilation passed; no physical Android runtime or Google Play distribution was tested. Android production maps still require the configured Google Maps key. Seven-day retention has unit coverage but cannot yet have seven days of live observations.
+
+## 0.1.4 (5) — Dispatch Australia
+
+- Backend tests: 15 passed. Added stable Victoria CAD migration/agency handoff, NSW/QLD parsing and elevated warning handling, combined-source health, and Adelaide time / coordinate-free SA parsing.
+- Mobile tests: 6 passed; includes combined-state source links and namespaces, preference compatibility and sorting by known source time instead of collection-batch arrival. Mobile types, root lint, diff whitespace and iOS/Android production exports passed.
+- Standalone Release cold launch on iPhone 17 Pro / iOS 26.5 passed. Combined list visibly contains ACT ambulance calls, NSW incidents, Horsham, one current Lynbrook record and one Yea record. Unknown call times carry Updated/Seen labels. Warnings are collapsed, with Nearby / Map / Settings retained.
+- South Australia selection loads two ordinary CFS records in the checked snapshot, uses Adelaide time, and explicitly explains missing coordinates in both the list and map view. Current records can be older than the history window while still published by the source; their actual dates remain visible.
+- Live parity check at 16:44 UTC compared all seven incident records then published in the VicEmergency combined feed, including its two planned burns and Caldwell NSW record, against the nationwide API: none missing. All stored Victoria source IDs were unique. This is a snapshot check, not proof that every emergency call is public or every future update will arrive.
+- All five live sources were ready and fresh. The collector retained existing history across deployments. SA is list-only; NSW/QLD source cadence is about 30 minutes.
+- Signed iOS archive/export and strict code-signature verification passed. Metadata identifies Dispatch Australia 0.1.4 (5), retaining ExpoModulesProviderModuleName=DispatchVictoria. Apple accepted upload delivery d6e35532-df80-43b0-b3e4-be3b52e2d21d without errors.
+- Android production bundle export passed; physical Android execution and the production Google Maps key remain outstanding. The Sites web preview was not changed in this native release.
+- Combined Apple Maps tiles and incident pins loaded across VIC/ACT/NSW/QLD. Settings visibly shows Dispatch Australia 0.1.4, all five source links and the persisted seven-day history preference.
+- Apple build d6e35532-df80-43b0-b3e4-be3b52e2d21d is VALID / IN_BETA_TESTING and is assigned to the existing owner group. Final Railway deployment 62624f54-0b7f-416a-9259-b7eb9691cbdb succeeded with all five sources fresh.
