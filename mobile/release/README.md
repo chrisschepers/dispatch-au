@@ -34,5 +34,5 @@ Startup repair — 0.1.1 (2):
 - The owner reported a white screen in build 1. A standalone Release launch reproduced a missing `ExpoAsset` native-module error.
 - The native module-name plugin now sets `ExpoModulesProviderModuleName` in Info.plist to match `PRODUCT_MODULE_NAME`. This fixes Expo provider discovery while preserving the visible app name.
 - A fresh prebuild and standalone Release simulator cold launch passed. Live feed, details, Apple Maps and persisted appearance were checked. See `../VERIFICATION.md`.
-- The signed archive and IPA export succeeded; exported metadata and code signature were verified. Upload and Apple processing are in progress.
+- The signed archive and IPA export succeeded; exported metadata and code signature were verified. Apple accepted the upload without errors (delivery `7053dd10-628a-4dc8-9b04-4b75d2f5e1b2`). Processing is `VALID` and internal status is `IN_BETA_TESTING`. The owner’s group now contains build 2; the defective build 1 was removed from that group.
 - New IPA: `~/Developer/dispatch-builds/ios/0.1.1-2/Dispatch.ipa`.
