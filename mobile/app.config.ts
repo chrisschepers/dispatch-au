@@ -12,7 +12,7 @@ if (
 const config: ExpoConfig = {
   name: 'Dispatch',
   slug: 'dispatch-victoria',
-  version: '0.1.0',
+  version: '0.1.1',
   scheme: 'dispatchau',
   platforms: ['ios', 'android'],
   orientation: 'portrait',
@@ -20,6 +20,7 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
+    buildNumber: '2',
     supportsTablet: true,
     infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },

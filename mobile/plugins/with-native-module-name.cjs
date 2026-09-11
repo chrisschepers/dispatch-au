@@ -1,8 +1,16 @@
-const { withXcodeProject } = require('expo/config-plugins');
+const { withInfoPlist, withXcodeProject } = require('expo/config-plugins');
+const moduleName = 'DispatchVictoria';
 
 // Swift's system Dispatch module is imported by Foundation. The app must not
 // shadow it, even though its user-facing product name remains Dispatch.
 module.exports = function withNativeModuleName(config) {
+  // Expo resolves the generated provider using the Swift module name. Without
+  // this override it tries the executable name (Dispatch), so release startup
+  // cannot register native modules such as ExpoAsset.
+  config = withInfoPlist(config, (mod) => {
+    mod.modResults.ExpoModulesProviderModuleName = moduleName;
+    return mod;
+  });
   return withXcodeProject(config, (mod) => {
     const configurations = mod.modResults.pbxXCBuildConfigurationSection();
     let updated = 0;
@@ -11,7 +19,7 @@ module.exports = function withNativeModuleName(config) {
       if (!settings) continue;
       const bundle = String(settings.PRODUCT_BUNDLE_IDENTIFIER || '').replaceAll('"', '');
       if (bundle !== config.ios.bundleIdentifier) continue;
-      settings.PRODUCT_MODULE_NAME = 'DispatchVictoria';
+      settings.PRODUCT_MODULE_NAME = moduleName;
       updated += 1;
     }
     if (!updated) throw new Error('Dispatch app build configurations were not found.');

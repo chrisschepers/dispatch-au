@@ -1,14 +1,14 @@
-# First TestFlight build
+# TestFlight release status
 
 Target app: Dispatch Victoria (display name in the app: Dispatch)
 Bundle identifier: `com.chrisschepers.dispatchau`
-Marketing version: `0.1.0`
-Initial build number: `1`
+Marketing version: `0.1.1`
+Current build number: `2`
 Audience: the owner's TestFlight testing; no public App Store release or external tester invitations have been requested.
 
 The local native iOS project is generated using Expo prebuild. Native source and build outputs are ignored by Git. Apple credentials, certificates and private keys must never enter this repository.
 
-Release preparation on 11 September 2026:
+Release preparation on 11 September 2026 (initial build history):
 
 - Expo Go simulator checks passed for the main interface; see `../VERIFICATION.md`.
 - CocoaPods installed successfully.
@@ -28,3 +28,11 @@ The EAS production submit profile now points to the actual Dispatch app ID. Neve
 Test notes are in `testflight-notes.txt`. Do not send external invitations or submit a public App Store release as part of this upload.
 
 Local prepared IPA: `~/Developer/dispatch-builds/ios/0.1.0-1/Dispatch.ipa` (outside Git). Minimum iOS version: 16.4. Export SHA-256: `ab9e777184120020e3bcbd544d87d28580ffca2878c67789513cac753e8c23af`.
+
+Startup repair — 0.1.1 (2):
+
+- The owner reported a white screen in build 1. A standalone Release launch reproduced a missing `ExpoAsset` native-module error.
+- The native module-name plugin now sets `ExpoModulesProviderModuleName` in Info.plist to match `PRODUCT_MODULE_NAME`. This fixes Expo provider discovery while preserving the visible app name.
+- A fresh prebuild and standalone Release simulator cold launch passed. Live feed, details, Apple Maps and persisted appearance were checked. See `../VERIFICATION.md`.
+- The signed archive and IPA export succeeded; exported metadata and code signature were verified. Upload and Apple processing are in progress.
+- New IPA: `~/Developer/dispatch-builds/ios/0.1.1-2/Dispatch.ipa`.

@@ -1,4 +1,6 @@
-Dispatch Victoria — first iOS beta (0.1.0)
+Dispatch Victoria — startup fix (0.1.1, build 2)
+
+Fixed the white screen on launch by correcting native module registration. This build is tested as a standalone Release app, including cold launch and live incident loading.
 
 Please test:
 • Current public incident list and separate official Victoria warnings.

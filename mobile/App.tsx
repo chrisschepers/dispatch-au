@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import Constants from 'expo-constants';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Location from 'expo-location';
 import { useDispatch } from './src/useDispatch';
@@ -833,7 +834,7 @@ function AppContent() {
             />
           </View>
           <Text style={[s.footerLink, { color: c.secondary }]}>
-            Dispatch · Victoria · 0.1.0 preview
+            Dispatch · Victoria · {Constants.expoConfig?.version ?? 'Preview'}
           </Text>
         </ScrollView>
       )}
