@@ -1,14 +1,7 @@
-Dispatch Victoria — startup fix (0.1.1, build 2)
+Dispatch Victoria — simpler navigation (0.1.2, build 3)
 
-Fixed the white screen on launch by correcting native module registration. This build is tested as a standalone Release app, including cold launch and live incident loading.
+Only three tabs: Nearby, Map and Settings. A compact scrolling location/category header, quieter incident cards and a floating tab bar follow the 112 Meldingen layout. The map gets most of the screen. Choose your area in the location sheet and set its radius under Settings. No Pro promotions or separate Places tab.
 
-Please test:
-• Current public incident list and separate official Victoria warnings.
-• Category/search filters, Melbourne timestamps and incident details.
-• Apple Maps pins and warning areas.
-• Selecting a Victorian place and radius, saving/removing one place on this device.
-• Light/dark appearance and refreshing after returning to the app.
+Please test cold launch, switching all three tabs, category filters, incident details, Show on map, area selection and radius, and light/dark appearance. Pull down the Nearby list to refresh.
 
-This is an independent personal preview, not an emergency service. Current data needs an internet connection. Use VicEmergency for official advice and call 000 in an emergency.
-
-Not available in this beta: background push, incident history, cloud account synchronization and paid subscriptions. No purchases are enabled. Saved preferences remain on the device.
+Official warnings remain visible across Victoria regardless of incident filters. The independent preview refreshes while open and needs an internet connection. Always follow VicEmergency; call 000 in an emergency. Background alerts, cloud sync and purchases are not available.

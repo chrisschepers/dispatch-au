@@ -1,7 +1,7 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   ActivityIndicator,
+  Alert,
   BackHandler,
   FlatList,
   Linking,
@@ -16,156 +16,130 @@ import {
   TextInput,
   View,
   useColorScheme,
-} from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import Constants from 'expo-constants';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Location from 'expo-location';
-import { useDispatch } from './src/useDispatch';
+} from "react-native";
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import Constants from "expo-constants";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as Location from "expo-location";
+import { useDispatch } from "./src/useDispatch";
 import {
   filterIncidents,
   type Incident,
   type Category,
-} from './src/domain/incidents';
-import { suggestedPlaces, type Place } from './src/domain/places';
+} from "./src/domain/incidents";
+import { suggestedPlaces, type Place } from "./src/domain/places";
 import {
   light,
   dark,
   categories,
   categoryIcons,
+  categoryColors,
   rowColor,
   localTime,
   dayLabel,
   type Colours,
-} from './src/theme';
-import IncidentMap from './src/IncidentMap';
+} from "./src/theme";
+import IncidentMap from "./src/IncidentMap";
 
-type Tab = 'list' | 'map' | 'places' | 'settings';
-type Icon = React.ComponentProps<typeof Ionicons>['name'];
-const tabs: { id: Tab; label: string; icon: Icon }[] = [
-  { id: 'list', label: 'Incidents', icon: 'list-outline' },
-  { id: 'map', label: 'Map', icon: 'map-outline' },
-  { id: 'places', label: 'Places', icon: 'location-outline' },
-  { id: 'settings', label: 'Settings', icon: 'options-outline' },
+type Tab = "nearby" | "map" | "settings";
+type Panel = "area" | "about" | null;
+type Icon = React.ComponentProps<typeof Ionicons>["name"];
+const tabs: { id: Tab; label: string; icon: Icon; activeIcon: Icon }[] = [
+  {
+    id: "nearby",
+    label: "Nearby",
+    icon: "location-outline",
+    activeIcon: "location",
+  },
+  { id: "map", label: "Map", icon: "map-outline", activeIcon: "map" },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: "settings-outline",
+    activeIcon: "settings",
+  },
 ];
-function Button({
-  label,
-  onPress,
-  colors,
-  subtle = false,
+
+function SettingRow({
+  title,
+  value,
   icon,
-  disabled = false,
-}: {
-  label: string;
-  onPress: () => void;
-  colors: Colours;
-  subtle?: boolean;
-  icon?: Icon;
-  disabled?: boolean;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        s.button,
-        {
-          backgroundColor: subtle ? colors.field : colors.accent,
-          opacity: disabled ? 0.45 : pressed ? 0.7 : 1,
-        },
-      ]}
-    >
-      {icon && (
-        <Ionicons name={icon} size={19} color={subtle ? colors.text : '#fff'} />
-      )}
-      <Text style={[s.buttonText, { color: subtle ? colors.text : '#fff' }]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-function Chip({
-  label,
-  active,
   onPress,
   colors,
 }: {
-  label: string;
-  active: boolean;
+  title: string;
+  value?: string;
+  icon: Icon;
   onPress: () => void;
   colors: Colours;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={[
-        s.chip,
-        {
-          backgroundColor: active ? colors.accent : colors.card,
-          borderColor: active ? colors.accent : colors.line,
-        },
-      ]}
+      style={[s.settingRow, { borderBottomColor: colors.line }]}
     >
-      <Text
-        style={{
-          fontSize: 13,
-          fontWeight: '600',
-          color: active ? '#fff' : colors.secondary,
-        }}
-      >
-        {label}
-      </Text>
+      <Ionicons name={icon} size={20} color={colors.secondary} />
+      <Text style={[s.settingTitle, { color: colors.text }]}>{title}</Text>
+      {value && (
+        <Text
+          numberOfLines={1}
+          style={[s.settingValue, { color: colors.secondary }]}
+        >
+          {value}
+        </Text>
+      )}
+      <Ionicons name="chevron-forward" size={15} color={colors.secondary} />
     </Pressable>
   );
 }
 function AppContent() {
   const data = useDispatch();
-  const [tab, setTab] = useState<Tab>('list');
-  const [query, setQuery] = useState('');
-  const [placeQuery, setPlaceQuery] = useState('');
-  const [category, setCategory] = useState<Category | 'all'>('all');
-  const [responding, setResponding] = useState(false);
-  const [selected, setSelected] = useState<Incident | null>(null);
-  const [panel, setPanel] = useState<'filters' | 'pro' | 'about' | null>(null);
-  const [locating, setLocating] = useState(false);
+  const insets = useSafeAreaInsets();
   const system = useColorScheme();
   const isDark =
-    data.prefs.theme === 'dark' ||
-    (data.prefs.theme === 'system' && system === 'dark');
+    data.prefs.theme === "dark" ||
+    (data.prefs.theme === "system" && system === "dark");
   const c = isDark ? dark : light;
+  const [tab, setTab] = useState<Tab>("nearby");
+  const [category, setCategory] = useState<Category | "all">("all");
+  const [responding, setResponding] = useState(false);
+  const [selected, setSelected] = useState<Incident | null>(null);
+  const [mapFocus, setMapFocus] = useState<[number, number] | null>(null);
+  const [panel, setPanel] = useState<Panel>(null);
+  const [placeQuery, setPlaceQuery] = useState("");
+  const [locating, setLocating] = useState(false);
   const place = data.prefs.active;
   const rows = useMemo(
     () =>
       filterIncidents(data.feed?.incidents ?? [], {
-        query,
+        query: "",
         category,
-        includePlanned: data.prefs.includePlanned || category === 'planned',
+        includePlanned: data.prefs.includePlanned || category === "planned",
         respondingOnly: responding,
         centre: place ? [place.lat, place.lng] : null,
         radius: place?.radius ?? 25,
       }),
-    [data.feed, query, category, data.prefs.includePlanned, responding, place],
+    [data.feed, category, data.prefs.includePlanned, responding, place],
   );
   const warnings = data.feed?.warnings ?? [];
   const current = selected
     ? ([...warnings, ...(data.feed?.incidents ?? [])].find(
-        (row) => row.id === selected.id,
+        (r) => r.id === selected.id,
       ) ?? selected)
     : null;
   const removed =
-    selected &&
-    data.feed &&
-    ![...warnings, ...data.feed.incidents].some(
-      (row) => row.id === selected.id,
-    );
+    !!selected &&
+    !!data.feed &&
+    ![...warnings, ...data.feed.incidents].some((r) => r.id === selected.id);
   const choices = useMemo(() => {
     const options = [...suggestedPlaces];
-    for (const row of data.feed?.incidents ?? [])
+    for (const row of data.feed?.incidents ?? []) {
       if (row.point && !options.some((p) => p.name === row.location))
         options.push({
           id: row.id,
@@ -174,714 +148,576 @@ function AppContent() {
           lng: row.point[1],
           radius: 25,
         });
+    }
     return options
       .filter((p) =>
         p.name.toLowerCase().includes(placeQuery.trim().toLowerCase()),
       )
       .slice(0, 30);
   }, [data.feed, placeQuery]);
+  const bottom = insets.bottom + 88;
+  const areaLabel = place
+    ? `${place.name} · ${place.radius} km`
+    : "All Victoria";
+  const close = () => {
+    setSelected(null);
+    setPanel(null);
+  };
   useEffect(() => {
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (selected) {
-        setSelected(null);
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (selected || panel) {
+        close();
         return true;
       }
-      if (panel) {
-        setPanel(null);
-        return true;
-      }
-      if (tab !== 'list') {
-        setTab('list');
+      if (tab !== "nearby") {
+        setTab("nearby");
         return true;
       }
       return false;
     });
     return () => sub.remove();
-  }, [tab, selected, panel]);
-  const choose = (p: Place | null) => {
-    data.setPrefs((old) => ({ ...old, active: p }));
-    setTab('list');
-    setPlaceQuery('');
-  };
+  }, [selected, panel, tab]);
+  function choose(next: Place | null) {
+    data.setPrefs((old) => ({ ...old, active: next }));
+    setPanel(null);
+    setPlaceQuery("");
+    setMapFocus(null);
+  }
   async function openUrl(url: string) {
     try {
       await Linking.openURL(url);
     } catch {
-      Alert.alert('Could not open link', 'Please try again.');
+      Alert.alert("Could not open link", "Please try again.");
     }
   }
   async function locate() {
     setLocating(true);
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
-      if (permission.status !== 'granted') {
+      if (permission.status !== "granted") {
         Alert.alert(
-          'Location unavailable',
-          'Choose a place below, or allow location in your device settings.',
+          "Location unavailable",
+          "Choose a place or allow location in your device settings.",
         );
         return;
       }
-      let timer: ReturnType<typeof setTimeout>;
+      let timer: ReturnType<typeof setTimeout> | undefined;
       const position = await Promise.race([
         Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         }),
         new Promise<never>((_, reject) => {
-          timer = setTimeout(() => reject(Error('Location timeout')), 20000);
+          timer = setTimeout(() => reject(Error("Location timeout")), 20000);
         }),
       ]).finally(() => clearTimeout(timer));
       choose({
-        id: 'my-location',
-        name: 'My current location',
+        id: "my-location",
+        name: "My location",
         lat: position.coords.latitude,
         lng: position.coords.longitude,
-        radius: 25,
+        radius: place?.radius ?? 25,
       });
     } catch {
-      Alert.alert('Could not find your location', 'Choose a place manually.');
+      Alert.alert("Location unavailable", "Please choose a place manually.");
     } finally {
       setLocating(false);
     }
   }
-  function savePlace() {
-    if (!place) return;
-    if (
-      data.prefs.saved.length &&
-      !data.prefs.saved.some((p) => p.id === place.id)
-    ) {
-      Alert.alert(
-        'One saved place',
-        'Remove your saved place to save a different one.',
-      );
-      return;
-    }
-    data.setPrefs((old) => ({ ...old, saved: [place] }));
-    Alert.alert('Place saved', 'Saved on this device.');
-  }
-  const heading = (title: string, caption?: string) => (
-    <View style={s.sectionHeader}>
-      <Text style={[s.sectionTitle, { color: c.text }]}>{title}</Text>
-      {caption && (
-        <Text style={[s.small, { color: c.secondary }]}>{caption}</Text>
-      )}
-    </View>
+  const section = (title: string) => (
+    <Text style={[s.section, { color: c.secondary }]}>{title}</Text>
   );
-  const incidentRow = (row: Incident) => (
+  const areaButton = (
     <Pressable
-      onPress={() => setSelected(row)}
       accessibilityRole="button"
-      accessibilityLabel={`${row.title}, ${row.location}, ${row.status}, ${localTime(row.updated)}`}
-      style={({ pressed }) => [
-        s.incident,
-        {
-          backgroundColor: c.card,
-          borderLeftColor: rowColor(row),
-          opacity: pressed ? 0.7 : 1,
-        },
-      ]}
+      accessibilityLabel={`Choose area: ${areaLabel}`}
+      onPress={() => setPanel("area")}
+      style={s.area}
     >
-      <View style={[s.incidentIcon, { backgroundColor: rowColor(row) + '15' }]}>
-        <Ionicons
-          name={
-            row.kind === 'warning'
-              ? 'warning-outline'
-              : categoryIcons[row.category]
-          }
-          color={rowColor(row)}
-          size={23}
-        />
-      </View>
-      <View style={s.grow}>
-        <Text style={[s.rowTitle, { color: c.text }]}>{row.title}</Text>
-        <Text numberOfLines={2} style={[s.location, { color: c.secondary }]}>
-          {row.location}
-        </Text>
-        <View style={s.row}>
-          <View style={[s.dot, { backgroundColor: rowColor(row) }]} />
-          <Text style={[s.small, { color: c.secondary }]}>{row.status}</Text>
-        </View>
-      </View>
-      <View style={s.timeColumn}>
-        <Text style={[s.time, { color: c.secondary }]}>
-          {row.updated ? localTime(row.updated) : '—'}
-        </Text>
-        <Ionicons name="chevron-forward" size={16} color={c.secondary} />
-      </View>
+      <Ionicons name="location-outline" size={15} color={c.secondary} />
+      <Text numberOfLines={1} style={[s.areaLabel, { color: c.secondary }]}>
+        {areaLabel}
+      </Text>
+      <Ionicons name="chevron-down" size={12} color={c.secondary} />
     </Pressable>
   );
-  const warningBanner = warnings.length > 0 && (
-    <View style={{ marginBottom: 14 }}>
-      {heading('Official warnings', 'All Victoria')}
-      {warnings.map((w) => (
-        <Pressable
-          key={w.id}
-          onPress={() => setSelected(w)}
-          accessibilityRole="button"
-          style={[
-            s.warning,
-            { backgroundColor: c.card, borderColor: rowColor(w) },
-          ]}
-        >
-          <Ionicons name="warning" size={23} color={rowColor(w)} />
-          <View style={s.grow}>
-            <Text style={[s.rowTitle, { color: c.text }]}>{w.level}</Text>
-            <Text style={[s.small, { color: c.secondary }]}>
-              {w.action || w.location}
+  const filters = (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={s.chipScroll}
+      contentContainerStyle={s.chips}
+    >
+      {categories.map((item) => {
+        const color = item.id === "all" ? c.accent : categoryColors[item.id];
+        const active = category === item.id;
+        return (
+          <Pressable
+            key={item.id}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            onPress={() => setCategory(item.id)}
+            style={[
+              s.chip,
+              {
+                backgroundColor: active ? color + "12" : c.card,
+                borderColor: active ? color : c.line,
+              },
+            ]}
+          >
+            {item.id !== "all" && (
+              <Ionicons
+                name={categoryIcons[item.id]}
+                size={15}
+                color={active ? color : c.secondary}
+              />
+            )}
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: active ? "600" : "400",
+                color: active ? color : c.secondary,
+              }}
+            >
+              {item.label}
             </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={17} color={c.secondary} />
-        </Pressable>
-      ))}
-    </View>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
   );
-  const status = (
-    <View style={s.statusRow}>
-      <View
-        style={[
-          s.dot,
-          {
-            backgroundColor: data.feed
-              ? data.stale
-                ? '#b67c19'
-                : c.green
-              : c.secondary,
-          },
-        ]}
-      />
-      <Text
-        accessibilityLiveRegion="polite"
-        style={[s.small, { color: c.secondary }]}
-      >
-        {!data.feed
-          ? data.loading
-            ? 'Getting incidents…'
-            : 'No live data'
-          : data.stale
-            ? 'Updates delayed'
-            : `Updated ${localTime(data.feed.fetchedAt)} · Melbourne time`}
+  const warningRows = warnings.map((w) => (
+    <Pressable
+      key={w.id}
+      accessibilityRole="button"
+      accessibilityLabel={`${w.level}, ${w.action || w.location}, official warning for Victoria`}
+      onPress={() => setSelected(w)}
+      style={[
+        s.warning,
+        { backgroundColor: c.card, borderColor: rowColor(w) + "65" },
+      ]}
+    >
+      <Ionicons name="warning-outline" size={20} color={rowColor(w)} />
+      <View style={s.grow}>
+        <Text style={[s.warningTitle, { color: c.text }]}>
+          {w.level}{" "}
+          <Text style={{ color: c.secondary, fontWeight: "400" }}>
+            · Victoria
+          </Text>
+        </Text>
+        <Text
+          numberOfLines={2}
+          style={[s.small, { color: c.secondary, marginTop: 2 }]}
+        >
+          {w.action || w.location}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={15} color={c.secondary} />
+    </Pressable>
+  ));
+  const errorNotice = !!data.error && (
+    <View style={[s.notice, { backgroundColor: c.card }]}>
+      <Text style={[s.small, { color: c.secondary }]}>
+        {data.error}
+        {data.feed ? " Showing the last successful update." : ""}
       </Text>
-      {data.loading && <ActivityIndicator size="small" color={c.secondary} />}
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => void data.refresh()}
+        style={s.retry}
+      >
+        <Text style={{ color: c.accent, fontWeight: "600" }}>Try again</Text>
+      </Pressable>
     </View>
   );
   if (!data.ready)
     return (
-      <SafeAreaView
-        style={[s.root, s.center, { backgroundColor: c.background }]}
-      >
-        <Ionicons name="radio-outline" size={42} color={c.accent} />
-        <ActivityIndicator style={{ marginTop: 20 }} color={c.accent} />
-      </SafeAreaView>
+      <View style={[s.root, s.center, { backgroundColor: c.background }]}>
+        <ActivityIndicator color={c.accent} />
+        <Text style={[s.small, { color: c.secondary, marginTop: 12 }]}>
+          Opening Dispatch…
+        </Text>
+      </View>
     );
   return (
     <SafeAreaView
       style={[s.root, { backgroundColor: c.background }]}
-      edges={['top', 'left', 'right', 'bottom']}
+      edges={["top", "left", "right"]}
     >
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <View style={s.header}>
-        <View style={s.row}>
-          <View style={[s.brand, { backgroundColor: c.accent }]}>
-            <Ionicons name="radio-outline" size={23} color="#fff" />
-          </View>
-          <Text style={[s.brandName, { color: c.text }]}>Dispatch</Text>
-          <View style={[s.region, { backgroundColor: c.field }]}>
-            <Text style={[s.regionText, { color: c.secondary }]}>VIC</Text>
-          </View>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="About Dispatch Pro"
-          onPress={() => setPanel('pro')}
-          style={[s.proTag, { backgroundColor: c.tint }]}
-        >
-          <Text style={{ fontWeight: '700', color: c.accent, fontSize: 12 }}>
-            PRO
-          </Text>
-        </Pressable>
-      </View>
-      {(tab === 'list' || tab === 'map') && (
-        <View style={s.feedControls}>
-          <View style={s.headingRow}>
-            <View>
-              <Text style={[s.pageTitle, { color: c.text }]}>
-                Nearby incidents
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Choose area"
-                onPress={() => setTab('places')}
-                style={[s.row, { paddingVertical: 8 }]}
-              >
-                <Ionicons name="location-outline" color={c.accent} size={15} />
-                <Text style={{ color: c.secondary, fontSize: 14 }}>
-                  {place
-                    ? `${place.name} · ${place.radius} km`
-                    : 'All Victoria'}
-                </Text>
-                <Ionicons name="chevron-down" size={13} color={c.secondary} />
-              </Pressable>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Filter incidents"
-              onPress={() => setPanel('filters')}
-              style={[s.iconButton, { backgroundColor: c.card }]}
-            >
-              <Ionicons name="options-outline" size={22} color={c.text} />
-            </Pressable>
-          </View>
-          <View style={[s.search, { backgroundColor: c.field }]}>
-            <Ionicons name="search-outline" color={c.secondary} size={19} />
-            <TextInput
-              accessibilityLabel="Search incidents"
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search a suburb or incident"
-              placeholderTextColor={c.secondary}
-              style={[s.input, { color: c.text }]}
-              autoCorrect={false}
-              returnKeyType="search"
-            />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Clear search"
-              onPress={() => setQuery('')}
-              hitSlop={8}
-            >
-              {query ? (
-                <Ionicons name="close-circle" color={c.secondary} size={18} />
-              ) : null}
-            </Pressable>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.chips}
-          >
-            {categories.map((item) => (
-              <Chip
-                key={item.id}
-                label={item.label}
-                active={category === item.id}
-                onPress={() => setCategory(item.id)}
-                colors={c}
-              />
-            ))}
-          </ScrollView>
-          {status}
-        </View>
-      )}
-      {tab === 'list' && (
+      <StatusBar style={isDark ? "light" : "dark"} />
+      {tab === "nearby" && (
         <FlatList
           data={rows}
-          keyExtractor={(row) => row.id}
-          contentContainerStyle={s.list}
-          keyboardShouldPersistTaps="handled"
+          keyExtractor={(r) => r.id}
+          contentContainerStyle={[s.list, { paddingBottom: bottom }]}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={data.loading}
               onRefresh={() => void data.refresh()}
-              tintColor={c.accent}
+              tintColor={c.secondary}
               colors={[c.accent]}
             />
           }
           ListHeaderComponent={
             <>
-              {warningBanner}
-              {data.error && (
-                <View style={[s.notice, { backgroundColor: c.card }]}>
-                  <Text style={{ color: c.secondary }}>
-                    {data.error}
-                    {data.feed ? ' Showing the last successful update.' : ''}
-                  </Text>
-                  <Button
-                    label="Try again"
-                    colors={c}
-                    onPress={() => void data.refresh()}
-                    subtle
-                  />
-                </View>
+              {areaButton}
+              {filters}
+              {data.stale && (
+                <Text
+                  accessibilityLiveRegion="polite"
+                  style={[s.small, { color: c.accent, marginBottom: 10 }]}
+                >
+                  Updates delayed · Check VicEmergency for current advice
+                </Text>
               )}
-              {heading('Incidents', `${rows.length} in view`)}
+              {warningRows}
+              {errorNotice}
             </>
           }
           renderItem={({ item, index }) => (
             <>
               {(index === 0 ||
                 dayLabel(item.updated, data.now) !==
-                  dayLabel(rows[index - 1].updated, data.now)) && (
-                <Text style={[s.dateLabel, { color: c.secondary }]}>
-                  {dayLabel(item.updated, data.now).toUpperCase()}
-                </Text>
-              )}
-              {incidentRow(item)}
+                  dayLabel(rows[index - 1].updated, data.now)) &&
+                section(dayLabel(item.updated, data.now))}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${item.title}, ${item.location}, ${item.status}, ${localTime(item.updated)}`}
+                onPress={() => setSelected(item)}
+                style={({ pressed }) => [
+                  s.incident,
+                  {
+                    backgroundColor: c.card,
+                    borderColor: c.line,
+                    opacity: pressed ? 0.65 : 1,
+                  },
+                ]}
+              >
+                <View style={[s.stripe, { backgroundColor: rowColor(item) }]} />
+                <View style={s.incidentIcon}>
+                  <Ionicons
+                    name={categoryIcons[item.category]}
+                    size={22}
+                    color={rowColor(item)}
+                  />
+                </View>
+                <View style={s.incidentBody}>
+                  <Text
+                    numberOfLines={2}
+                    style={[s.rowTitle, { color: c.text }]}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={[s.small, { color: c.secondary, marginTop: 3 }]}
+                  >
+                    {item.location}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={[s.small, { color: c.secondary }]}
+                  >
+                    {item.status}
+                  </Text>
+                </View>
+                <View style={s.timeColumn}>
+                  <Text style={[s.time, { color: c.text }]}>
+                    {item.updated ? localTime(item.updated) : "—"}
+                  </Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={c.secondary}
+                  />
+                </View>
+              </Pressable>
             </>
           )}
           ListEmptyComponent={
             <View style={[s.empty, { backgroundColor: c.card }]}>
-              <Ionicons
-                name={data.loading ? 'radio-outline' : 'search-outline'}
-                size={33}
-                color={c.secondary}
-              />
-              <Text style={[s.rowTitle, { color: c.text, marginTop: 12 }]}>
+              {data.loading && <ActivityIndicator color={c.secondary} />}
+              <Text style={[s.rowTitle, { color: c.text, marginTop: 8 }]}>
                 {data.loading
-                  ? 'Loading Victoria incidents'
+                  ? "Loading incidents…"
                   : data.feed
-                    ? 'No matching incidents'
-                    : 'Incidents unavailable'}
+                    ? "No incidents in this view"
+                    : "Incidents unavailable"}
               </Text>
               <Text
-                style={[s.body, { color: c.secondary, textAlign: 'center' }]}
+                style={[s.body, { color: c.secondary, textAlign: "center" }]}
               >
                 {data.feed
-                  ? 'Try another area or fewer filters. An empty list is not an all-clear.'
-                  : 'Pull down to refresh. Current incidents need an internet connection.'}
+                  ? "Choose another area or category. An empty list is not an all-clear."
+                  : "Pull down to try again."}
               </Text>
-              {data.feed && (
-                <Button
-                  label="Reset filters"
-                  colors={c}
-                  subtle
-                  onPress={() => {
-                    setCategory('all');
-                    setQuery('');
-                    setResponding(false);
-                    data.setPrefs((old) => ({
-                      ...old,
-                      active: null,
-                      includePlanned: false,
-                    }));
-                  }}
-                />
-              )}
             </View>
           }
           ListFooterComponent={
-            <View style={s.footer}>
-              <Text
-                style={[s.small, { color: c.secondary, textAlign: 'center' }]}
-              >
-                Source: VicEmergency · Public fire, rescue and SES incidents
-              </Text>
-              <Pressable
-                onPress={() =>
-                  void openUrl('https://emergency.vic.gov.au/respond/')
-                }
-                accessibilityRole="link"
-              >
-                <Text style={[s.footerLink, { color: c.accent }]}>
-                  Read official emergency advice ↗
-                </Text>
-              </Pressable>
-              <Text
-                style={[s.small, { color: c.secondary, textAlign: 'center' }]}
-              >
-                Independent preview. In an emergency, call 000.
-              </Text>
-            </View>
+            <Text style={[s.feedFoot, { color: c.secondary }]}>
+              {data.feed
+                ? `Updated ${localTime(data.feed.fetchedAt)} · Melbourne time\n`
+                : ""}
+              VicEmergency
+            </Text>
           }
         />
       )}
-      {tab === 'map' && (
-        <View style={s.grow}>
-          {warnings.length > 0 && (
-            <Pressable
-              onPress={() => {
-                setTab('list');
-              }}
-              accessibilityRole="button"
-              style={[s.mapWarnings, { backgroundColor: c.card }]}
-            >
-              <Ionicons name="warning" size={17} color="#ab8210" />
-              <Text style={{ color: c.text, fontSize: 13 }}>
-                {warnings.length} official{' '}
-                {warnings.length === 1 ? 'warning' : 'warnings'} across Victoria
-                · View
-              </Text>
-            </Pressable>
-          )}
+      {tab === "map" && (
+        <View style={s.root}>
+          <View style={s.mapHeading}>{areaButton}</View>
           <IncidentMap
             rows={rows}
             warnings={warnings}
             place={place}
+            focus={mapFocus}
+            onSelect={setSelected}
             colors={c}
             dark={isDark}
-            onSelect={setSelected}
           />
-        </View>
-      )}
-      {tab === 'places' && (
-        <ScrollView
-          contentContainerStyle={s.list}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={[s.pageTitle, { color: c.text, marginTop: 10 }]}>
-            Your places
-          </Text>
-          <Text style={[s.body, { color: c.secondary }]}>
-            Choose the area you want to follow.
-          </Text>
-          <View style={[s.card, { backgroundColor: c.card }]}>
-            <Button
-              label="All Victoria"
-              icon="globe-outline"
-              colors={c}
-              subtle
-              onPress={() => choose(null)}
-            />
-            <Button
-              label={locating ? 'Finding location…' : 'Use my location'}
-              icon="locate-outline"
-              colors={c}
-              subtle
-              disabled={locating}
-              onPress={() => void locate()}
-            />
-          </View>
-          {heading('Saved place', 'On this device')}
-          {data.prefs.saved.length ? (
-            data.prefs.saved.map((p) => (
-              <View
-                key={p.id}
-                style={[s.savedRow, { backgroundColor: c.card }]}
-              >
+          {(warnings.length > 0 ||
+            data.error ||
+            data.stale ||
+            category !== "all" ||
+            responding) && (
+            <View style={s.mapNotices}>
+              {warnings.length > 0 && (
                 <Pressable
                   accessibilityRole="button"
-                  onPress={() => choose(p)}
-                  style={s.grow}
+                  onPress={() => setTab("nearby")}
+                  style={[s.mapNotice, { backgroundColor: c.card }]}
                 >
-                  <Text style={[s.rowTitle, { color: c.text }]}>{p.name}</Text>
-                  <Text style={[s.small, { color: c.secondary, marginTop: 4 }]}>
-                    {p.radius} km radius
+                  <Ionicons name="warning-outline" size={18} color="#a8810b" />
+                  <Text style={[s.small, { color: c.text, flex: 1 }]}>
+                    {warnings.length} official{" "}
+                    {warnings.length === 1 ? "warning" : "warnings"} · Victoria
+                  </Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={14}
+                    color={c.secondary}
+                  />
+                </Pressable>
+              )}
+              {(data.error || data.stale) && (
+                <Text
+                  style={[
+                    s.mapNotice,
+                    s.small,
+                    { color: c.accent, backgroundColor: c.card },
+                  ]}
+                >
+                  Updates unavailable · Check VicEmergency
+                </Text>
+              )}
+              {(category !== "all" || responding) && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Show all incident categories"
+                  onPress={() => {
+                    setCategory("all");
+                    setResponding(false);
+                  }}
+                  style={[s.mapNotice, { backgroundColor: c.card }]}
+                >
+                  <Text style={[s.small, { color: c.secondary }]}>
+                    Filtered view · Show all
                   </Text>
                 </Pressable>
-                <Pressable
-                  onPress={() =>
-                    data.setPrefs((old) => ({
-                      ...old,
-                      saved: old.saved.filter((x) => x.id !== p.id),
-                    }))
-                  }
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remove saved ${p.name}`}
-                  style={s.iconButton}
-                >
-                  <Ionicons name="trash-outline" color={c.accent} size={20} />
-                </Pressable>
-              </View>
-            ))
-          ) : (
-            <Text style={[s.body, { color: c.secondary }]}>
-              No saved place yet. Choose an area, then save it below.
-            </Text>
-          )}
-          {place && (
-            <View style={[s.card, { backgroundColor: c.card }]}>
-              <Text style={[s.rowTitle, { color: c.text }]}>{place.name}</Text>
-              <Text style={[s.body, { color: c.secondary }]}>
-                Show incidents within {place.radius} km
-              </Text>
-              <View style={s.chips}>
-                {[5, 10, 25, 50, 100].map((radius) => (
-                  <Chip
-                    key={radius}
-                    label={`${radius}`}
-                    active={place.radius === radius}
-                    colors={c}
-                    onPress={() =>
-                      data.setPrefs((old) => ({
-                        ...old,
-                        active: old.active ? { ...old.active, radius } : null,
-                      }))
-                    }
-                  />
-                ))}
-              </View>
-              <Button
-                label="Save this place"
-                icon="bookmark-outline"
-                colors={c}
-                onPress={savePlace}
-              />
+              )}
             </View>
           )}
-          {heading('Find a place')}
-          <View style={[s.search, { backgroundColor: c.field }]}>
-            <Ionicons name="search-outline" size={19} color={c.secondary} />
-            <TextInput
-              value={placeQuery}
-              onChangeText={setPlaceQuery}
-              accessibilityLabel="Search places"
-              placeholder="Search Victoria"
-              placeholderTextColor={c.secondary}
-              style={[s.input, { color: c.text }]}
+        </View>
+      )}
+      {tab === "settings" && (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[s.list, { paddingBottom: bottom }]}
+        >
+          <Text style={[s.pageTitle, { color: c.text }]}>Settings</Text>
+          {section("Your area")}
+          <View style={[s.group, { backgroundColor: c.card }]}>
+            <SettingRow
+              title="Location"
+              value={place?.name ?? "All Victoria"}
+              icon="location-outline"
+              onPress={() => setPanel("area")}
+              colors={c}
             />
-          </View>
-          <View style={[s.card, { backgroundColor: c.card }]}>
-            {choices.map((p) => (
-              <Pressable
-                key={p.id}
-                accessibilityRole="button"
-                onPress={() => choose(p)}
-                style={[s.option, { borderBottomColor: c.line }]}
-              >
-                <Ionicons
-                  name="location-outline"
-                  size={19}
-                  color={c.secondary}
-                />
-                <Text style={[s.grow, { color: c.text, fontSize: 15 }]}>
-                  {p.name}
+            {place && (
+              <View style={s.radiusSection}>
+                <Text
+                  style={[s.small, { color: c.secondary, marginBottom: 10 }]}
+                >
+                  Radius
                 </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={15}
-                  color={c.secondary}
-                />
-              </Pressable>
-            ))}
-            {choices.length === 0 && (
-              <Text style={[s.body, { color: c.secondary }]}>
-                No match in suggested places or current incident locations.
-              </Text>
+                <View style={s.segments}>
+                  {[5, 10, 25, 50, 100].map((radius) => (
+                    <Pressable
+                      key={radius}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${radius} kilometres`}
+                      accessibilityState={{ checked: place.radius === radius }}
+                      onPress={() =>
+                        data.setPrefs((old) => ({
+                          ...old,
+                          active: old.active ? { ...old.active, radius } : null,
+                        }))
+                      }
+                      style={[
+                        s.segment,
+                        {
+                          backgroundColor:
+                            place.radius === radius ? c.tint : c.field,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={{
+                          color:
+                            place.radius === radius ? c.accent : c.secondary,
+                          fontSize: 13,
+                          fontWeight: "600",
+                        }}
+                      >
+                        {radius} km
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
             )}
           </View>
-          <Text style={[s.small, { color: c.secondary }]}>
-            One saved place is included. Places and preferences stay on this
-            device; they do not sync with the website yet.
-          </Text>
-        </ScrollView>
-      )}
-      {tab === 'settings' && (
-        <ScrollView contentContainerStyle={s.list}>
-          <Text style={[s.pageTitle, { color: c.text, marginTop: 10 }]}>
-            Settings
-          </Text>
-          {heading('Appearance')}
-          <View style={[s.card, { backgroundColor: c.card }]}>
-            {(['system', 'light', 'dark'] as const).map((theme) => (
-              <Pressable
-                key={theme}
-                onPress={() => data.setPrefs((old) => ({ ...old, theme }))}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: data.prefs.theme === theme }}
-                style={[s.option, { borderBottomColor: c.line }]}
-              >
-                <Text style={[s.grow, { color: c.text, fontSize: 16 }]}>
-                  {theme === 'system'
-                    ? 'Use device setting'
-                    : theme === 'dark'
-                      ? 'Dark'
-                      : 'Light'}
-                </Text>
-                {data.prefs.theme === theme && (
-                  <Ionicons name="checkmark" color={c.accent} size={20} />
-                )}
-              </Pressable>
-            ))}
-          </View>
-          {heading('Notifications')}
-          <View style={[s.card, { backgroundColor: c.card }]}>
-            <View style={s.row}>
-              <Ionicons
-                name="notifications-outline"
-                size={22}
-                color={c.secondary}
-              />
-              <Text style={[s.rowTitle, { color: c.text }]}>
-                Background alerts
+          {section("Incidents")}
+          <View style={[s.group, { backgroundColor: c.card }]}>
+            <View style={[s.settingRow, { borderBottomColor: c.line }]}>
+              <Text style={[s.settingTitle, { color: c.text }]}>
+                Planned burns
               </Text>
+              <Switch
+                accessibilityLabel="Include planned burns"
+                value={data.prefs.includePlanned}
+                onValueChange={(includePlanned) =>
+                  data.setPrefs((old) => ({ ...old, includePlanned }))
+                }
+                trackColor={{ true: c.accent }}
+              />
             </View>
-            <Text style={[s.body, { color: c.secondary }]}>
-              Not available in this first version. The feed refreshes while the
-              app is open. Use VicEmergency for official warnings.
-            </Text>
+            <View style={[s.settingRow, { borderBottomColor: c.line }]}>
+              <Text style={[s.settingTitle, { color: c.text }]}>
+                Operational incidents only
+              </Text>
+              <Switch
+                accessibilityLabel="Operational incidents only"
+                value={responding}
+                onValueChange={setResponding}
+                trackColor={{ true: c.accent }}
+              />
+            </View>
           </View>
-          {heading('Dispatch Pro')}
-          <View style={[s.card, { backgroundColor: c.card }]}>
-            <Text style={[s.rowTitle, { color: c.text }]}>
-              A little more local
-            </Text>
-            <Text style={[s.body, { color: c.secondary }]}>
-              More saved places and future notification options. Mobile
-              subscriptions are not on sale yet.
-            </Text>
-            <Button
-              label="View planned features"
+          {section("Appearance")}
+          <View style={[s.group, s.appearance, { backgroundColor: c.card }]}>
+            <View style={s.segments}>
+              {(["system", "light", "dark"] as const).map((theme) => (
+                <Pressable
+                  key={theme}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`${theme} appearance`}
+                  accessibilityState={{ checked: data.prefs.theme === theme }}
+                  onPress={() => data.setPrefs((old) => ({ ...old, theme }))}
+                  style={[
+                    s.segment,
+                    {
+                      backgroundColor:
+                        data.prefs.theme === theme ? c.tint : c.field,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      color:
+                        data.prefs.theme === theme ? c.accent : c.secondary,
+                      fontSize: 14,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {theme[0].toUpperCase() + theme.slice(1)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+          {section("Information")}
+          <View style={[s.group, { backgroundColor: c.card }]}>
+            <SettingRow
+              title="VicEmergency"
+              icon="open-outline"
+              onPress={() =>
+                void openUrl("https://emergency.vic.gov.au/respond/")
+              }
               colors={c}
-              subtle
-              onPress={() => setPanel('pro')}
+            />
+            <SettingRow
+              title="About Dispatch"
+              icon="information-circle-outline"
+              onPress={() => setPanel("about")}
+              colors={c}
             />
           </View>
-          {heading('About your data')}
-          <View style={[s.card, { backgroundColor: c.card }]}>
-            <Text style={[s.body, { color: c.secondary }]}>
-              No account is needed for this preview. Your saved place and
-              appearance are stored on this device. Location is requested only
-              when you choose “Use my location”. No background location
-              tracking.
-            </Text>
-            <Text style={[s.body, { color: c.secondary }]}>
-              Current incident data comes directly from VicEmergency. The map
-              uses Apple Maps on iOS and Google Maps on Android.
-            </Text>
-            <Button
-              label="Sources & app information"
-              colors={c}
-              subtle
-              onPress={() => setPanel('about')}
-            />
-          </View>
-          <Text style={[s.footerLink, { color: c.secondary }]}>
-            Dispatch · Victoria · {Constants.expoConfig?.version ?? 'Preview'}
+          <Text style={[s.settingsFoot, { color: c.secondary }]}>
+            Dispatch {Constants.expoConfig?.version}
+            {"\n"}In an emergency, call 000.
           </Text>
         </ScrollView>
       )}
       {!!data.storageError && (
         <Text
           accessibilityLiveRegion="polite"
-          style={[s.storageError, { color: c.accent }]}
+          style={[
+            s.storageError,
+            { bottom, color: c.accent, backgroundColor: c.card },
+          ]}
         >
           {data.storageError}
         </Text>
       )}
       <View
-        style={[s.tabbar, { backgroundColor: c.card, borderTopColor: c.line }]}
+        pointerEvents="box-none"
+        style={[s.tabDock, { bottom: Math.max(insets.bottom, 12) }]}
       >
-        {tabs.map((t) => (
-          <Pressable
-            key={t.id}
-            accessibilityRole="tab"
-            accessibilityLabel={t.label}
-            accessibilityState={{ selected: tab === t.id }}
-            onPress={() => setTab(t.id)}
-            style={s.tab}
-          >
-            <Ionicons
-              name={t.icon}
-              size={23}
-              color={tab === t.id ? c.accent : c.secondary}
-            />
-            <Text
-              style={{
-                fontSize: 11,
-                fontWeight: tab === t.id ? '700' : '500',
-                color: tab === t.id ? c.accent : c.secondary,
-                marginTop: 4,
-              }}
+        <View
+          style={[s.tabbar, { backgroundColor: c.card, borderColor: c.line }]}
+        >
+          {tabs.map((t) => (
+            <Pressable
+              key={t.id}
+              accessibilityRole="tab"
+              accessibilityLabel={t.label}
+              accessibilityState={{ selected: tab === t.id }}
+              onPress={() => setTab(t.id)}
+              style={[s.tab, tab === t.id && { backgroundColor: c.tint }]}
             >
-              {t.label}
-            </Text>
-          </Pressable>
-        ))}
+              <Ionicons
+                name={tab === t.id ? t.activeIcon : t.icon}
+                size={21}
+                color={tab === t.id ? c.accent : c.secondary}
+              />
+              <Text
+                maxFontSizeMultiplier={1.3}
+                style={[
+                  s.tabLabel,
+                  { color: tab === t.id ? c.accent : c.secondary },
+                ]}
+              >
+                {t.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
       <Modal
         visible={!!current || !!panel}
-        onRequestClose={() => {
-          setSelected(null);
-          setPanel(null);
-        }}
+        onRequestClose={close}
         animationType="slide"
         presentationStyle="pageSheet"
       >
@@ -889,277 +725,220 @@ function AppContent() {
           <View style={[s.modalHeader, { borderBottomColor: c.line }]}>
             <Text style={[s.rowTitle, { color: c.text }]}>
               {current
-                ? 'Incident details'
-                : panel === 'filters'
-                  ? 'Filters'
-                  : panel === 'pro'
-                    ? 'Dispatch Pro'
-                    : 'About Dispatch'}
+                ? "Incident details"
+                : panel === "area"
+                  ? "Your area"
+                  : "About Dispatch"}
             </Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Close"
-              onPress={() => {
-                setSelected(null);
-                setPanel(null);
-              }}
-              style={[s.iconButton, { backgroundColor: c.field }]}
+              onPress={close}
+              style={s.close}
             >
-              <Ionicons name="close" size={23} color={c.text} />
+              <Ionicons name="close" size={23} color={c.secondary} />
             </Pressable>
           </View>
-          <ScrollView contentContainerStyle={s.list}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[s.list, { paddingBottom: 32 }]}
+          >
+            {panel === "area" && (
+              <>
+                <View style={[s.search, { backgroundColor: c.field }]}>
+                  <Ionicons
+                    name="search-outline"
+                    size={19}
+                    color={c.secondary}
+                  />
+                  <TextInput
+                    accessibilityLabel="Search places"
+                    value={placeQuery}
+                    onChangeText={setPlaceQuery}
+                    placeholder="Search Victoria"
+                    placeholderTextColor={c.secondary}
+                    autoCorrect={false}
+                    style={[s.input, { color: c.text }]}
+                  />
+                </View>
+                <View style={[s.group, { backgroundColor: c.card }]}>
+                  <SettingRow
+                    title="All Victoria"
+                    icon="globe-outline"
+                    onPress={() => choose(null)}
+                    colors={c}
+                  />
+                  <SettingRow
+                    title={locating ? "Finding location…" : "Use my location"}
+                    icon="locate-outline"
+                    onPress={() => {
+                      if (!locating) void locate();
+                    }}
+                    colors={c}
+                  />
+                </View>
+                {section("Places")}
+                <View style={[s.group, { backgroundColor: c.card }]}>
+                  {choices.map((p) => (
+                    <SettingRow
+                      key={p.id}
+                      title={p.name}
+                      icon="location-outline"
+                      onPress={() =>
+                        choose({ ...p, radius: place?.radius ?? p.radius })
+                      }
+                      colors={c}
+                    />
+                  ))}
+                </View>
+                {!choices.length && (
+                  <Text style={[s.body, { color: c.secondary }]}>
+                    No matching places. Try a nearby suburb.
+                  </Text>
+                )}
+              </>
+            )}
+            {panel === "about" && (
+              <>
+                <Text style={[s.pageTitle, { color: c.text }]}>Dispatch</Text>
+                <Text style={[s.body, { color: c.secondary }]}>
+                  Public fire, rescue and SES incidents in Victoria, sourced
+                  from VicEmergency. Independent of the emergency services.
+                </Text>
+                <Text style={[s.body, { color: c.secondary }]}>
+                  Updates refresh while the app is open. Background alerts are
+                  not available. Always follow official advice and call 000 in
+                  an emergency.
+                </Text>
+                <Text style={[s.body, { color: c.secondary }]}>
+                  Your area and appearance stay on this device. Location is only
+                  requested when you choose Use my location. No background
+                  location tracking.
+                </Text>
+                <Text style={[s.body, { color: c.secondary }]}>
+                  Locations are approximate. Pins do not show affected areas.
+                  Times use Melbourne time. This is a preview; source reuse
+                  conditions are being confirmed before a paid launch.
+                </Text>
+                <SettingRow
+                  title="Official emergency advice"
+                  icon="open-outline"
+                  onPress={() =>
+                    void openUrl("https://emergency.vic.gov.au/respond/")
+                  }
+                  colors={c}
+                />
+              </>
+            )}
             {current && (
               <>
                 <View
                   style={[
                     s.detailIcon,
-                    { backgroundColor: rowColor(current) + '18' },
+                    { backgroundColor: rowColor(current) + "15" },
                   ]}
                 >
                   <Ionicons
                     name={
-                      current.kind === 'warning'
-                        ? 'warning-outline'
+                      current.kind === "warning"
+                        ? "warning-outline"
                         : categoryIcons[current.category]
                     }
-                    size={36}
+                    size={30}
                     color={rowColor(current)}
                   />
                 </View>
-                <Text style={[s.pageTitle, { color: c.text }]}>
+                <Text style={[s.detailTitle, { color: c.text }]}>
                   {current.title}
                 </Text>
                 <Text style={[s.body, { color: c.secondary }]}>
                   {current.location}
                 </Text>
                 {(removed || data.stale) && (
-                  <View style={[s.notice, { backgroundColor: c.card }]}>
-                    <Text style={{ color: c.accent }}>
-                      {removed
-                        ? 'This record is no longer in the current feed. This does not confirm it is resolved.'
-                        : 'Updates are delayed. Check the official source for current advice.'}
-                    </Text>
-                  </View>
+                  <Text
+                    style={[
+                      s.notice,
+                      { color: c.accent, backgroundColor: c.card },
+                    ]}
+                  >
+                    {removed
+                      ? "This record is no longer in the feed. This does not confirm it is resolved."
+                      : "Updates delayed. Check the official source."}
+                  </Text>
                 )}
-                {current.action && (
+                {!!current.action && (
                   <Text style={[s.body, { color: c.text }]}>
                     {current.action}
                   </Text>
                 )}
-                <View style={[s.card, { backgroundColor: c.card }]}>
+                <View style={[s.group, { backgroundColor: c.card }]}>
                   {[
-                    ['Status', current.status],
-                    ['Agency', current.agency],
-                    ['Updated', localTime(current.updated, true)],
-                    ['Reported', localTime(current.created, true)],
+                    ["Status", current.status],
+                    ["Agency", current.agency],
+                    ["Updated", localTime(current.updated, true)],
+                    ["Reported", localTime(current.created, true)],
                     [
-                      'Resources',
+                      "Resources",
                       current.resources === null
-                        ? 'Not supplied'
+                        ? "Not supplied"
                         : String(current.resources),
                     ],
-                    ['Reference', current.sourceId],
-                  ].map(([k, v]) => (
+                    ["Reference", current.sourceId],
+                  ].map(([label, value]) => (
                     <View
-                      key={k}
-                      style={[s.detailRow, { borderBottomColor: c.line }]}
+                      key={label}
+                      style={[s.settingRow, { borderBottomColor: c.line }]}
                     >
-                      <Text
-                        style={{ color: c.secondary, fontSize: 13, flex: 1 }}
-                      >
-                        {k}
+                      <Text style={[s.small, { color: c.secondary, flex: 1 }]}>
+                        {label}
                       </Text>
                       <Text
                         selectable
-                        style={{
-                          color: c.text,
-                          fontSize: 14,
-                          flex: 2,
-                          textAlign: 'right',
-                        }}
+                        style={[
+                          s.small,
+                          { color: c.text, flex: 2, textAlign: "right" },
+                        ]}
                       >
-                        {v}
+                        {value}
                       </Text>
                     </View>
                   ))}
                 </View>
-                <Text
-                  style={[s.small, { color: c.secondary, marginBottom: 15 }]}
-                >
-                  Times are in Melbourne time. Resource counts do not identify
-                  individual vehicles. Reported locations are approximate.
+                <Text style={[s.detailFoot, { color: c.secondary }]}>
+                  Melbourne time · Reported locations are approximate.
                 </Text>
-                <Button
-                  label="Read official advice"
-                  icon="open-outline"
-                  colors={c}
-                  onPress={() => void openUrl(current.officialUrl)}
-                />
-                {current.point && (
-                  <Button
-                    label="Open location in maps"
-                    icon="map-outline"
+                <View style={[s.group, { backgroundColor: c.card }]}>
+                  <SettingRow
+                    title="Official advice"
+                    icon="open-outline"
+                    onPress={() => void openUrl(current.officialUrl)}
                     colors={c}
-                    subtle
+                  />
+                  {current.point && (
+                    <SettingRow
+                      title="Show on map"
+                      icon="map-outline"
+                      onPress={() => {
+                        setMapFocus(current.point);
+                        setSelected(null);
+                        setTab("map");
+                      }}
+                      colors={c}
+                    />
+                  )}
+                  <SettingRow
+                    title="Share incident"
+                    icon="share-outline"
                     onPress={() =>
-                      void openUrl(
-                        `https://www.google.com/maps/search/?api=1&query=${current.point![0]},${current.point![1]}`,
+                      void Share.share({
+                        message: `${current.title} · ${current.location}\n${current.status}\nUpdated ${localTime(current.updated, true)} (Melbourne time)\n${current.officialUrl}`,
+                      }).catch(() =>
+                        Alert.alert("Could not share", "Please try again."),
                       )
                     }
-                  />
-                )}
-                <Button
-                  label="Share incident"
-                  icon="share-outline"
-                  colors={c}
-                  subtle
-                  onPress={() => {
-                    void Share.share({
-                      message: `${current.title} · ${current.location}\n${current.status}\nUpdated ${localTime(current.updated, true)} (Melbourne time)\nVicEmergency reference ${current.sourceId}\n${current.officialUrl}`,
-                    }).catch(() =>
-                      Alert.alert('Could not share', 'Please try again.'),
-                    );
-                  }}
-                />
-              </>
-            )}
-            {panel === 'filters' && (
-              <>
-                <Text style={[s.body, { color: c.secondary }]}>
-                  Filters apply to incidents. Official warnings remain visible
-                  across Victoria.
-                </Text>
-                <View style={[s.card, { backgroundColor: c.card }]}>
-                  <View style={s.option}>
-                    <Text style={[s.grow, { color: c.text, fontSize: 16 }]}>
-                      Include planned burns
-                    </Text>
-                    <Switch
-                      accessibilityLabel="Include planned burns"
-                      value={data.prefs.includePlanned}
-                      onValueChange={(includePlanned) =>
-                        data.setPrefs((old) => ({ ...old, includePlanned }))
-                      }
-                      trackColor={{ true: c.accent }}
-                    />
-                  </View>
-                  <View style={s.option}>
-                    <Text style={[s.grow, { color: c.text, fontSize: 16 }]}>
-                      Operational incidents only
-                    </Text>
-                    <Switch
-                      accessibilityLabel="Operational incidents only"
-                      value={responding}
-                      onValueChange={setResponding}
-                      trackColor={{ true: c.accent }}
-                    />
-                  </View>
-                  <Text style={[s.small, { color: c.secondary }]}>
-                    Operational includes responding, on scene and under control
-                    statuses supplied by the source.
-                  </Text>
-                </View>
-                <Button
-                  label="Apply filters"
-                  colors={c}
-                  onPress={() => setPanel(null)}
-                />
-                <Button
-                  label="Reset filters"
-                  colors={c}
-                  subtle
-                  onPress={() => {
-                    setQuery('');
-                    setCategory('all');
-                    setResponding(false);
-                    data.setPrefs((old) => ({
-                      ...old,
-                      includePlanned: false,
-                      active: null,
-                    }));
-                    setPanel(null);
-                  }}
-                />
-              </>
-            )}
-            {panel === 'pro' && (
-              <>
-                <View style={[s.detailIcon, { backgroundColor: c.tint }]}>
-                  <Ionicons
-                    name="sparkles-outline"
-                    color={c.accent}
-                    size={34}
+                    colors={c}
                   />
                 </View>
-                <Text style={[s.pageTitle, { color: c.text }]}>
-                  Your neighbourhood.{`\n`}A little closer.
-                </Text>
-                <Text style={[s.body, { color: c.secondary }]}>
-                  Pro is in development. There are no purchases or paid
-                  entitlements in this preview.
-                </Text>
-                <View style={[s.card, { backgroundColor: c.card }]}>
-                  {[
-                    'Up to five saved places',
-                    'A radius for each place',
-                    'Background alerts in a later release',
-                  ].map((t) => (
-                    <View key={t} style={s.option}>
-                      <Ionicons
-                        name="ellipse-outline"
-                        size={17}
-                        color={c.accent}
-                      />
-                      <Text style={{ color: c.text, fontSize: 15, flex: 1 }}>
-                        {t}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-                <Text style={[s.body, { color: c.secondary }]}>
-                  Final subscription prices will be shown by the App Store or
-                  Google Play when purchases become available. Current official
-                  warnings remain free.
-                </Text>
-                <Button
-                  label="Back to Dispatch"
-                  colors={c}
-                  onPress={() => setPanel(null)}
-                />
-              </>
-            )}
-            {panel === 'about' && (
-              <>
-                <Text style={[s.pageTitle, { color: c.text }]}>
-                  A clearer local view.
-                </Text>
-                <Text style={[s.body, { color: c.secondary }]}>
-                  Dispatch is an independent preview of public fire, rescue and
-                  SES incidents in Victoria. It is not an emergency service or a
-                  complete police and ambulance pager feed.
-                </Text>
-                <Text style={[s.body, { color: c.secondary }]}>
-                  The source is checked about once a minute while the app is
-                  active. Older data is labelled delayed. This app cannot
-                  guarantee that every incident is shown or that updates arrive
-                  immediately.
-                </Text>
-                <Text style={[s.body, { color: c.secondary }]}>
-                  Source content belongs to the relevant agencies. Commercial
-                  reuse conditions are still being confirmed before a public
-                  paid launch.
-                </Text>
-                <Button
-                  label="Visit VicEmergency"
-                  colors={c}
-                  onPress={() =>
-                    void openUrl('https://emergency.vic.gov.au/respond/')
-                  }
-                />
-                <Text style={[s.body, { color: c.text, fontWeight: '700' }]}>
-                  In an emergency, call 000.
-                </Text>
               </>
             )}
           </ScrollView>
@@ -1177,194 +956,191 @@ export default function App() {
 }
 const s = StyleSheet.create({
   root: { flex: 1 },
-  center: { alignItems: 'center', justifyContent: 'center' },
   grow: { flex: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  center: { alignItems: "center", justifyContent: "center" },
+  list: { paddingHorizontal: 16 },
+  area: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    minHeight: 46,
+    paddingHorizontal: 4,
   },
-  brand: {
-    width: 35,
-    height: 35,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandName: { fontSize: 23, fontWeight: '800', letterSpacing: -0.8 },
-  region: {
-    borderRadius: 5,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    marginLeft: 3,
-  },
-  regionText: { fontSize: 10, fontWeight: '700', letterSpacing: 1 },
-  proTag: { paddingHorizontal: 11, paddingVertical: 8, borderRadius: 9 },
-  pageTitle: { fontSize: 29, fontWeight: '800', letterSpacing: -0.8 },
-  feedControls: { paddingHorizontal: 20 },
-  headingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  iconButton: {
-    width: 44,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 13,
-  },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    minHeight: 44,
-    marginVertical: 8,
-  },
-  input: { flex: 1, fontSize: 15, paddingVertical: 12 },
-  chips: { flexDirection: 'row', gap: 8, paddingVertical: 8, flexWrap: 'wrap' },
+  areaLabel: { fontSize: 13, flexShrink: 1 },
+  chipScroll: { flexGrow: 0, marginBottom: 12 },
+  chips: { gap: 7, paddingVertical: 2 },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 22,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     borderWidth: 1,
-    minHeight: 40,
+    borderRadius: 22,
+    paddingHorizontal: 12,
+    minHeight: 36,
   },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingVertical: 12,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  small: { fontSize: 12, lineHeight: 17 },
-  list: { paddingHorizontal: 20, paddingBottom: 26 },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    marginBottom: 10,
-  },
-  sectionTitle: { fontSize: 18, fontWeight: '700', letterSpacing: -0.3 },
-  dateLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    marginTop: 10,
-    marginBottom: 9,
+  section: {
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.9,
+    marginTop: 18,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   incident: {
-    borderRadius: 13,
-    padding: 14,
-    borderLeftWidth: 3,
-    flexDirection: 'row',
-    gap: 11,
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
-  },
-  incidentIcon: {
-    width: 40,
-    height: 40,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+    paddingRight: 12,
   },
-  rowTitle: { fontSize: 16, fontWeight: '600', letterSpacing: -0.2 },
-  location: { fontSize: 13, lineHeight: 19, marginTop: 4, marginBottom: 5 },
+  stripe: { width: 4, alignSelf: "stretch" },
+  incidentIcon: { width: 43, alignItems: "center" },
+  incidentBody: { flex: 1, paddingVertical: 12, paddingRight: 9 },
+  rowTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: -0.1,
+    lineHeight: 21,
+  },
+  small: { fontSize: 13, lineHeight: 18 },
   timeColumn: {
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    maxWidth: 56,
+    alignItems: "flex-end",
+    alignSelf: "stretch",
+    justifyContent: "space-between",
+    paddingVertical: 13,
   },
-  time: { fontSize: 12, fontVariant: ['tabular-nums'] },
+  time: { fontSize: 12, fontVariant: ["tabular-nums"] },
   warning: {
-    borderWidth: 1,
-    borderRadius: 13,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
-    marginBottom: 8,
-  },
-  notice: { padding: 16, gap: 10, borderRadius: 14, marginBottom: 12 },
-  button: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 15,
+    padding: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 12,
-    marginVertical: 5,
-    minHeight: 48,
+    marginBottom: 6,
   },
-  buttonText: { fontSize: 15, fontWeight: '600' },
-  empty: { padding: 25, alignItems: 'center', borderRadius: 16 },
-  body: { fontSize: 15, lineHeight: 23, marginTop: 9, marginBottom: 14 },
-  footer: { paddingTop: 23, paddingBottom: 8, gap: 7 },
-  footerLink: { fontSize: 12, textAlign: 'center', paddingVertical: 8 },
-  card: { padding: 16, borderRadius: 16, marginVertical: 8 },
-  option: {
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  warningTitle: { fontSize: 13, fontWeight: "600" },
+  notice: { padding: 14, borderRadius: 12, marginBottom: 8 },
+  retry: { alignSelf: "flex-start", paddingTop: 12, minHeight: 40 },
+  empty: { alignItems: "center", padding: 22, marginTop: 16, borderRadius: 12 },
+  body: { fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 16 },
+  feedFoot: {
+    fontSize: 11,
+    lineHeight: 17,
+    textAlign: "center",
+    marginTop: 18,
+  },
+  mapHeading: { paddingHorizontal: 16 },
+  mapNotices: { position: "absolute", top: 58, left: 12, right: 12, gap: 6 },
+  mapNotice: {
+    padding: 12,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  pageTitle: {
+    fontSize: 29,
+    fontWeight: "700",
+    letterSpacing: -0.6,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  group: { borderRadius: 12, overflow: "hidden" },
+  settingRow: {
+    minHeight: 51,
+    paddingHorizontal: 14,
     paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  savedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderRadius: 14,
-    marginBottom: 8,
+  settingTitle: { fontSize: 15, flex: 1 },
+  settingValue: { fontSize: 14, maxWidth: "46%" },
+  radiusSection: { padding: 14 },
+  segments: { flexDirection: "row", gap: 5 },
+  segment: {
+    flex: 1,
+    minHeight: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
   },
+  appearance: { padding: 8 },
+  settingsFoot: {
+    fontSize: 12,
+    lineHeight: 20,
+    marginTop: 20,
+    textAlign: "center",
+  },
+  tabDock: { position: "absolute", left: 0, right: 0, alignItems: "center" },
   tabbar: {
-    flexDirection: 'row',
-    paddingTop: 9,
-    paddingBottom: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    padding: 5,
+    borderRadius: 29,
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
   },
   tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 2,
+    minWidth: 78,
+    minHeight: 49,
+    paddingHorizontal: 15,
+    borderRadius: 24,
+  },
+  tabLabel: { fontSize: 10, fontWeight: "600" },
+  storageError: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    padding: 10,
+    fontSize: 12,
+    borderRadius: 10,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingLeft: 20,
+    paddingRight: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 57,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  close: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  search: {
+    marginTop: 16,
+    marginBottom: 16,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  input: { flex: 1, paddingVertical: 13, fontSize: 16 },
   detailIcon: {
-    width: 70,
-    height: 70,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 21,
-    marginTop: 20,
-    marginBottom: 18,
+    height: 56,
+    width: 56,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 15,
+    marginTop: 22,
+    marginBottom: 14,
   },
-  detailRow: {
-    flexDirection: 'row',
-    gap: 20,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  mapWarnings: {
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  storageError: { fontSize: 12, padding: 8, textAlign: 'center' },
+  detailTitle: { fontSize: 25, fontWeight: "700", letterSpacing: -0.5 },
+  detailFoot: { fontSize: 12, lineHeight: 18, marginVertical: 15 },
 });

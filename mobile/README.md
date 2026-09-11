@@ -4,12 +4,12 @@ Native Expo SDK 57 / React Native 0.86 starter, in the existing Dispatch reposit
 
 ## Included
 
-- Native incident list, separate official warning banners, categories, search, pull-to-refresh and filters.
+- Three tabs only: Nearby, Map and Settings. The Nearby list has a scrolling area/category header and compact incident cards, following the owner’s 112 Meldingen layout. Official warnings remain visible.
 - Apple Maps on iOS / Google Maps on Android, real supplied pins, warning polygons including holes, optional local radius.
 - Melbourne timestamps, foreground refresh every 60 seconds, stale and failure states that retain the last successful in-memory feed.
-- Suggested Victorian places plus current incident locations, optional foreground geolocation, one locally saved place and radius.
+- Area selection in a sheet, suggested Victorian places and optional foreground geolocation. The active area and radius persist automatically; radius controls live in Settings.
 - Device appearance, accessible control labels, safe-area handling, native details sheet and sharing.
-- Pro preview with honest availability text. No purchases, account entitlements, background push or cloud synchronization are active.
+- No Pro promotion, separate Places tab or planned-feature screens. No purchases, account entitlements, background push or cloud synchronization are active.
 
 No Railway credentials, ChatGPT cookies or Stripe secrets are included. The app fetches the public VicEmergency GeoJSON directly and uses the same tested normalization logic as the website. Current incidents are not persisted between launches; a cold start offline shows an unavailable state.
 
@@ -23,7 +23,7 @@ The prototype supports Expo Go. If its current store version no longer supports 
 
 `npm run ios:native` / `npm run android:native` generate and build local native projects when Xcode / the Android SDK are installed. Generated `ios/` and `android/` directories are intentionally ignored; app configuration owns their reproducible settings.
 
-EAS profiles are ready in `eas.json`: `simulator` (iOS simulator), `preview` (internal distribution, Android APK) and `production` (store builds). Link this as its own Expo project before the first EAS build. No EAS project, signing credentials, TestFlight release or Play Console entry has been created in this step. The current identifiers are `com.chrisschepers.dispatchau` on both platforms; verify availability and final branding before store registration.
+EAS profiles are ready in `eas.json`: `simulator` (iOS simulator), `preview` (internal distribution, Android APK) and `production` (store builds). Link this as its own Expo project before the first EAS build. The iOS app is registered as `com.chrisschepers.dispatchau` and has an owner-only TestFlight group. Local Xcode signing/upload is configured outside the repository. EAS project setup and Android Play Console setup remain pending. See `release/README.md` for the current release status.
 
 For standalone Android maps set `GOOGLE_MAPS_ANDROID_API_KEY` through EAS environment configuration or an ignored local `.env`. Restrict it to Maps SDK for Android, the Android package and signing SHA-1 certificate. The production Android profile fails configuration if the key is absent. A preview APK without the key shows an explicit map-setup message; its incident list works. Expo Go uses its existing maps configuration. iOS uses Apple Maps and does not need a Google Maps key. [Expo map setup](https://docs.expo.dev/versions/v57.0.0/sdk/map-view/)
 

@@ -2,8 +2,8 @@
 
 Target app: Dispatch Victoria (display name in the app: Dispatch)
 Bundle identifier: `com.chrisschepers.dispatchau`
-Marketing version: `0.1.1`
-Current build number: `2`
+Marketing version: `0.1.2`
+Current build number: `3`
 Audience: the owner's TestFlight testing; no public App Store release or external tester invitations have been requested.
 
 The local native iOS project is generated using Expo prebuild. Native source and build outputs are ignored by Git. Apple credentials, certificates and private keys must never enter this repository.
@@ -36,3 +36,9 @@ Startup repair — 0.1.1 (2):
 - A fresh prebuild and standalone Release simulator cold launch passed. Live feed, details, Apple Maps and persisted appearance were checked. See `../VERIFICATION.md`.
 - The signed archive and IPA export succeeded; exported metadata and code signature were verified. Apple accepted the upload without errors (delivery `7053dd10-628a-4dc8-9b04-4b75d2f5e1b2`). Processing is `VALID` and internal status is `IN_BETA_TESTING`. The owner’s group now contains build 2; the defective build 1 was removed from that group.
 - New IPA: `~/Developer/dispatch-builds/ios/0.1.1-2/Dispatch.ipa`.
+
+Three-tab simplification — 0.1.2 (3):
+
+- Nearby, Map and Settings only, following the owner’s 112 Meldingen layout.
+- Removed Pro marketing, the separate Places tab and large fixed feed headers. Region selection is a sheet; radius lives in Settings.
+- Standalone Release launch and main list/settings visual checks passed; see `../VERIFICATION.md` for limits. TestFlight preparation is underway.

@@ -22,3 +22,10 @@ For subsequent releases, compilation, Expo Go checks and Apple processing alone 
 The dependency audit reports ten moderate findings in the Expo build/config dependency chain involving xcode/uuid, with no high or critical findings. Its suggested forced remediation downgrades Expo to SDK 46 and is not a compatible fix for this SDK 57 app. No forced downgrade was applied. Recheck upstream fixes before a public release.
 
 GitHub Actions now also performs a clean mobile install, domain check, tests, type check and both platform exports. Downloadable CI exports are bundles/assets, not installable applications.
+
+Three-tab simplification — 0.1.2 (3):
+
+- Used the owner’s local 112 Meldingen `BuurtScreen` and `TabBalk` as the layout reference: compact scrolling area/category controls, quiet incident rows and a floating three-tab dock.
+- Removed the branded header, Pro promotion, standalone Places tab, incident search and planned-feature screens. Active area persists automatically, with radius and appearance in Settings. The map uses most of its screen; incident detail can focus its location on the in-app map.
+- TypeScript and the existing three domain tests passed. The standalone Release simulator build cold-launched, loaded live incidents and visibly showed only Nearby, Map and Settings. A screenshot confirmed approximately six full incident rows in the viewport. Settings, the area sheet and Melbourne selection were exercised; the Mac then locked before the final map/radius visual check. Startup logs reported no missing native modules or unhandled JavaScript exceptions.
+- Device archive, upload and final TestFlight status are being completed.
