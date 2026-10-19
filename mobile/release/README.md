@@ -2,8 +2,8 @@
 
 Target app: Dispatch Australia
 Bundle identifier: `com.chrisschepers.dispatchau`
-Marketing version: `0.1.4`
-Current build number: `5`
+Marketing version: `0.1.5`
+Current build number: `6`
 Audience: the owner's TestFlight testing; no public App Store release or external tester invitations have been requested.
 
 The local native iOS project is generated using Expo prebuild. Native source and build outputs are ignored by Git. Apple credentials, certificates and private keys must never enter this repository.
@@ -62,3 +62,13 @@ Dispatch Australia expansion — 0.1.4 (5):
 - IPA: `~/Developer/dispatch-builds/ios/0.1.4-5/DispatchAustralia.ipa`, with SHA256.txt beside it, outside Git.
 - Railway deployment `62624f54-0b7f-416a-9259-b7eb9691cbdb` succeeded and all five live sources were ready/fresh after deployment. The existing persistent volume was retained.
 - The Sites preview and Android store distribution are unchanged. Public-feed coverage remains incomplete; this release does not enable paid subscriptions or push notifications.
+
+
+## 0.1.5 (6) — source health, 19 October 2026
+
+- The collector watchdog is live on Railway deployment `8afd0561-89e9-4d4d-99d7-20bb7a99a51b`. The existing volume/history was retained. All five sources passed production freshness checks, and `/health/ready` returned 200.
+- Independent GitHub production checks and daily official-source contract checks are active. Initial manual runs `39312543243` and `39312549096` both succeeded; outage and recovery notifications use deduplicated GitHub issues assigned to the owner. Delivery follows GitHub notification preferences.
+- The native app identifies delayed regions and last-successful-update age, including when another region keeps the nationwide response fresh. Valid empty/unchanged feeds are not failures. The SA map is enabled for locations published by the new official CAP-AU feed; no location is invented for an area or an unlocated incident.
+- 45 backend/shared/mobile tests passed, as did root/mobile types, lint, domain drift checks, web production build and iOS/Android JavaScript exports. A standalone iPhone 17 Pro / iOS 26.5 Release cold launch loaded live nationwide incidents and official warnings without Metro. Delayed-source messages have automated model coverage; actual upstream sources were not interrupted for a visual test. No physical Android runtime was exercised.
+- Signed iOS archive/export and strict code-signature verification passed. IPA metadata is Dispatch Australia `com.chrisschepers.dispatchau`, 0.1.5 (6), with the `DispatchVictoria` Expo provider correction retained. IPA and SHA256 are under `~/Developer/dispatch-builds/ios/0.1.5-6/`, outside Git.
+- Apple accepted delivery `58c5dd8c-c928-46f5-a32c-38edee40024f`, processed build 6 as `VALID`, and reports `IN_BETA_TESTING`. The existing internal Owner testing group contains build 6; English (Australia) build notes are saved. This build is for the existing internal Owner testing group; no public App Store release or external invitations are part of this change.

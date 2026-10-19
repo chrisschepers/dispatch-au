@@ -56,7 +56,15 @@ Antwoord `200`:
 - Ontdubbelen per (toestel, incident, niveau), zodat een herstart van de collector geen tweede golf geeft.
 - Receipts verwerken en ongeldige tokens (`DeviceNotRegistered`) verwijderen.
 
+## Versturen: zo werkt het nu (gebouwd 19-10)
+
+- `backend/push.mjs`, aangeroepen na elke geslaagde `ingest` in `server.mjs`.
+- iOS: de app stuurt het eigen APNs-toestelnummer (64 hex-tekens). De server verstuurt rechtstreeks naar Apple met token-authenticatie. Railway-variabelen: `APNS_KEY` (inhoud van de .p8, of base64 daarvan), `APNS_KEY_ID`, `APNS_TEAM_ID` (HZN6L3J556), optioneel `APNS_TOPIC` (standaard `com.chrisschepers.dispatchau`) en `APNS_ENV=sandbox` voor ontwikkelbuilds. TestFlight en App Store gebruiken de productieserver.
+- Expo-tokens (`ExponentPushToken[…]`) gaan via de Expo-pushdienst; dat pad bestaat voor later (Android).
+- Zonder `APNS_KEY` slaat de server iOS over en logt dat.
+- De eerste ronde per staat leert alleen wat er al staat; er komt dus geen golf meldingen na een deploy.
+
 ## Nog te regelen buiten de code
 
-- Een EAS-project voor de app: de app heeft een `projectId` nodig om een Expo-pushtoken op te halen. Dat zet je in `mobile/app.config.ts` onder `extra.eas.projectId`.
-- APNs-sleutel (iOS) en FCM (Android) koppelen aan dat EAS-project.
+- iOS: een APNs-sleutel (.p8) in de Railway-variabelen hierboven, en de Push Notifications-capability op de App ID.
+- Android: een Firebase-project met FCM, of een EAS-project voor Expo-tokens. Nog niet ingericht.
