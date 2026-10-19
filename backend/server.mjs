@@ -13,12 +13,21 @@ function readJson(req, limit = 8192) {
     const parts = [];
     req.on('data', (c) => {
       size += c.length;
-      if (size > limit) { reject(new RangeError('Body too large')); req.destroy(); return; }
+      if (size > limit) {
+        reject(new RangeError('Body too large'));
+        req.destroy();
+        return;
+      }
       parts.push(c);
     });
     req.on('end', () => {
-      try { resolve(parts.length ? JSON.parse(Buffer.concat(parts).toString('utf8')) : {}); }
-      catch { reject(new SyntaxError('Invalid JSON')); }
+      try {
+        resolve(
+          parts.length ? JSON.parse(Buffer.concat(parts).toString('utf8')) : {},
+        );
+      } catch {
+        reject(new SyntaxError('Invalid JSON'));
+      }
     });
     req.on('error', reject);
   });
@@ -31,9 +40,12 @@ async function deviceRoute(req, url, push, send) {
   }
   const m = url.pathname.match(/^\/v1\/devices\/([0-9a-f-]{36})\/filter$/);
   if (m && req.method === 'PATCH') {
-    if (!push.authorised(m[1], req.headers['x-install-token'])) return send(401, { error: 'Unknown device' });
+    if (!push.authorised(m[1], req.headers['x-install-token']))
+      return send(401, { error: 'Unknown device' });
     const body = await readJson(req);
-    return push.setFilter(m[1], body) ? send(200, { ok: true }) : send(404, { error: 'Unknown device' });
+    return push.setFilter(m[1], body)
+      ? send(200, { ok: true })
+      : send(404, { error: 'Unknown device' });
   }
   return send(404, { error: 'Not found' });
 }
@@ -48,8 +60,14 @@ export function createServer(store, push = null) {
       res.end(JSON.stringify(body));
     };
     if (req.method === 'OPTIONS') {
-      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, PATCH, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-install-token');
+      res.setHeader(
+        'Access-Control-Allow-Methods',
+        'GET, HEAD, POST, PATCH, OPTIONS',
+      );
+      res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Content-Type, x-install-token',
+      );
       res.writeHead(204);
       return res.end();
     }
@@ -57,7 +75,12 @@ export function createServer(store, push = null) {
     if (push && url.pathname.startsWith('/v1/devices')) {
       res.setHeader('Cache-Control', 'no-store');
       deviceRoute(req, url, push, send).catch((error) => {
-        send(error instanceof RangeError || error instanceof SyntaxError ? 400 : 500, { error: 'Invalid request' });
+        send(
+          error instanceof RangeError || error instanceof SyntaxError
+            ? 400
+            : 500,
+          { error: 'Invalid request' },
+        );
       });
       return;
     }
@@ -116,7 +139,13 @@ async function main() {
         // the collector, so it is logged and left.
         if (accepted) {
           await push.process(region, feed).catch((error) => {
-            console.warn(JSON.stringify({ region, push: 'failed', error: String(error).slice(0, 160) }));
+            console.warn(
+              JSON.stringify({
+                region,
+                push: 'failed',
+                error: String(error).slice(0, 160),
+              }),
+            );
           });
         }
         console.log(
