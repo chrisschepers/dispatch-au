@@ -24,19 +24,19 @@ export function createServer(store) {
     try {
       const url = new URL(req.url, 'http://localhost');
       if (url.pathname === '/health') return send(200, { ok: true });
-      if (url.pathname === '/v1/status')
-        return send(200, {
-          sources: Object.keys(sources).map((region) => {
-            const f = store.feed(region);
-            return {
-              region,
-              ready: !!f,
-              stale: f?.stale ?? true,
-              fetchedAt: f?.fetchedAt ?? null,
-              error: f?.error ?? null,
-            };
-          }),
+      if (url.pathname === '/v1/status' || url.pathname === '/health/ready') {
+        const checkedAt = new Date().toISOString();
+        const health = Object.keys(sources).map((r) =>
+          store.health(r, Date.parse(checkedAt)),
+        );
+        const ok = health.every((s) => !s.stale);
+        res.setHeader('Cache-Control', 'no-store');
+        return send(url.pathname === '/health/ready' && !ok ? 503 : 200, {
+          ok,
+          checkedAt,
+          sources: health,
         });
+      }
       if (url.pathname !== '/v1/feed') return send(404, { error: 'Not found' });
       const region = url.searchParams.get('region') || 'vic';
       const hours = Number(url.searchParams.get('hours') || 24);

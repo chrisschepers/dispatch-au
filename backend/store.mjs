@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { canonicalVIC } from './regional.mjs';
 import { sources } from './feeds.mjs';
+import { sourceHealth } from './health.mjs';
 
 export class IncidentStore {
   constructor(path = ':memory:') {
@@ -9,6 +10,7 @@ export class IncidentStore {
       CREATE TABLE IF NOT EXISTS sources(region TEXT PRIMARY KEY, started_at TEXT NOT NULL, fetched_at TEXT, updated_at TEXT, stale INTEGER NOT NULL DEFAULT 1, error TEXT);
       CREATE TABLE IF NOT EXISTS incidents(id TEXT PRIMARY KEY, region TEXT NOT NULL, payload TEXT NOT NULL, first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, listed INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS incidents_region_seen ON incidents(region,last_seen);
+      CREATE TABLE IF NOT EXISTS source_attempts(region TEXT PRIMARY KEY, last_attempt TEXT NOT NULL, failures INTEGER NOT NULL DEFAULT 0, first_failure TEXT, error TEXT);
     `);
     this.repairLegacyACTText();
     this.mergeVICIdentities();
@@ -84,7 +86,7 @@ export class IncidentStore {
   ingest(region, feed) {
     const now = feed.receivedAt || feed.fetchedAt;
     if (feed.stale) {
-      this.fail(region, 'Source update delayed');
+      this.fail(region, 'Source update delayed', now);
       return false;
     }
     this.db.exec('BEGIN IMMEDIATE');
@@ -122,6 +124,7 @@ export class IncidentStore {
           'DELETE FROM incidents WHERE region=? AND listed=0 AND last_seen<?',
         )
         .run(region, cutoff);
+      this.recordAttempt(region, now);
       this.db.exec('COMMIT');
       return true;
     } catch (e) {
@@ -129,7 +132,32 @@ export class IncidentStore {
       throw e;
     }
   }
-  fail(region, message) {
+  recordAttempt(region, at, error = null) {
+    this.db
+      .prepare(`INSERT INTO source_attempts VALUES(?,?,?,?,?)
+      ON CONFLICT(region) DO UPDATE SET last_attempt=excluded.last_attempt,
+      failures=CASE WHEN excluded.error IS NULL THEN 0 ELSE source_attempts.failures+1 END,
+      first_failure=CASE WHEN excluded.error IS NULL THEN NULL ELSE COALESCE(source_attempts.first_failure,excluded.first_failure) END,
+      error=excluded.error`)
+      .run(region, at, error ? 1 : 0, error ? at : null, error);
+  }
+  health(region, now = Date.now()) {
+    if (!sources[region]) throw Error('Unknown region');
+    return sourceHealth(
+      region,
+      sources[region],
+      this.db.prepare('SELECT * FROM sources WHERE region=?').get(region),
+      this.db
+        .prepare('SELECT * FROM source_attempts WHERE region=?')
+        .get(region),
+      now,
+    );
+  }
+  fail(region, message, at = new Date().toISOString()) {
+    message = String(message)
+      .replace(/[\r\n\t]/g, ' ')
+      .slice(0, 300);
+    this.recordAttempt(region, at, message);
     this.db
       .prepare('UPDATE sources SET stale=1,error=? WHERE region=?')
       .run(message, region);
@@ -164,12 +192,7 @@ export class IncidentStore {
         historyHours: hours,
         stale: feeds.some((f) => !f || f.stale),
         staleAfterMs: 300000,
-        sources: Object.keys(sources).map((r, i) => ({
-          region: r,
-          ready: !!feeds[i],
-          stale: feeds[i]?.stale ?? true,
-          fetchedAt: feeds[i]?.fetchedAt ?? null,
-        })),
+        sources: Object.keys(sources).map((r) => this.health(r, now)),
       };
     }
     const config = sources[region];
@@ -224,6 +247,7 @@ export class IncidentStore {
         !!meta.stale || now - Date.parse(meta.fetched_at) > config.staleAfter,
       error: meta.error,
       staleAfterMs: config.staleAfter,
+      sources: [this.health(region, now)],
     };
   }
   close() {

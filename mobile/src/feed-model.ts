@@ -28,6 +28,12 @@ export type Feed = {
   historyHours: number;
   stale: boolean;
   staleAfterMs: number;
+  sources?: {
+    region: Exclude<Region, 'au'>;
+    ready: boolean;
+    stale: boolean;
+    fetchedAt: string | null;
+  }[];
 };
 export const regions = {
   sa: {
@@ -317,6 +323,7 @@ export function parseFeed(value: unknown, region: Region): Feed {
   };
   return {
     ...f,
+    sources: parseSourceStatus(f.sources),
     source: regions[region].source,
     adviceUrl: regions[region].adviceUrl,
     staleAfterMs: ['nsw', 'qld'].includes(region)
@@ -335,9 +342,71 @@ export function incidentTime(row: Incident) {
 export function isStale(feed: Feed, now = Date.now()) {
   return (
     feed.stale ||
+    !!feed.sources?.some((s) => sourceDelayed(s, now)) ||
     now - Date.parse(feed.fetchedAt) > feed.staleAfterMs ||
     Date.parse(feed.fetchedAt) > now + 120000
   );
+}
+function sourceLimit(region: Region) {
+  return ['nsw', 'qld'].includes(region)
+    ? 2400000
+    : region === 'sa'
+      ? 900000
+      : 300000;
+}
+function parseSourceStatus(value: unknown): Feed['sources'] {
+  if (value === undefined) return undefined; // Compatible with older collector responses.
+  if (!Array.isArray(value) || value.length > 5)
+    throw Error('Invalid source status');
+  const seen = new Set();
+  return value.map((s) => {
+    if (
+      !s ||
+      !['vic', 'act', 'nsw', 'qld', 'sa'].includes(s.region) ||
+      seen.has(s.region) ||
+      typeof s.ready !== 'boolean' ||
+      typeof s.stale !== 'boolean' ||
+      !(s.fetchedAt === null || date(s.fetchedAt))
+    )
+      throw Error('Invalid source status');
+    seen.add(s.region);
+    return {
+      region: s.region,
+      ready: s.ready,
+      stale: s.stale,
+      fetchedAt: s.fetchedAt,
+    };
+  });
+}
+function sourceDelayed(s: NonNullable<Feed['sources']>[number], now: number) {
+  const t = Date.parse(s.fetchedAt || '');
+  return (
+    !s.ready ||
+    s.stale ||
+    !Number.isFinite(t) ||
+    now - t > sourceLimit(s.region) ||
+    t > now + 120000
+  );
+}
+export function delayedSourceText(feed: Feed | null, now = Date.now()) {
+  if (!feed) return '';
+  const delayed = feed.sources?.filter((s) => sourceDelayed(s, now));
+  if (delayed?.length)
+    return delayed
+      .map((s) => {
+        const age = Math.max(
+          0,
+          Math.floor((now - Date.parse(s.fetchedAt || '')) / 60000),
+        );
+        const last = !s.fetchedAt
+          ? 'No successful update yet'
+          : `Last received ${age < 1 ? 'just now' : age < 60 ? `${age} min ago` : `${Math.floor(age / 60)}h ago`}`;
+        return `${regions[s.region].label}: updates delayed. ${last}.`;
+      })
+      .join('\n');
+  return isStale(feed, now)
+    ? 'Updates delayed. Showing the last received information.'
+    : '';
 }
 export function filterIncidents(
   rows: Incident[],

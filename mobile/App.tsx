@@ -32,6 +32,7 @@ import {
   regions,
   incidentTime,
   rowRegion,
+  delayedSourceText,
   type Region,
   type Incident,
   type Category,
@@ -392,7 +393,7 @@ function AppContent() {
                 <Text
                   style={[s.small, { color: c.secondary, marginBottom: 12 }]}
                 >
-                  CFS incident list · No map coordinates supplied
+                  CFS published incidents · Locations shown where supplied
                 </Text>
               )}
               <View
@@ -423,7 +424,9 @@ function AppContent() {
                   accessibilityLiveRegion="polite"
                   style={[s.small, { color: c.accent, marginBottom: 10 }]}
                 >
-                  Updates delayed · Check the official source for current advice
+                  {delayedSourceText(data.feed, data.now) ||
+                    'Could not refresh. Showing the last received information.'}
+                  {'\n'}Check the official source for current advice.
                 </Text>
               )}
               {warnings.length > 0 && (
@@ -603,7 +606,9 @@ function AppContent() {
                     { color: c.accent, backgroundColor: c.card },
                   ]}
                 >
-                  Updates unavailable · Check official advice
+                  {delayedSourceText(data.feed, data.now) ||
+                    'Could not refresh incidents.'}
+                  {'\n'}Check official advice.
                 </Text>
               )}
               {(category !== 'all' || responding) && (
