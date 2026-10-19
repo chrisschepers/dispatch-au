@@ -12,13 +12,13 @@ export const sources = {
     name: 'SA Country Fire Service',
     interval: 300000,
     staleAfter: 900000,
-    url: 'https://data.eso.sa.gov.au/prod/cfs/criimson/cfs_current_incidents.xml',
+    url: 'https://data.eso.sa.gov.au/feeds/prod/cap-au.xml',
     adviceUrl: 'https://www.cfs.sa.gov.au/incidents/',
     attribution:
       'The Government of South Australia, CFS Current Incidents, https://www.cfs.sa.gov.au/warnings-restrictions/warnings/rss-feeds/. CC BY 4.0.',
     licenseUrl: 'https://www.cfs.sa.gov.au/home/copyright/',
     coverageNote:
-      'CFS public incident list only, not CFSScan or all SA emergency calls. This feed has no coordinates: incidents are available in the state list, not nearby-radius views or map pins. See CFS for warnings.',
+      'CFS public CAP-AU incidents and warnings, not CFSScan or all SA emergency calls. Map pins use only published point locations; warning polygons remain areas. See CFS for official advice.',
   },
   nsw: {
     name: 'NSW Rural Fire Service',
