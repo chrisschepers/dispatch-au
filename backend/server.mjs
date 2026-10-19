@@ -33,6 +33,7 @@ export function createServer(store) {
               ready: !!f,
               stale: f?.stale ?? true,
               fetchedAt: f?.fetchedAt ?? null,
+              error: f?.error ?? null,
             };
           }),
         });
@@ -79,10 +80,20 @@ async function main() {
           }),
         );
       }
-    } catch {
+    } catch (error) {
       if (!stopping) {
-        store.fail(region, 'Could not update the official source');
-        console.warn(JSON.stringify({ region, error: 'Source unavailable' }));
+        const reason =
+          error instanceof Error
+            ? error.message.slice(0, 160)
+            : 'Source unavailable';
+        store.fail(region, reason);
+        console.warn(
+          JSON.stringify({
+            region,
+            error: reason,
+            at: new Date().toISOString(),
+          }),
+        );
       }
     } finally {
       if (!stopping) {

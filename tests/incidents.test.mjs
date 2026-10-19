@@ -66,14 +66,21 @@ void test('whitelists public fields, normalises numbers and never emits CAP cont
   assert.ok(!JSON.stringify(feed).includes('script'));
   assert.equal(feed.stale, false);
 });
-void test('rejects malformed and incomplete snapshots rather than replacing valid data', () => {
+void test('rejects malformed snapshots and bounds the source array', () => {
   assert.throws(() => normalizeFeed({ features: [] }));
   assert.throws(() =>
-    normalizeFeed({
-      ...collection([feature()]),
-      properties: { featureCount: 2 },
-    }),
+    normalizeFeed({ type: 'FeatureCollection', features: null }),
   );
+  assert.throws(() => normalizeFeed(collection(Array(15001).fill(feature()))));
+});
+void test('VicEmergency advisory featureCount does not suppress a fresh published array', () => {
+  const raw = collection([feature()]);
+  raw.properties.featureCount = 35;
+  const feed = normalizeFeed(raw, now);
+  assert.equal(feed.incidents.length, 1);
+  assert.equal(feed.stale, false);
+  raw.properties.lastUpdated = '2026-09-11T09:00:00Z';
+  assert.equal(normalizeFeed(raw, now).stale, true);
 });
 void test('keeps latest duplicate and separates warning/incident IDs and interstate sources', () => {
   const f = normalizeFeed(

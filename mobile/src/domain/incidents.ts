@@ -131,11 +131,10 @@ export function normalizeFeed(raw: unknown, now = new Date()): Feed {
     data.features.length > 15000
   )
     throw Error('Invalid source data');
-  if (
-    typeof data.properties?.featureCount === 'number' &&
-    data.properties.featureCount !== data.features.length
-  )
-    throw Error('Incomplete source snapshot');
+  // VicEmergency's featureCount can include more than the published array
+  // (19 Oct: 35 advertised, 12 supplied, also present on its official list).
+  // It is advisory metadata, not a transport checksum. JSON parsing, array
+  // bounds and the source/HTTP clocks still validate the actual snapshot.
   const unique = new Map<string, Incident>();
   for (const f of data.features) {
     if (!f || typeof f !== 'object') continue;
