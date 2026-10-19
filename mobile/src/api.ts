@@ -11,6 +11,7 @@
  * and the app keeps working as a live list and map.
  */
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import { parseFeed, type Feed, type Incident } from './feed-model';
 import { vensters } from './diensten';
 
@@ -304,7 +305,7 @@ export async function registreerGebruiker(opts: {
   const res = await fetch(`${BASE}/v1/devices/register`, {
     method: 'POST', headers: headers(),
     body: JSON.stringify({
-      deviceId: opts.deviceId, pushToken: opts.fcmToken,
+      deviceId: opts.deviceId, pushToken: opts.fcmToken, platform: Platform.OS,
       lat: opts.lat, lon: opts.lon,
       ...appVersieVelden(),
     }),

@@ -70,11 +70,11 @@ export default function InstellingenScreen() {
       '',
       '--- details for support, please keep ---',
       `User: ${userId ?? 'not registered yet'}`,
-      `App: Dispatch ${VERSIE}`,
+      `App: Emergencies Near Me ${VERSIE}`,
       `Device: ${Platform.OS} ${Platform.Version}`,
     ].join('\n');
     const url = `mailto:${CONTACT.email}`
-      + `?subject=${encodeURIComponent('Dispatch Australia')}`
+      + `?subject=${encodeURIComponent('Emergencies Near Me')}`
       + `&body=${encodeURIComponent(body)}`;
     try {
       await Linking.openURL(url);
@@ -395,7 +395,7 @@ export default function InstellingenScreen() {
         <View style={kaartStijl}>
           <Rij
             icoon="star" tegelKleur="#ffcc00"
-            titel="Rate Dispatch"
+            titel="Rate Emergencies Near Me"
             sub="A review helps others find the app"
             onPress={openRecensiePagina}
             rechts={<MaterialCommunityIcons name="open-in-new" size={18} color={C.textMuted} />}

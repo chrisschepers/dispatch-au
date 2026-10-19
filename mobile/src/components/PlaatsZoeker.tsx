@@ -31,7 +31,7 @@ export async function zoekPlaatsen(vraag: string): Promise<PlaatsKeuze[]> {
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(vraag)}`
     + '&countrycodes=au&format=json&addressdetails=1&limit=10';
   const res = await fetch(url, {
-    headers: { 'Accept-Language': 'en', 'User-Agent': 'DispatchAustralia/1.0' },
+    headers: { 'Accept-Language': 'en', 'User-Agent': 'EmergenciesNearMe/1.0' },
   });
   const data: Ruw[] = await res.json();
 

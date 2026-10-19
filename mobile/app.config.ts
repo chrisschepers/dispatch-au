@@ -22,7 +22,9 @@ const config: ExpoConfig = {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
     buildNumber: '7',
     supportsTablet: true,
-    infoPlist: { ITSAppUsesNonExemptEncryption: false },
+    // Home screen label; the App Store name is "Emergencies Near Me: Australia".
+    // `name` stays as is: it also names the native project and module.
+    infoPlist: { ITSAppUsesNonExemptEncryption: false, CFBundleDisplayName: 'Emergencies' },
   },
   android: {
     package: 'com.chrisschepers.dispatchau',
@@ -39,6 +41,8 @@ const config: ExpoConfig = {
     [
       'expo-notifications',
       {
+        // TestFlight and App Store builds talk to Apple's production push service.
+        mode: 'production',
         sounds: [
           './assets/sounds/zacht.wav', './assets/sounds/tik.wav', './assets/sounds/melodie.wav',
           './assets/sounds/pager.wav', './assets/sounds/bel.wav', './assets/sounds/dubbel.wav',
@@ -49,7 +53,7 @@ const config: ExpoConfig = {
       'expo-location',
       {
         locationWhenInUsePermission:
-          'Dispatch uses your location to show emergency incidents near you, only while you use the app.',
+          'Your location is used to show emergency incidents near you, only while you use the app.',
         isAndroidBackgroundLocationEnabled: false,
         isAndroidForegroundServiceEnabled: false,
       },

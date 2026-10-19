@@ -37,7 +37,7 @@ interface Stap {
 
 const STAPPEN: Stap[] = [
   {
-    titel: 'Welcome to Dispatch',
+    titel: 'Welcome to Emergencies Near Me',
     tekst: 'See what is happening around you right now: fires, rescues, storms, floods and other emergencies, straight from the official agencies.',
     knop: 'Get started',
     scherm: <SchermLijst />,
@@ -71,7 +71,7 @@ const STAPPEN: Stap[] = [
   },
   {
     titel: 'Ready to go',
-    tekst: 'New incidents appear automatically. Use the magnifier at the bottom to search all of Australia. Dispatch is not an emergency service: in an emergency call 000.',
+    tekst: 'New incidents appear automatically. Use the magnifier at the bottom to search all of Australia. This app is not an emergency service: in an emergency call 000.',
     knop: 'Start',
     scherm: <SchermLijst />,
   },

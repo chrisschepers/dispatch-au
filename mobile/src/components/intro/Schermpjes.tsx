@@ -197,7 +197,7 @@ function Push({ titel, tekst, tijd }: { titel: string; tekst: string; tijd: stri
       <Image source={require('../../../assets/icon.png')} style={s.pushIcoon} />
       <View style={{ flex: 1 }}>
         <View style={s.pushKopRij}>
-          <Text style={s.pushApp}>Dispatch</Text>
+          <Text style={s.pushApp}>Emergencies</Text>
           <Text style={s.pushTijd}>{tijd}</Text>
         </View>
         <Text style={s.pushTitel} numberOfLines={1}>{titel}</Text>

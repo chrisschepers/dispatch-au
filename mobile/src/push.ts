@@ -86,8 +86,12 @@ export async function registreerVoorPushMetInstellingen(inst: Instellingen): Pro
   const perm = await Notifications.requestPermissionsAsync();
   if (!perm.granted) { await meldInstallatie(); return false; }
 
+  // iOS: Apple's own device token; the backend sends straight to APNs, so no
+  // Expo account is needed. Elsewhere: an Expo token, once an EAS project is set.
   const projectId = (Constants.expoConfig?.extra as { eas?: { projectId?: string } })?.eas?.projectId;
-  const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  const token = Platform.OS === 'ios'
+    ? String((await Notifications.getDevicePushTokenAsync()).data)
+    : (await Notifications.getExpoPushTokenAsync({ projectId })).data;
   const plek = await bepaalPlek(inst);
 
   // Zie werkPushFilterBij: de noodplek midden in Nederland gaat nooit mee.

@@ -332,7 +332,7 @@ export default function DetailScreen() {
       <View style={[kaartStijl, styles.blok]}>
         <Text style={styles.blokKop}>Good to know</Text>
         <Text style={styles.blokTekst}>
-          Dispatch shows public information published by the emergency services. It is not an
+          This app shows public information published by the emergency services. It is not an
           emergency service and it can be delayed or incomplete. In an emergency, call 000. Always
           follow the advice of the agency.
         </Text>
