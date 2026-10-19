@@ -53,3 +53,11 @@ Three-tab simplification — 0.1.2 (3):
 - Android production bundle export passed; physical Android execution and the production Google Maps key remain outstanding. The Sites web preview was not changed in this native release.
 - Combined Apple Maps tiles and incident pins loaded across VIC/ACT/NSW/QLD. Settings visibly shows Dispatch Australia 0.1.4, all five source links and the persisted seven-day history preference.
 - Apple build d6e35532-df80-43b0-b3e4-be3b52e2d21d is VALID / IN_BETA_TESTING and is assigned to the existing owner group. Final Railway deployment 62624f54-0b7f-416a-9259-b7eb9691cbdb succeeded with all five sources fresh.
+
+
+## 19 October 2026 — regional feed health (0.1.5, build 6)
+
+- 45 regression/unit checks passed across the collector, external watchdog and mobile/domain models; root/mobile types, lint, domain drift, web build and both mobile JavaScript/Hermes exports passed.
+- Five actual official-source parsers and five production feeds passed, including populated SA coordinates. Independent production and source-contract workflows both ran successfully on GitHub. Failure/recovery tests cover startup without a snapshot, restart persistence, source-specific age limits, frozen/missing status, HTML masquerading as HTTP success, issue assignment/deduplication/recovery and failed notification delivery.
+- Signed device archive and IPA export succeeded. Strict signature verification passed. The bundle includes the new source-health messages and retains the native Expo provider-name fix. A standalone Release simulator cold launch on iPhone 17 Pro / iOS 26.5 loaded nationwide incidents and three official warnings; no new unhandled JavaScript/native exception was seen in startup logs. A snapshot is saved outside Git under `~/tmp/dispatch-watchdog-20261019/simulator-loaded.png`.
+- Android bundle export is verified, not a signed Play release or a physical Android test. The Sites preview is unchanged. The live backend watchdog requires no installed-app update; the additional native source messages/SA map require build 6.
