@@ -235,3 +235,60 @@ void test('unknown call times use the source update before collector startup tim
     recent.id,
   );
 });
+
+void test('one healthy region cannot hide an aged source in the nationwide view', async () => {
+  const { parseFeed, isStale, delayedSourceText } =
+    await import('../src/feed-model.ts');
+  const now = Date.parse('2026-10-19T19:00:00Z');
+  const t = new Date(now).toISOString();
+  const raw = {
+    region: 'au',
+    incidents: [],
+    warnings: [],
+    fetchedAt: t,
+    historyStartedAt: t,
+    historyHours: 24,
+    stale: false,
+    attribution: 'Sources',
+    licenseUrl: 'https://example.test',
+    coverageNote: null,
+    sources: [
+      {
+        region: 'vic',
+        ready: true,
+        stale: false,
+        fetchedAt: new Date(now - 360000).toISOString(),
+      },
+      {
+        region: 'nsw',
+        ready: true,
+        stale: false,
+        fetchedAt: new Date(now - 360000).toISOString(),
+      },
+    ],
+  };
+  const feed = parseFeed(raw, 'au');
+  assert.equal(isStale(feed, now), true);
+  const message = delayedSourceText(feed, now);
+  assert.match(message, /Victoria: updates delayed/);
+  assert.match(message, /6 min ago/);
+  assert.doesNotMatch(message, /New South Wales/);
+  assert.throws(() =>
+    parseFeed(
+      { ...raw, sources: [{ ...raw.sources[0], fetchedAt: 'bad-date' }] },
+      'au',
+    ),
+  );
+  assert.throws(() =>
+    parseFeed({ ...raw, sources: [raw.sources[0], raw.sources[0]] }, 'au'),
+  );
+  const fresh = parseFeed(
+    {
+      ...raw,
+      sources: [{ region: 'vic', ready: true, stale: false, fetchedAt: t }],
+    },
+    'au',
+  );
+  assert.equal(isStale(fresh, now), false);
+  assert.equal(delayedSourceText(fresh, now), '');
+});
