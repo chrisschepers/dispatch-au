@@ -323,6 +323,48 @@ export function SchermDetail() {
   );
 }
 
+/** Trial preview on the paywall: what you get today, during and after. */
+export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null; proefTekst: string }) {
+  const stappen = [
+    { icoon: 'lock-open-variant', kleur: C.success, kop: 'Today', tekst: 'Everything unlocked, free.' },
+    { icoon: 'bell-ring', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`, tekst: 'Alerts, the map and every incident near you.' },
+    { icoon: 'star', kleur: C.accent, kop: 'After that', tekst: prijsZin ? `${prijsZin}. Cancel any time.` : 'The yearly price. Cancel any time.' },
+  ];
+  return (
+    <View style={s.scherm}>
+      <View style={s.proefKop}>
+        <Image source={require('../../../assets/icon.png')} style={s.proefIcoon} />
+        <Text style={[s.schermTitel, { paddingTop: 10 }]}>Emergencies Near Me</Text>
+        <Text style={s.proefSub}>Free trial</Text>
+      </View>
+      <View style={s.tijdlijn}>
+        {stappen.map((st, i) => (
+          <View key={st.kop} style={s.tlRij}>
+            <View style={s.tlKolom}>
+              <View style={[s.tlBol, { backgroundColor: st.kleur }]}>
+                <MaterialCommunityIcons name={st.icoon as never} size={15} color="#fff" />
+              </View>
+              {i < stappen.length - 1 && <View style={s.tlLijn} />}
+            </View>
+            <View style={s.tlInhoud}>
+              <Text style={s.rijLabel}>{st.kop}</Text>
+              <Text style={s.tlTekst}>{st.tekst}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+      <View style={s.voordelen}>
+        {['Live incidents near you', 'Bushfire, flood and crash alerts', 'Every state in one app', 'No ads'].map((t) => (
+          <View key={t} style={s.voordeel}>
+            <MaterialCommunityIcons name="check-circle" size={17} color={C.success} />
+            <Text style={s.voordeelTekst}>{t}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 const s = StyleSheet.create({
   scherm: { width: SCHERM_B, height: SCHERM_H, backgroundColor: C.bg, overflow: 'hidden' },
   bovenRij: {
