@@ -22,8 +22,8 @@ no tracking across apps.</p>
 <ul>
 <li><b>A random device ID and an installation token</b>, created by the app, so
 your alert settings belong to your device.</li>
-<li><b>Your push token</b> (from Apple), only when you turn on alerts, so we can
-send them.</li>
+<li><b>Your push token</b> (from Apple or Google), only when you turn on
+alerts, so we can send them.</li>
 <li><b>Your alert location</b>: the place you chose, or your current location
 while the app is open. We use it only to decide which incidents are within
 your radius. The app never tracks your location in the background.</li>
@@ -37,7 +37,7 @@ not use it for advertising. Location is stored as a single point that is
 overwritten when it changes.</p>
 
 <h2>Subscriptions</h2>
-<p>Payments are handled by Apple. We use RevenueCat to check whether your
+<p>Payments are handled by Apple or Google. We use RevenueCat to check whether your
 subscription is active; it receives an anonymous app user ID and your
 purchase receipts, not your name or payment details. See
 <a href="https://www.revenuecat.com/privacy">RevenueCat's privacy policy</a>.</p>
@@ -50,7 +50,7 @@ emergency.</p>
 <h2>Deleting your data</h2>
 <p>Turning off alerts and Emergency Warnings anywhere stops all pushes; deleting the app removes the device
 ID from your phone, and its push token is removed from our server once Apple
-reports it invalid. To have everything removed right away, email us.</p>
+or Google reports it invalid. To have everything removed right away, email us.</p>
 
 <h2>Contact</h2>
 <p>Chris Schepers · <a href="mailto:chrisschepers22@gmail.com">chrisschepers22@gmail.com</a></p>
