@@ -22,6 +22,8 @@ import KaartScreen from './src/screens/KaartScreen';
 import DetailScreen from './src/screens/DetailScreen';
 import InstellingenScreen from './src/screens/InstellingenScreen';
 import IntroScreen from './src/screens/IntroScreen';
+import BetaalmuurScreen from './src/screens/BetaalmuurScreen';
+import { AbonnementProvider, useAbonnement } from './src/abonnement';
 import { C } from './src/theme';
 import { navRef, luisterNaarMeldingTikken } from './src/meldingOpenen';
 import { telOpening } from './src/recensie';
@@ -89,6 +91,7 @@ function Binnenkant() {
   // Statusbalk mee: donkere letters op licht, lichte op donker.
   const navThema = useMemo(() => navThemaVoor(C), [C]);
   const { inst, geladen, zet } = useInstellingen();
+  const abonnement = useAbonnement();
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -137,7 +140,11 @@ function Binnenkant() {
   // startscherm, de eerste keer is geen "keer openen".
   useEffect(() => { if (onboarded) telOpening(); }, [onboarded]);
 
-  if (!geladen || onboarded === null) {
+  // Zonder abonnement of proef is de app dicht (abonnement.tsx). Tijdens de
+  // eerste controle het laadscherm, niet even de muur: anders flitst hij bij
+  // elke start voor een betalende gebruiker.
+  const muurLaden = abonnement.vereist && abonnement.toegang === 'onbekend';
+  if (!geladen || onboarded === null || (onboarded && muurLaden)) {
     // Zichtbaar laadscherm in plaats van een leeg vlak: zo weet je bij het
     // testen meteen of React draait of dat de bundel al eerder sneuvelde.
     return (
@@ -149,6 +156,9 @@ function Binnenkant() {
   }
   if (!onboarded) {
     return <IntroScreen klaar={() => { AsyncStorage.setItem(ONBOARD_KEY, '1'); setOnboarded(true); }} />;
+  }
+  if (abonnement.vereist && abonnement.toegang !== 'actief') {
+    return <BetaalmuurScreen />;
   }
 
   return (
@@ -185,7 +195,9 @@ export default function App() {
       <InstellingenProvider>
         <ThemaProvider>
           <Systeembalk />
-          <Binnenkant />
+          <AbonnementProvider>
+            <Binnenkant />
+          </AbonnementProvider>
         </ThemaProvider>
       </InstellingenProvider>
     </SafeAreaProvider>

@@ -73,3 +73,18 @@ void test('readiness separates upstream health from process liveness without cac
     s.close();
   }
 });
+void test('the privacy policy is served as HTML for the App Store and the paywall', async () => {
+  const s = new IncidentStore();
+  const server = createServer(s);
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    const response = await fetch(base + '/privacy');
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-type'), /^text\/html/);
+    assert.match(await response.text(), /Privacy policy/);
+  } finally {
+    await new Promise((r) => server.close(r));
+    s.close();
+  }
+});

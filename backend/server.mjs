@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { fetchSource, sources } from './feeds.mjs';
 import { IncidentStore } from './store.mjs';
 import { PushService } from './push.mjs';
+import { PRIVACY_HTML } from './privacy.mjs';
 
 // Device routes for push alerts (docs/PUSH-API.md). Small JSON bodies only.
 function readJson(req, limit = 8192) {
@@ -88,6 +89,12 @@ export function createServer(store, push = null) {
       return send(405, { error: 'Method not allowed' });
     try {
       if (url.pathname === '/health') return send(200, { ok: true });
+      if (url.pathname === '/privacy') {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.writeHead(200);
+        return res.end(req.method === 'HEAD' ? undefined : PRIVACY_HTML);
+      }
       if (url.pathname === '/v1/status' || url.pathname === '/health/ready') {
         const checkedAt = new Date().toISOString();
         const health = Object.keys(sources).map((r) =>
