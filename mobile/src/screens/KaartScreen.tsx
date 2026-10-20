@@ -155,7 +155,7 @@ export default function KaartScreen() {
         : null;
       const snel = await bepaalPlekSnel(inst);
       if (!levend) return;
-      if (snel) setMijnPlek({ lat: snel.lat, lon: snel.lon });
+      if (snel && snel.bron !== 'buiten-au') setMijnPlek({ lat: snel.lat, lon: snel.lon });
       const eersteBeeld = vanMelding ?? (snel ? { lat: snel.lat, lon: snel.lon } : null);
       if (eersteBeeld) {
         setStart(eersteBeeld);
@@ -170,7 +170,7 @@ export default function KaartScreen() {
       // of alles opnieuw op te halen.
       const eigen = await bepaalPlek(inst);
       if (!levend) return;
-      setMijnPlek({ lat: eigen.lat, lon: eigen.lon });
+      setMijnPlek(eigen.bron === 'buiten-au' ? null : { lat: eigen.lat, lon: eigen.lon });
       const verschoven = !snel
         || Math.abs(eigen.lat - snel.lat) > 0.02
         || Math.abs(eigen.lon - snel.lon) > 0.03;

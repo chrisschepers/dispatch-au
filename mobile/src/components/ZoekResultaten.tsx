@@ -49,7 +49,7 @@ export function ZoekResultaten({ vraag, onKies, onderRuimte }: {
     // (emulatortest 27-09).
     bepaalPlekSnel(inst)
       .then((p) => p ?? bepaalPlek(inst))
-      .then((p) => { if (p && p.bron !== 'geen') setPlek(p); })
+      .then((p) => { if (p && p.bron !== 'geen' && p.bron !== 'buiten-au') setPlek(p); })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -43,6 +43,8 @@ export default function BuurtScreen() {
   const [rijen, setRijen] = useState<Rij[]>([]);
   const [laden, setLaden] = useState(true);
   const [plaatsLabel, setPlaatsLabel] = useState<string | null>(null);
+  // Outside Australia the list shows Melbourne; the header then says so.
+  const [buitenAu, setBuitenAu] = useState(false);
   const [meerBezig, setMeerBezig] = useState(false);
   const [eindeBereikt, setEindeBereikt] = useState(false);
   // Laatst gebruikte plek: de live-verbinding toetst daar nieuwe meldingen aan.
@@ -56,6 +58,7 @@ export default function BuurtScreen() {
       // dat het niet werkt"). De verse fix komt hieronder alsnog.
       const plek = (await bepaalPlekSnel(inst)) ?? (await bepaalPlek(inst));
       setPlaatsLabel(plek.bron === 'handmatig' ? inst.handPlaats : null);
+      setBuitenAu(plek.bron === 'buiten-au');
       plekRef.current = plek;
       // Geen tijdvenster in de lijst (keuze Chris 16-08): het venster is er om
       // de kaart behapbaar te houden, hier wil je gewoon terug kunnen scrollen.
@@ -191,7 +194,7 @@ export default function BuurtScreen() {
         <StatusPil status={liveStatus} />
       </View>
       <Text style={styles.subkop}>
-        {plaatsLabel ? `Around ${plaatsLabel}` : 'Around your current location'} · {straalLabel}
+        {plaatsLabel ? `Around ${plaatsLabel}` : buitenAu ? 'Outside Australia, showing Melbourne' : 'Around your current location'} · {straalLabel}
       </Text>
 
       {/* Vijf diensten passen niet meer naast elkaar op een telefoon, dus
