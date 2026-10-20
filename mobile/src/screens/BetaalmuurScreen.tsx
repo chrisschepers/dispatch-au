@@ -73,7 +73,10 @@ export default function BetaalmuurScreen() {
       titel={titel}
       tekst={
         <View>
+          {/* Title, length and price of the subscription, required in the
+              app itself (3.1.2(c), Alarmeringen P2000 25-07). */}
           {prijsZin ? <Text style={styles.prijs}>{prijsZin}</Text> : null}
+          {product ? <Text style={styles.abo}>Emergencies Near Me Premium · yearly subscription</Text> : null}
           <Text style={styles.tekst}>
             {verlopen
               ? 'Renew to see what is happening near you again.'
@@ -134,6 +137,7 @@ function Regel({ icoon, tekst }: { icoon: string; tekst: string }) {
 
 const styles = StyleSheet.create({
   prijs: { fontSize: 21, fontWeight: '700', color: INTRO.tekst, textAlign: 'center', marginTop: 8 },
+  abo: { fontSize: 13.5, color: INTRO.zacht, textAlign: 'center', marginTop: 2 },
   tekst: { fontSize: 15.5, lineHeight: 22, color: INTRO.zacht, textAlign: 'center', marginTop: 6 },
   regel: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12,

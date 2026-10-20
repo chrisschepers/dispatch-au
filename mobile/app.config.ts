@@ -21,7 +21,9 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
     buildNumber: '7',
-    supportsTablet: true,
+    // iPhone only: App Review tests on an iPad, and an iPhone-only app runs
+    // there in compatibility mode without needing an iPad layout or screenshots.
+    supportsTablet: false,
     // Home screen label; the App Store name is "Emergencies Near Me: Australia".
     // `name` stays as is: it also names the native project and module.
     infoPlist: { ITSAppUsesNonExemptEncryption: false, CFBundleDisplayName: 'Emergencies' },
