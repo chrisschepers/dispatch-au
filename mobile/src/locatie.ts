@@ -7,7 +7,24 @@
 import * as Location from 'expo-location';
 import type { Instellingen } from './instellingen';
 
-export interface Plek { lat: number; lon: number; bron: 'live' | 'handmatig' | 'laatst-bekend' | 'geen'; }
+export interface Plek { lat: number; lon: number; bron: 'live' | 'handmatig' | 'laatst-bekend' | 'geen' | 'buiten-au'; }
+
+/** Melbourne CBD: where the app looks when it has no Australian location. */
+export const MELBOURNE = { lat: -37.81, lon: 144.96 };
+
+/** Rough box around mainland Australia and Tasmania. */
+export function inAustralie(lat: number, lon: number): boolean {
+  return lat >= -44.5 && lat <= -9 && lon >= 112 && lon <= 154.5;
+}
+
+/**
+ * Outside Australia (a visitor abroad, an App Store reviewer) a 100 km radius
+ * finds nothing, so the app shows Melbourne instead and says so.
+ */
+function inAu(p: Plek): Plek {
+  if (p.bron === 'handmatig' || p.bron === 'geen' || inAustralie(p.lat, p.lon)) return p;
+  return { ...MELBOURNE, bron: 'buiten-au' };
+}
 
 let laatstBekend: { lat: number; lon: number } | null = null;
 
@@ -28,7 +45,7 @@ export async function bepaalPlekSnel(inst: Instellingen): Promise<Plek | null> {
   if (!inst.volgLocatie && inst.handLat != null && inst.handLon != null) {
     return { lat: inst.handLat, lon: inst.handLon, bron: 'handmatig' };
   }
-  if (laatstBekend) return { ...laatstBekend, bron: 'laatst-bekend' };
+  if (laatstBekend) return inAu({ ...laatstBekend, bron: 'laatst-bekend' });
   try {
     const { status } = await Location.getForegroundPermissionsAsync();
     if (status === 'granted') {
@@ -36,7 +53,7 @@ export async function bepaalPlekSnel(inst: Instellingen): Promise<Plek | null> {
       const cache = await Location.getLastKnownPositionAsync({ maxAge: 15 * 60_000 });
       if (cache) {
         laatstBekend = { lat: cache.coords.latitude, lon: cache.coords.longitude };
-        return { ...laatstBekend, bron: 'laatst-bekend' };
+        return inAu({ ...laatstBekend, bron: 'laatst-bekend' });
       }
     }
   } catch { /* niets bekend: de aanroeper toont zolang iets anders */ }
@@ -65,17 +82,17 @@ export async function bepaalPlek(inst: Instellingen): Promise<Plek> {
       ]);
       if (fix) {
         laatstBekend = { lat: fix.coords.latitude, lon: fix.coords.longitude };
-        return { ...laatstBekend, bron: 'live' };
+        return inAu({ ...laatstBekend, bron: 'live' });
       }
     }
   } catch { /* GPS-hapering → val door naar laatst bekend */ }
-  if (laatstBekend) return { ...laatstBekend, bron: 'laatst-bekend' };
+  if (laatstBekend) return inAu({ ...laatstBekend, bron: 'laatst-bekend' });
   const cache = await Location.getLastKnownPositionAsync({ maxAge: 60 * 60_000 }).catch(() => null);
   if (cache) {
     laatstBekend = { lat: cache.coords.latitude, lon: cache.coords.longitude };
-    return { ...laatstBekend, bron: 'laatst-bekend' };
+    return inAu({ ...laatstBekend, bron: 'laatst-bekend' });
   }
-  return { lat: -37.81, lon: 144.96, bron: 'geen' };  // Melbourne until we know better
+  return { ...MELBOURNE, bron: 'geen' };  // Melbourne until we know better
 }
 
 export async function vraagLocatiePermissie(): Promise<boolean> {

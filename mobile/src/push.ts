@@ -95,7 +95,7 @@ export async function registreerVoorPushMetInstellingen(inst: Instellingen): Pro
   const plek = await bepaalPlek(inst);
 
   // Zie werkPushFilterBij: de noodplek midden in Nederland gaat nooit mee.
-  const plekVelden = plek.bron === 'geen' ? {} : { lat: plek.lat, lon: plek.lon };
+  const plekVelden = plek.bron === 'geen' || plek.bron === 'buiten-au' ? {} : { lat: plek.lat, lon: plek.lon };
 
   const user = await registreerGebruiker({
     deviceId: await deviceId(), fcmToken: token, ...plekVelden,
@@ -163,7 +163,7 @@ export async function werkPushFilterBij(inst: Instellingen): Promise<void> {
   // of de app een fix miste (gevonden 18-08). De server laat de opgeslagen
   // plek staan als lat/lon ontbreken, dus de rest van het filter gaat gewoon
   // door; juist bij het UITZETTEN van meldingen is dat wat telt.
-  const plekVelden = !plek || plek.bron === 'geen' ? {} : { lat: plek.lat, lon: plek.lon };
+  const plekVelden = !plek || plek.bron === 'geen' || plek.bron === 'buiten-au' ? {} : { lat: plek.lat, lon: plek.lon };
   await zetPushFilter(userId, {
     ...plekVelden,
     radius: inst.straalKm,

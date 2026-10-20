@@ -96,7 +96,7 @@ export default function DetailScreen() {
   useEffect(() => () => { setTimeout(() => { void misschienVragen(); }, 700); }, []);
 
   useEffect(() => {
-    bepaalPlekSnel(inst).then((p) => { if (p && p.bron !== 'geen') setMijnPlek(p); }).catch(() => {});
+    bepaalPlekSnel(inst).then((p) => { if (p && p.bron !== 'geen' && p.bron !== 'buiten-au') setMijnPlek(p); }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
