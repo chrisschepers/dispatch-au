@@ -13,8 +13,8 @@ import { ENTITLEMENT } from './abonnementRegels';
  */
 export const RC_SLEUTEL = Platform.select({
   ios: 'appl_oYZfSGyMstyaSVaRZzGKTpIIrhp',
-  // Android follows once the app is in Play.
-  android: '',
+  // Google Play app in the same RevenueCat project.
+  android: 'goog_ErnPHiWYIaqXdXcqmvtYRcKmHgy',
   default: '',
 }) as string;
 
