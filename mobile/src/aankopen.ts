@@ -12,7 +12,7 @@ import { ENTITLEMENT } from './abonnementRegels';
  * app; the secret key stays at RevenueCat.
  */
 export const RC_SLEUTEL = Platform.select({
-  ios: '',
+  ios: 'appl_oYZfSGyMstyaSVaRZzGKTpIIrhp',
   // Android follows once the app is in Play.
   android: '',
   default: '',
