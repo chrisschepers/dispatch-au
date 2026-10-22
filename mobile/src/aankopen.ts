@@ -13,8 +13,9 @@ import { ENTITLEMENT } from './abonnementRegels';
  */
 export const RC_SLEUTEL = Platform.select({
   ios: 'appl_oYZfSGyMstyaSVaRZzGKTpIIrhp',
-  // Google Play app in the same RevenueCat project.
-  android: 'goog_ErnPHiWYIaqXdXcqmvtYRcKmHgy',
+  // Google Play key (goog_ErnPHiWYIaqXdXcqmvtYRcKmHgy) goes in after the
+  // closed test: testers need the app without a paywall.
+  android: '',
   default: '',
 }) as string;
 
