@@ -12,8 +12,9 @@ import { ENTITLEMENT } from './abonnementRegels';
  * app; the secret key stays at RevenueCat.
  */
 export const RC_SLEUTEL = Platform.select({
-  ios: '',
-  // Google Play app in the same RevenueCat project (goog_…).
+  ios: 'appl_oYZfSGyMstyaSVaRZzGKTpIIrhp',
+  // Google Play key (goog_ErnPHiWYIaqXdXcqmvtYRcKmHgy) goes in after the
+  // closed test: testers need the app without a paywall.
   android: '',
   default: '',
 }) as string;
