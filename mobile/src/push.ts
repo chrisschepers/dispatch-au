@@ -11,7 +11,6 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registreerGebruiker, zetPushFilter, zetInstallToken } from './api';
-import Constants from 'expo-constants';
 import { bepaalPlek, bepaalPlekSnel } from './locatie';
 import type { Instellingen } from './instellingen';
 import { GELUIDEN, geldigGeluid, kanaalVoor } from './geluiden';
@@ -50,7 +49,8 @@ export function zetNotificatieGedrag(): void {
     for (const g of GELUIDEN) {
       Notifications.setNotificationChannelAsync(kanaalVoor(g.sleutel), {
         name: `Alerts (${g.naam.toLowerCase()})`,
-        importance: Notifications.AndroidImportance.DEFAULT,
+        // HIGH: shown as a heads-up banner, as people expect from an emergency alert.
+        importance: Notifications.AndroidImportance.HIGH,
         sound: `${g.sleutel}.wav`,
       }).catch(() => {});
     }
@@ -86,12 +86,9 @@ export async function registreerVoorPushMetInstellingen(inst: Instellingen): Pro
   const perm = await Notifications.requestPermissionsAsync();
   if (!perm.granted) { await meldInstallatie(); return false; }
 
-  // iOS: Apple's own device token; the backend sends straight to APNs, so no
-  // Expo account is needed. Elsewhere: an Expo token, once an EAS project is set.
-  const projectId = (Constants.expoConfig?.extra as { eas?: { projectId?: string } })?.eas?.projectId;
-  const token = Platform.OS === 'ios'
-    ? String((await Notifications.getDevicePushTokenAsync()).data)
-    : (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  // The device's own token: APNs on iOS, FCM on Android. The backend sends
+  // straight to Apple and Google, so no Expo account is involved.
+  const token = String((await Notifications.getDevicePushTokenAsync()).data);
   const plek = await bepaalPlek(inst);
 
   // Zie werkPushFilterBij: de noodplek midden in Nederland gaat nooit mee.

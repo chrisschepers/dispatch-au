@@ -235,6 +235,128 @@ async function sendExpo(items) {
   return dead;
 }
 
+// ── FCM (Android) ───────────────────────────────────────────────────────────
+
+/** Service account of the Firebase project, as JSON or base64 JSON. */
+function fcmAccount(env) {
+  const raw = env.FCM_SERVICE_ACCOUNT;
+  if (!raw) return null;
+  try {
+    return JSON.parse(
+      raw.trim().startsWith('{')
+        ? raw
+        : Buffer.from(raw, 'base64').toString('utf8'),
+    );
+  } catch {
+    return null;
+  }
+}
+
+export function fcmConfigured(env = process.env) {
+  return Boolean(fcmAccount(env)?.private_key);
+}
+
+let fcmAuth = { token: null, at: 0 };
+/** OAuth token through the service account (JWT bearer flow), kept 50 min. */
+async function fcmAccessToken(sa) {
+  if (fcmAuth.token && Date.now() - fcmAuth.at < 50 * 60_000)
+    return fcmAuth.token;
+  const now = Math.floor(Date.now() / 1000);
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const head = `${b64({ alg: 'RS256', typ: 'JWT' })}.${b64({
+    iss: sa.client_email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  })}`;
+  const sig = crypto
+    .sign('sha256', Buffer.from(head), sa.private_key)
+    .toString('base64url');
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: `${head}.${sig}`,
+    }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const j = await res.json();
+  if (!j.access_token) throw new Error('FCM: no access token');
+  fcmAuth = { token: j.access_token, at: Date.now() };
+  return fcmAuth.token;
+}
+
+/** Native FCM tokens from the Android app; returns tokens Google says are gone. */
+async function sendFcm(items, env) {
+  const sa = fcmAccount(env);
+  const dead = [];
+  let auth;
+  try {
+    auth = await fcmAccessToken(sa);
+  } catch (error) {
+    console.warn(
+      JSON.stringify({ push: 'fcm', error: String(error).slice(0, 120) }),
+    );
+    return dead;
+  }
+  const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
+  for (let i = 0; i < items.length; i += 20) {
+    await Promise.all(
+      items.slice(i, i + 20).map(async ({ token, msg, sound }) => {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              authorization: `Bearer ${auth}`,
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: {
+                token,
+                notification: { title: msg.title, body: msg.body },
+                // FCM data values must be strings.
+                data: Object.fromEntries(
+                  Object.entries(msg.data).map(([k, v]) => [k, String(v)]),
+                ),
+                android: {
+                  priority: 'HIGH',
+                  notification: {
+                    channel_id: `dispatch_snd_${sound || 'zacht'}`,
+                    sound: sound || 'zacht',
+                  },
+                },
+              },
+            }),
+            signal: AbortSignal.timeout(15_000),
+          });
+          if (res.ok) return;
+          const body = await res.text();
+          if (
+            res.status === 404 ||
+            /UNREGISTERED|registration-token-not-registered/.test(body)
+          )
+            dead.push(token);
+          else
+            console.warn(
+              JSON.stringify({
+                push: 'fcm',
+                status: res.status,
+                body: body.slice(0, 120),
+              }),
+            );
+        } catch (error) {
+          console.warn(
+            JSON.stringify({ push: 'fcm', error: String(error).slice(0, 120) }),
+          );
+        }
+      }),
+    );
+  }
+  return dead;
+}
+
 // ── Store ───────────────────────────────────────────────────────────────────
 
 const DEFAULT_FILTER = {
@@ -469,7 +591,24 @@ export class PushService {
     if (this.sendOverride) return this.sendOverride(items);
     const expo = items.filter((i) => i.token.startsWith('ExponentPushToken'));
     const apns = items.filter((i) => /^[0-9a-f]{64,200}$/i.test(i.token));
+    // Everything else is a native FCM token from the Android app.
+    const fcm = items.filter(
+      (i) =>
+        !i.token.startsWith('ExponentPushToken') &&
+        !/^[0-9a-f]{64,200}$/i.test(i.token),
+    );
     const dead = [];
+    if (fcm.length) {
+      if (fcmConfigured(this.env)) dead.push(...(await sendFcm(fcm, this.env)));
+      else
+        console.warn(
+          JSON.stringify({
+            push: 'fcm',
+            skipped: fcm.length,
+            reason: 'FCM_SERVICE_ACCOUNT not configured',
+          }),
+        );
+    }
     if (expo.length) dead.push(...(await sendExpo(expo)));
     if (apns.length) {
       if (apnsConfigured(this.env))

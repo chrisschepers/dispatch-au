@@ -16,19 +16,21 @@
  * to cancel, must be able to do that here, even when the store returns nothing.
  */
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, Alert, Linking, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAbonnement } from '../abonnement';
 import { periodeTekst, perPeriode } from '../abonnementRegels';
 import { Drukbaar } from '../components/Drukbaar';
 import { IntroSchil, INTRO } from '../components/intro/IntroSchil';
 import { SchermProef } from '../components/intro/Schermpjes';
-import { API_BASE } from '../api';
 import { toonRevenueCatPaywall } from '../aankopen';
 
-/** Apple's standard licence agreement; App Store Connect uses it too. */
-const VOORWAARDEN = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
-const PRIVACY = `${API_BASE}/privacy`;
+const SITE = 'https://emergenciesnearme.online';
+/** iOS: Apple's standard licence agreement, which App Store Connect uses too. */
+const VOORWAARDEN = Platform.OS === 'ios'
+  ? 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'
+  : `${SITE}/terms`;
+const PRIVACY = `${SITE}/privacy`;
 
 export default function BetaalmuurScreen() {
   const {
