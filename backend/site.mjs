@@ -382,6 +382,7 @@ function terms() {
   const body = `<section class="prose"><h1 style="font-size:40px;letter-spacing:-.03em;margin:20px 0 8px">Terms of Use</h1>
 <p class="m" style="color:var(--muted)">Last updated 20 October 2026</p>
 ${parts.map(([h, p]) => `<h2>${esc(h)}</h2><p>${esc(p)}</p>`).join('')}
+<h2>App Store</h2><p>For purchases through the App Store, Apple's <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Standard End User License Agreement</a> also applies.</p>
 <h2>Contact</h2><p><a href="mailto:${CONTACT}">${CONTACT}</a></p></section>`;
   return page({
     path: '/terms',
