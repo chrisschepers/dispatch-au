@@ -1,9 +1,10 @@
 /**
  * The store behind the yearly subscription, in one shape for abonnement.tsx.
- * Copied from 112 Meldingen; for now only the App Store via RevenueCat.
+ * Copied from 112 Meldingen. Both platforms go through RevenueCat: the App
+ * Store on iOS, Google Play on Android, one entitlement for both.
  *
- * `kiesWinkel()` returns null when this platform has no working store (Android
- * for now, a build without the native module, no RevenueCat key). The
+ * `kiesWinkel()` returns null when this platform has no working store (a
+ * build without the native module, no RevenueCat key for it). The
  * provider then leaves the app open: a payment module that fails to load must
  * never lock everyone out.
  */
@@ -28,9 +29,9 @@ export type Gebeurtenis =
   | { soort: 'fout'; melding: string };
 
 export interface Winkel {
-  /** For sentences like "through the App Store". */
+  /** For sentences like "through the App Store" / "through Google Play". */
   naam: string;
-  /** "Apple Account": where the subscription lives. */
+  /** "Apple Account" / "Google Account": where the subscription lives. */
   account: string;
   beheerUrl: string;
   /** Current state; throws when the store cannot be reached. */
@@ -49,7 +50,7 @@ function code(e: unknown): string {
   return String((e as { code?: string | number })?.code ?? '');
 }
 
-function appStoreWinkel(): Winkel | null {
+function revenueCatWinkel(android: boolean): Winkel | null {
   if (!kopenMogelijk()) return null;
   const rc = laadPurchases();
   if (!rc) return null;
@@ -64,9 +65,11 @@ function appStoreWinkel(): Winkel | null {
   let pakket: Pakket | null = null;
 
   return {
-    naam: 'the App Store',
-    account: 'Apple Account',
-    beheerUrl: 'https://apps.apple.com/account/subscriptions',
+    naam: android ? 'Google Play' : 'the App Store',
+    account: android ? 'Google Account' : 'Apple Account',
+    beheerUrl: android
+      ? 'https://play.google.com/store/account/subscriptions?package=com.chrisschepers.dispatchau'
+      : 'https://apps.apple.com/account/subscriptions',
     async toestand() {
       await startAankopen();
       return uit(await P.getCustomerInfo());
@@ -77,6 +80,13 @@ function appStoreWinkel(): Winkel | null {
       pakket = aanbod.current?.annual ?? null;
       if (!pakket) return null;
       const sp = pakket.product;
+      if (android) {
+        // Play only offers the trial to people who are eligible, so the
+        // free phase of the default offer is the answer by itself.
+        const iso = (sp as { defaultOption?: { freePhase?: { billingPeriod?: { iso8601?: string } } | null } | null })
+          .defaultOption?.freePhase?.billingPeriod?.iso8601 ?? null;
+        return { prijs: sp.priceString, periode: sp.subscriptionPeriod ?? 'P1Y', proefPeriode: iso };
+      }
       let geschikt = false;
       if (sp.introPrice) {
         try {
@@ -124,17 +134,18 @@ function appStoreWinkel(): Winkel | null {
       const c = code(e);
       const E = rc.PURCHASES_ERROR_CODE;
       if (c === 'tijd' || c === E.NETWORK_ERROR || c === E.STORE_PROBLEM_ERROR) {
-        return 'The App Store cannot be reached right now. Check your connection and try again.';
+        return `${android ? 'Google Play' : 'The App Store'} cannot be reached right now. Check your connection and try again.`;
       }
       if (c === 'niet_gevonden') {
         return 'The subscription is not available right now. Please try again later.';
       }
-      return 'Something went wrong with the App Store. Please try again.';
+      return `Something went wrong with ${android ? 'Google Play' : 'the App Store'}. Please try again.`;
     },
   };
 }
 
 export function kiesWinkel(): Winkel | null {
-  if (Platform.OS === 'ios') return appStoreWinkel();
+  if (Platform.OS === 'ios') return revenueCatWinkel(false);
+  if (Platform.OS === 'android') return revenueCatWinkel(true);
   return null;
 }

@@ -15,6 +15,7 @@ void test('the website serves its pages, sitemap and assets next to the API', as
       '/incidents/vic',
       '/support',
       '/privacy',
+      '/terms',
     ]) {
       const response = await fetch(base + path);
       assert.equal(response.status, 200, path);

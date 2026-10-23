@@ -150,3 +150,52 @@ void test('filter changes need the installation token', () => {
     messageFor(row(), { lat: -37.81, lon: 144.96 }).body.includes('km'),
   );
 });
+
+void test('Android FCM tokens go to FCM v1 with the sound channel, and unregistered tokens are dropped', async () => {
+  const { generateKeyPairSync } = await import('node:crypto');
+  const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const sa = {
+    project_id: 'demo-project',
+    client_email: 'push@demo-project.iam.gserviceaccount.com',
+    private_key: privateKey.export({ type: 'pkcs8', format: 'pem' }),
+  };
+  const push = new PushService(new DatabaseSync(':memory:'), {
+    env: { FCM_SERVICE_ACCOUNT: JSON.stringify(sa) },
+  });
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const href =
+      typeof url === 'string' ? url : url instanceof URL ? url.href : url.url;
+    calls.push({ url: href, body: init?.body });
+    if (href.includes('oauth2'))
+      return new Response(JSON.stringify({ access_token: 'tok' }));
+    const token = JSON.parse(init.body).message.token;
+    return token === 'gone:APA91'
+      ? new Response(
+          '{"error":{"status":"NOT_FOUND","details":[{"errorCode":"UNREGISTERED"}]}}',
+          { status: 404 },
+        )
+      : new Response('{"name":"ok"}');
+  };
+  try {
+    const msg = {
+      title: 'Grass fire in Kilmore',
+      body: 'Lancefield Rd',
+      data: { incidentId: 'vic:1' },
+    };
+    const dead = await push.send([
+      { token: 'live:APA91', msg, sound: 'pager' },
+      { token: 'gone:APA91', msg, sound: null },
+    ]);
+    assert.deepEqual(dead, ['gone:APA91']);
+    const sent = calls.filter((c) => c.url.includes('fcm.googleapis.com'));
+    assert.equal(sent.length, 2);
+    assert.match(sent[0].url, /projects\/demo-project\/messages:send/);
+    const m = JSON.parse(sent[0].body).message;
+    assert.equal(m.android.notification.channel_id, 'dispatch_snd_pager');
+    assert.equal(m.data.incidentId, 'vic:1');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

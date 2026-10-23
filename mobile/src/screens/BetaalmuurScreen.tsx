@@ -16,19 +16,21 @@
  * to cancel, must be able to do that here, even when the store returns nothing.
  */
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, Alert, Linking, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAbonnement } from '../abonnement';
 import { periodeTekst, perPeriode } from '../abonnementRegels';
 import { Drukbaar } from '../components/Drukbaar';
 import { IntroSchil, INTRO } from '../components/intro/IntroSchil';
 import { SchermProef } from '../components/intro/Schermpjes';
-import { API_BASE } from '../api';
 import { toonRevenueCatPaywall } from '../aankopen';
 
-/** Apple's standard licence agreement; App Store Connect uses it too. */
-const VOORWAARDEN = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
-const PRIVACY = `${API_BASE}/privacy`;
+const SITE = 'https://emergenciesnearme.online';
+/** iOS: Apple's standard licence agreement, which App Store Connect uses too. */
+const VOORWAARDEN = Platform.OS === 'ios'
+  ? 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'
+  : `${SITE}/terms`;
+const PRIVACY = `${SITE}/privacy`;
 
 export default function BetaalmuurScreen() {
   const {
@@ -73,7 +75,10 @@ export default function BetaalmuurScreen() {
       titel={titel}
       tekst={
         <View>
+          {/* Title, length and price of the subscription, required in the
+              app itself (3.1.2(c), Alarmeringen P2000 25-07). */}
           {prijsZin ? <Text style={styles.prijs}>{prijsZin}</Text> : null}
+          {product ? <Text style={styles.abo}>Emergencies Near Me Premium · yearly subscription</Text> : null}
           <Text style={styles.tekst}>
             {verlopen
               ? 'Renew to see what is happening near you again.'
@@ -134,6 +139,7 @@ function Regel({ icoon, tekst }: { icoon: string; tekst: string }) {
 
 const styles = StyleSheet.create({
   prijs: { fontSize: 21, fontWeight: '700', color: INTRO.tekst, textAlign: 'center', marginTop: 8 },
+  abo: { fontSize: 13.5, color: INTRO.zacht, textAlign: 'center', marginTop: 2 },
   tekst: { fontSize: 15.5, lineHeight: 22, color: INTRO.zacht, textAlign: 'center', marginTop: 6 },
   regel: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12,

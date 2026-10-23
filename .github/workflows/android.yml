@@ -1,0 +1,104 @@
+name: Android
+
+# Android build of Emergencies Near Me, on a Linux runner (no Mac, no EAS),
+# the same way as the 112 Meldingen workflow. Result: a signed .aab as an
+# artifact and, once the Play service account secret exists, an upload to the
+# internal test track. Promoting to the closed test or production is done by
+# hand in the Play Console, never here.
+#
+# Secrets:
+#   DISPATCH_KEYSTORE_B64, DISPATCH_KEYSTORE_PASSWORD, DISPATCH_KEY_ALIAS,
+#   DISPATCH_KEY_PASSWORD   upload key (docs/ANDROID.md)
+#   GOOGLE_MAPS_ANDROID_API_KEY   Maps SDK for Android, restricted to the app
+#   PLAY_SERVICE_ACCOUNT_JSON     optional: upload to the internal track
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'android-v*'
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    env:
+      HAS_PLAY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Push only works with the Firebase config; without it the app still
+      # builds, so a missing file is a warning, not a failure.
+      - name: Firebase config
+        run: |
+          if [ -f google-services.json ]; then
+            echo "GOOGLE_SERVICES_FILE=./google-services.json" >> "$GITHUB_ENV"
+          else
+            echo "::warning::mobile/google-services.json is missing: this build has no push alerts."
+          fi
+
+      - name: Generate the native project (expo prebuild)
+        run: npx expo prebuild -p android --no-install
+        env:
+          GOOGLE_MAPS_ANDROID_API_KEY: ${{ secrets.GOOGLE_MAPS_ANDROID_API_KEY }}
+
+      # Version code = run number: always increasing, never edited by hand.
+      - name: Set version code
+        run: |
+          sed -i "s/versionCode [0-9]*/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          grep -n "versionCode\|versionName" android/app/build.gradle | head -3
+
+      - name: Unpack the upload key
+        run: |
+          echo "${{ secrets.DISPATCH_KEYSTORE_B64 }}" | base64 -d > android/app/release.keystore
+          test -s android/app/release.keystore
+
+      - name: Build the bundle
+        run: ./gradlew :app:bundleRelease --no-daemon
+        working-directory: mobile/android
+        env:
+          DISPATCH_KEYSTORE_PASSWORD: ${{ secrets.DISPATCH_KEYSTORE_PASSWORD }}
+          DISPATCH_KEY_ALIAS: ${{ secrets.DISPATCH_KEY_ALIAS }}
+          DISPATCH_KEY_PASSWORD: ${{ secrets.DISPATCH_KEY_PASSWORD }}
+
+      # Play refuses a debug-signed bundle; fail here with a clear message.
+      - name: Check the signature
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          keytool -printcert -jarfile "$AAB" | grep -q "CN=Android Debug" && { echo "::error::Bundle is debug-signed: check the DISPATCH_* secrets."; exit 1; } || true
+
+      - name: Keep the bundle
+        # A full Actions storage must never block the Play upload below.
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: emergencies-android-${{ github.run_number }}
+          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 1
+
+      # The very first bundle of a new app has to be uploaded by hand in the
+      # Play Console; after that this step takes over.
+      - name: Upload to the internal track
+        if: env.HAS_PLAY == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.chrisschepers.dispatchau
+          releaseFiles: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed

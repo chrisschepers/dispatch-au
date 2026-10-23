@@ -45,14 +45,14 @@ const STAPPEN: Stap[] = [
   {
     titel: 'Location',
     tekst: 'Allow your location to see incidents nearby. Prefer a fixed suburb? You can set one later in Settings.',
-    knop: 'Allow location',
+    knop: 'Continue',
     scherm: <SchermStraal />,
     actie: 'locatie',
   },
   {
     titel: 'Alerts',
     tekst: 'Get an alert as soon as something happens inside your radius. You choose which services and how far.',
-    knop: 'Allow alerts',
+    knop: 'Continue',
     scherm: <SchermVergrendel />,
     donker: true,
     actie: 'meldingen',
@@ -112,7 +112,11 @@ export default function IntroScreen({ klaar }: Props) {
       knop={huidig.knop}
       onKnop={verder}
       bezig={bezig}
-      onTerug={stap > 0 ? () => setStap(stap - 1) : undefined}
+      // No way back on a permission step: Apple rejects a screen before the
+      // system prompt that lets you leave without seeing it (5.1.1(iv), UV Sun
+      // Index 02-07). The button always leads to the prompt, labelled
+      // "Continue" rather than "Allow", which Apple also flags.
+      onTerug={stap > 0 && !huidig.actie ? () => setStap(stap - 1) : undefined}
     />
   );
 }

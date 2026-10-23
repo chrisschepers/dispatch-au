@@ -163,7 +163,7 @@ function page({ path, title, description, body, attribution = '' }) {
 <nav><a href="/incidents">Incidents</a><a href="/support">Support</a></nav></header>
 ${body}
 <footer>
-<a href="/incidents">Incidents</a><a href="/support">Support</a><a href="/privacy">Privacy</a>
+<a href="/incidents">Incidents</a><a href="/support">Support</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>
 <p>Emergencies Near Me is an independent app and is not affiliated with any government or emergency service. In an emergency, call <b>000</b>. Always follow the advice of official emergency services.</p>
 ${attribution ? `<div class="attr">${esc(attribution)}</div>` : ''}
 </footer></div></body></html>`;
@@ -356,6 +356,42 @@ ${faq.map(([q, a]) => `<h2>${esc(q)}</h2><p>${esc(a)}</p>`).join('')}
   });
 }
 
+function terms() {
+  const parts = [
+    [
+      'The app',
+      'Emergencies Near Me shows incident information published by Australian state emergency services. It is an independent app, not an official warning service, and is not affiliated with any government or emergency service. Information can be delayed, incomplete or wrong. In an emergency call 000, and always follow the advice of official emergency services.',
+    ],
+    [
+      'Subscription',
+      'Emergencies Near Me Premium is a yearly auto-renewable subscription, sold through the App Store or Google Play. Eligible new subscribers get a free trial; after the trial the yearly price shown in the store is charged, unless you cancel at least 24 hours before the trial ends. The subscription renews every year until you cancel it in your Apple or Google account settings. Refunds follow the rules of the store you bought it in.',
+    ],
+    [
+      'Your use',
+      'Use the app for personal, non-commercial purposes. Do not copy, resell or scrape the app or its data, and do not use it in a way that harms the service or other people.',
+    ],
+    [
+      'Liability',
+      'The app is provided as is. To the extent the law allows, we are not liable for loss or damage caused by relying on the information in the app, by delayed or missed alerts, or by the app being unavailable. Nothing in these terms limits your rights under the Australian Consumer Law.',
+    ],
+    [
+      'Changes',
+      'We may update these terms. The current version is always on this page.',
+    ],
+  ];
+  const body = `<section class="prose"><h1 style="font-size:40px;letter-spacing:-.03em;margin:20px 0 8px">Terms of Use</h1>
+<p class="m" style="color:var(--muted)">Last updated 20 October 2026</p>
+${parts.map(([h, p]) => `<h2>${esc(h)}</h2><p>${esc(p)}</p>`).join('')}
+<h2>Contact</h2><p><a href="mailto:${CONTACT}">${CONTACT}</a></p></section>`;
+  return page({
+    path: '/terms',
+    title: 'Terms of Use | Emergencies Near Me',
+    description:
+      'Terms of Use for the Emergencies Near Me app and subscription.',
+    body,
+  });
+}
+
 function sitemap() {
   const paths = [
     '/',
@@ -365,6 +401,7 @@ function sitemap() {
       .map((r) => `/incidents/${r}`),
     '/support',
     '/privacy',
+    '/terms',
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths
     .map((p) => `<url><loc>${SITE}${p}</loc></url>`)
@@ -389,6 +426,7 @@ export function renderSite(pathname, store) {
   const m = pathname.match(/^\/incidents\/([a-z]{2,3})$/);
   if (m && STATES[m[1]] && sources[m[1]]) return html(statePage(store, m[1]));
   if (pathname === '/support') return html(support(), 'public, max-age=3600');
+  if (pathname === '/terms') return html(terms(), 'public, max-age=3600');
   if (pathname === '/privacy')
     return html(PRIVACY_HTML, 'public, max-age=3600');
   if (pathname === '/sitemap.xml')
