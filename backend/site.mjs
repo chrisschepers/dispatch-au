@@ -144,6 +144,7 @@ footer{margin-top:56px;padding:28px 0 40px;border-top:1px solid var(--line);colo
 footer a{margin-right:16px}
 @media (max-width:440px){.brand .bn{display:none}nav a{margin-left:14px}.row .r{font-size:12px}}
 .row>div:nth-child(2){min-width:0;overflow-wrap:anywhere}.attr{white-space:pre-line;margin-top:10px}
+.maker{margin-top:10px}.maker a{margin-right:0}
 `;
 
 function page({ path, title, description, body, attribution = '' }) {
@@ -165,6 +166,7 @@ ${body}
 <footer>
 <a href="/incidents">Incidents</a><a href="/support">Support</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>
 <p>Emergencies Near Me is an independent app and is not affiliated with any government or emergency service. In an emergency, call <b>000</b>. Always follow the advice of official emergency services.</p>
+<p class="maker">Also by the maker: <a href="https://alarmeringenp2000.nl/" hreflang="nl">Alarmeringen P2000</a>, emergency alerts in the Netherlands</p>
 ${attribution ? `<div class="attr">${esc(attribution)}</div>` : ''}
 </footer></div></body></html>`;
 }
