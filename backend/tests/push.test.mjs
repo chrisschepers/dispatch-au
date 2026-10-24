@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
-import { PushService, fits, levelRank, messageFor } from '../push.mjs';
+import {
+  PushService,
+  apnsPayload,
+  fits,
+  hasArea,
+  insideArea,
+  levelRank,
+  messageFor,
+} from '../push.mjs';
 
 const MELBOURNE = { lat: -37.81, lon: 144.96 };
 const now = Date.parse('2026-10-19T10:00:00Z');
@@ -198,4 +206,179 @@ void test('Android FCM tokens go to FCM v1 with the sound channel, and unregiste
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+// A square around Melbourne, as GeoJSON ([lon, lat]).
+const AREA = {
+  type: 'Polygon',
+  coordinates: [
+    [
+      [144.5, -38.1],
+      [145.4, -38.1],
+      [145.4, -37.5],
+      [144.5, -37.5],
+      [144.5, -38.1],
+    ],
+  ],
+};
+
+void test('area check: inside, outside, holes, multi-polygons and collections', () => {
+  const { lat, lon } = MELBOURNE;
+  assert.equal(insideArea(AREA, lat, lon), true);
+  assert.equal(insideArea(AREA, -33.8, 151.2), false, 'Sydney');
+  const hole = [
+    [144.9, -37.9],
+    [145.0, -37.9],
+    [145.0, -37.7],
+    [144.9, -37.7],
+    [144.9, -37.9],
+  ];
+  const holed = { type: 'Polygon', coordinates: [AREA.coordinates[0], hole] };
+  assert.equal(
+    insideArea(holed, lat, lon),
+    false,
+    'Melbourne sits in the hole',
+  );
+  assert.equal(
+    insideArea(
+      {
+        type: 'MultiPolygon',
+        coordinates: [holed.coordinates, AREA.coordinates],
+      },
+      lat,
+      lon,
+    ),
+    true,
+  );
+  assert.equal(
+    insideArea(
+      {
+        type: 'GeometryCollection',
+        geometries: [{ type: 'Point', coordinates: [151.2, -33.8] }, AREA],
+      },
+      lat,
+      lon,
+    ),
+    true,
+  );
+  assert.equal(hasArea({ type: 'Point', coordinates: [lon, lat] }), false);
+  assert.equal(
+    hasArea({ type: 'GeometryCollection', geometries: [AREA] }),
+    true,
+  );
+  assert.equal(insideArea(null, lat, lon), false);
+});
+
+void test('a warning without a pin reaches devices inside its area, not outside', async () => {
+  const { push, sent } = service();
+  device(push, { radiusKm: 5 });
+  // Queensland warnings carry only their area.
+  const warning = row({
+    id: 'qld:warning:WARN-1',
+    sourceFeed: 'qld',
+    sourceId: 'WARN-1',
+    title: 'Bushfire',
+    point: null,
+    geometry: AREA,
+    level: 'Watch and Act',
+    created: null,
+    updated: '2026-10-19T09:58:00Z',
+  });
+  await push.process(
+    'qld',
+    { incidents: [row({ id: 'qld:incident:0' })], warnings: [] },
+    now,
+  );
+  await push.process(
+    'qld',
+    { incidents: [row({ id: 'qld:incident:0' })], warnings: [warning] },
+    now,
+  );
+  assert.equal(sent.length, 1, 'inside the area, although 5 km radius');
+  assert.equal(sent[0].critical, false, 'not asked for');
+  const sydney = {
+    lat: -33.8,
+    lon: 151.2,
+    filter: { notificationsEnabled: true, radiusKm: 20, services: [] },
+  };
+  assert.equal(fits(sydney, warning), false);
+  assert.equal(
+    fits(
+      { ...sydney, lat: MELBOURNE.lat, lon: MELBOURNE.lon },
+      { ...warning, level: null },
+    ),
+    false,
+    'an incident area without a warning level is not a warning area',
+  );
+});
+
+void test('an NSW incident and its mirrored warning give one alert', async () => {
+  const { push, sent } = service();
+  device(push, {
+    notificationsEnabled: false,
+    emergencyWarningsAnywhere: true,
+  });
+  const fire = (level) =>
+    row({ id: 'nsw:incident:7', sourceFeed: 'nsw', sourceId: '7', level });
+  const mirror = row({
+    id: 'nsw:warning:7',
+    sourceFeed: 'nsw',
+    sourceId: '7',
+    point: null,
+    geometry: null,
+    level: 'Emergency Warning',
+  });
+  await push.process('nsw', { incidents: [fire(null)], warnings: [] }, now);
+  await push.process(
+    'nsw',
+    { incidents: [fire('Emergency Warning')], warnings: [mirror] },
+    now,
+  );
+  assert.equal(sent.length, 1);
+  assert.match(sent[0].msg.title, /^Emergency Warning: Grass fire in Kilmore/);
+  assert.equal(
+    sent[0].critical,
+    false,
+    'anywhere alerts never break through silent mode',
+  );
+});
+
+void test('critical only for an Emergency Warning at your own place, when asked', async () => {
+  const { push, sent } = service();
+  device(push, { radiusKm: 80, critical: true });
+  await push.process(
+    'act',
+    { incidents: [row({ id: 'act:incident:0' })], warnings: [] },
+    now,
+  );
+  await push.process(
+    'act',
+    {
+      incidents: [
+        row({ id: 'act:incident:0' }),
+        row({ level: 'Watch and Act' }),
+        row({ id: 'act:incident:2', level: 'Emergency Warning' }),
+      ],
+      warnings: [],
+    },
+    now,
+  );
+  assert.deepEqual(
+    Object.fromEntries(sent.map((s) => [s.msg.data.incidentId, s.critical])),
+    { 'act:incident:1': false, 'act:incident:2': true },
+  );
+});
+
+void test('a critical APNs alert asks for full volume through silent mode', () => {
+  const msg = {
+    title: 'Emergency Warning: Bushfire in Kilmore',
+    body: 'Leave now',
+    data: { incidentId: 'vic:1' },
+  };
+  assert.equal(apnsPayload(msg, 'pager').aps.sound, 'pager.wav');
+  assert.equal(apnsPayload(msg, 'pager').aps['interruption-level'], undefined);
+  const p = apnsPayload(msg, 'pager', true);
+  assert.deepEqual(p.aps.sound, { critical: 1, name: 'pager.wav', volume: 1 });
+  assert.equal(p.aps['interruption-level'], 'critical');
+  assert.equal(p.incidentId, 'vic:1');
 });

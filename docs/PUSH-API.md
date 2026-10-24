@@ -35,7 +35,8 @@ Antwoord `200`:
   "warningsOnly": false,
   "emergencyWarningsAnywhere": false,
   "sound": "zacht",
-  "notificationsEnabled": true
+  "notificationsEnabled": true,
+  "critical": false
 }
 ```
 
@@ -43,6 +44,7 @@ Antwoord `200`:
 - `radiusPerService` overschrijft `radiusKm` per dienst. Een waarde van 5000 of meer betekent "heel Australië".
 - `warningsOnly`: alleen pushen als het incident een waarschuwingsniveau heeft (Advice, Watch and Act, Emergency Warning).
 - `emergencyWarningsAnywhere`: push bij elke Emergency Warning in Australië, los van straal en diensten, en ook als `notificationsEnabled` uit staat.
+- `critical` (24-10-2026): een Emergency Warning voor de eigen plek (in het gebied of binnen de straal) gaat als kritieke melding, die door stil en Focus heen breekt. Nooit voor de meldingen van `emergencyWarningsAnywhere` en nooit voor lagere niveaus. iOS: `sound: { critical: 1 }` en `interruption-level: critical`. Dat werkt pas met Apple's Critical Alerts-entitlement in de app en toestemming van de gebruiker; anders komt hij binnen als gewone melding. Android: kanaal `dispatch_kritiek`, dat de app aanmaakt voordat hij `critical` aanzet.
 - Ontbreken `lat`/`lon`, dan de opgeslagen plek houden.
 - `401` bij een verkeerde of ontbrekende `x-install-token`.
 
@@ -50,6 +52,8 @@ Antwoord `200`:
 
 - Bij elk incident dat de collector voor het eerst ziet en dat een coördinaat heeft: push naar elk toestel met `notificationsEnabled`, de dienst aan, en een afstand binnen de straal van die dienst.
 - Een verhoging van het waarschuwingsniveau (bijvoorbeeld Advice → Watch and Act) is ook een push waard. Een gewone statuswijziging niet.
+- Een waarschuwing gaat over een gebied (24-10-2026). Ligt de plek van het toestel in dat gebied, dan krijgt het de push, hoe ver de pin ook is en ook als er geen pin is. Queensland- en SA-waarschuwingen hebben vaak alleen het gebied; die werden voorheen nooit gepusht. Een incidentgebied zonder waarschuwingsniveau (zoals een uitgebrand gebied) telt niet.
+- Eén gebeurtenis, één push: NSW zet een Watch and Act zowel bij het incident (met pin) als in een losse waarschuwingsrij zonder plek. Per bron-id gaat alleen de rij met het hoogste niveau door, bij gelijk niveau die met een plek.
 - Verzenden via de Expo Push API (`https://exp.host/--/api/v2/push/send`), in batches van maximaal 100.
 - Inhoud: `title` "Grass fire in Kilmore", `body` "Lancefield Rd · Watch and Act · 4.2 km", `data: { "incidentId": "<id uit de feed>" }`. Tikken opent dan het juiste incident.
 - Android: `channelId` "dispatch_snd_<sound>" (zie `mobile/src/geluiden.ts`, `kanaalVoor`). iOS: `sound` "<sound>.wav".

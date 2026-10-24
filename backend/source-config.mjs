@@ -13,7 +13,7 @@ export const sources = {
   },
   nsw: {
     name: 'NSW Rural Fire Service',
-    interval: 1800000,
+    interval: 120000,
     staleAfter: 2400000,
     url: 'https://www.rfs.nsw.gov.au/feeds/majorIncidents.json',
     adviceUrl: 'https://www.rfs.nsw.gov.au/fire-information/fires-near-me',
@@ -26,7 +26,7 @@ export const sources = {
   },
   qld: {
     name: 'Queensland Fire Department',
-    interval: 1800000,
+    interval: 120000,
     staleAfter: 2400000,
     url: 'https://publiccontent-gis-psba-qld-gov-au.s3.amazonaws.com/content/Feeds/BushfireCurrentIncidents/bushfireAlert.json',
     adviceUrl: 'https://www.fire.qld.gov.au/Current-Incidents',
