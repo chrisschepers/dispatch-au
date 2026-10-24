@@ -5,7 +5,7 @@ Standalone public read-only API for the native preview. This is separate from th
 - Node 24, `npm ci`, `npm test`, `npm start` inside `backend`.
 - Root `Dockerfile` deploys only the collector and the shared incident parser.
 - `PORT=8080`, `DATABASE_PATH=/data/incidents.sqlite`; mount a persistent Railway volume at `/data`.
-- Run one replica with serverless sleeping disabled. Each source polls independently: VIC/ACT after 60 seconds, NSW/QLD after 30 minutes, and SA after five minutes. Source-specific freshness limits are applied. Failed/invalid/stale snapshots cannot erase the last good records.
+- Run one replica with serverless sleeping disabled. Each source polls independently: VIC/ACT after 60 seconds, NSW/QLD after two minutes (their feeds change more often than the documented 30 minutes), and SA after five minutes. Source-specific freshness limits are applied. Failed/invalid/stale snapshots cannot erase the last good records.
 - `/health` checks process availability. `/v1/status` separately reports source readiness/freshness and the last bounded source error.
 - `/v1/feed?region=au|vic|act|nsw|qld|sa&hours=24|72|168` returns current records plus records last seen within the selected window. History starts with the first successful collection; it is not a backfill. Removed records retain the last known source status. Only currently listed warnings are returned.
 - Seven days of unlisted records are retained. Source failure pauses cleanup until the next valid snapshot. `firstSeen` and `lastSeen` describe our observations, not an incident's start or resolution.

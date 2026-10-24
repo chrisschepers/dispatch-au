@@ -52,11 +52,60 @@ export function distanceKm(a, b) {
   return 2 * 6371 * Math.asin(Math.sqrt(s));
 }
 
+// Ray casting on GeoJSON rings ([lon, lat]): inside the outer ring and in
+// none of its holes.
+function inPolygon(rings, lat, lon) {
+  if (!Array.isArray(rings) || !rings.length) return false;
+  const inRing = (ring) => {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i];
+      const [xj, yj] = ring[j];
+      if (
+        yi > lat !== yj > lat &&
+        lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi
+      )
+        inside = !inside;
+    }
+    return inside;
+  };
+  return inRing(rings[0]) && !rings.slice(1).some(inRing);
+}
+
+/** Does the geometry contain a warning area (not just a pin or a line)? */
+export function hasArea(geometry) {
+  if (!geometry) return false;
+  if (geometry.type === 'GeometryCollection')
+    return (geometry.geometries ?? []).some(hasArea);
+  return geometry.type === 'Polygon' || geometry.type === 'MultiPolygon';
+}
+
+/** Is this place inside one of the areas of the geometry? */
+export function insideArea(geometry, lat, lon) {
+  if (!geometry || lat == null || lon == null) return false;
+  if (geometry.type === 'GeometryCollection')
+    return (geometry.geometries ?? []).some((g) => insideArea(g, lat, lon));
+  if (geometry.type === 'Polygon')
+    return inPolygon(geometry.coordinates, lat, lon);
+  if (geometry.type === 'MultiPolygon')
+    return geometry.coordinates.some((p) => inPolygon(p, lat, lon));
+  return false;
+}
+
 /** Does this incident belong in this device's alerts? */
 export function fits(device, row, { upgrade = false } = {}) {
+  if (device.filter.emergencyWarningsAnywhere && levelRank(row.level) === 3)
+    return true;
+  return fitsPlace(device, row, { upgrade });
+}
+
+/**
+ * The filter without "Emergency Warnings anywhere": is this about the
+ * device's own place? Only such alerts may break through silent mode.
+ */
+export function fitsPlace(device, row, { upgrade = false } = {}) {
   const f = device.filter;
   const rank = levelRank(row.level);
-  if (f.emergencyWarningsAnywhere && rank === 3) return true;
   if (!f.notificationsEnabled) return false;
   const service = serviceOf(row);
   if (
@@ -66,7 +115,13 @@ export function fits(device, row, { upgrade = false } = {}) {
   )
     return false;
   if (f.warningsOnly && rank === 0) return false;
-  if (!row.point || device.lat == null || device.lon == null) return false;
+  if (device.lat == null || device.lon == null) return false;
+  // A warning covers an area. Whoever is inside it must hear about it,
+  // however far away its pin is, and also when it has no pin at all
+  // (Queensland and SA warnings often only have the area).
+  if (rank >= 1 && insideArea(row.geometry, device.lat, device.lon))
+    return true;
+  if (!row.point) return false;
   const radius = Number(f.radiusPerService?.[service] ?? f.radiusKm ?? 20);
   if (radius >= NATIONWIDE_KM) return true;
   // An upgrade to Watch and Act or higher reaches a bit further than the
@@ -130,6 +185,23 @@ function apnsToken(env) {
   return apnsJwt.token;
 }
 
+/**
+ * A critical alert plays at full volume through silent mode and Focus.
+ * iOS only honours it when the app has Apple's Critical Alerts entitlement
+ * and the user allowed it; otherwise it arrives as a normal alert.
+ */
+export function apnsPayload(msg, sound, critical = false) {
+  const name = sound ? `${sound}.wav` : 'default';
+  return {
+    aps: {
+      alert: { title: msg.title, body: msg.body },
+      sound: critical ? { critical: 1, name, volume: 1 } : name,
+      ...(critical ? { 'interruption-level': 'critical' } : {}),
+    },
+    ...msg.data,
+  };
+}
+
 /** Sends one alert per token; returns tokens Apple says are gone. */
 async function sendApns(items, env) {
   const host =
@@ -143,7 +215,7 @@ async function sendApns(items, env) {
   try {
     await Promise.all(
       items.map(
-        ({ token, msg, sound }) =>
+        ({ token, msg, sound, critical }) =>
           new Promise((resolve) => {
             const req = client.request({
               ':method': 'POST',
@@ -179,15 +251,7 @@ async function sendApns(items, env) {
               resolve();
             });
             req.on('error', () => resolve());
-            req.end(
-              JSON.stringify({
-                aps: {
-                  alert: { title: msg.title, body: msg.body },
-                  sound: sound ? `${sound}.wav` : 'default',
-                },
-                ...msg.data,
-              }),
-            );
+            req.end(JSON.stringify(apnsPayload(msg, sound, critical)));
           }),
       ),
     );
@@ -304,7 +368,7 @@ async function sendFcm(items, env) {
   const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
   for (let i = 0; i < items.length; i += 20) {
     await Promise.all(
-      items.slice(i, i + 20).map(async ({ token, msg, sound }) => {
+      items.slice(i, i + 20).map(async ({ token, msg, sound, critical }) => {
         try {
           const res = await fetch(url, {
             method: 'POST',
@@ -322,8 +386,12 @@ async function sendFcm(items, env) {
                 ),
                 android: {
                   priority: 'HIGH',
+                  // The app that switches `critical` on also creates this
+                  // channel (alarm audio, may bypass Do Not Disturb).
                   notification: {
-                    channel_id: `dispatch_snd_${sound || 'zacht'}`,
+                    channel_id: critical
+                      ? 'dispatch_kritiek'
+                      : `dispatch_snd_${sound || 'zacht'}`,
                     sound: sound || 'zacht',
                   },
                 },
@@ -367,6 +435,8 @@ const DEFAULT_FILTER = {
   emergencyWarningsAnywhere: false,
   sound: 'zacht',
   notificationsEnabled: false,
+  // Emergency Warnings for the device's own place break through silent mode.
+  critical: false,
 };
 
 export class PushService {
@@ -477,6 +547,7 @@ export class PushService {
       'warningsOnly',
       'emergencyWarningsAnywhere',
       'notificationsEnabled',
+      'critical',
     ]) {
       if (typeof body[k] === 'boolean') f[k] = body[k];
     }
@@ -535,7 +606,8 @@ export class PushService {
       if (!seen) {
         const started = Date.parse(row.created ?? row.updated ?? at);
         if (Number.isFinite(started) && now - started > FRESH_MS) continue;
-        if (!row.point && rank < 3) continue;
+        if (!row.point && !(rank >= 1 && hasArea(row.geometry)) && rank < 3)
+          continue;
         events.push({ row, upgrade: false, rank });
       } else if (rank > seen.rank && rank >= 1) {
         events.push({ row, upgrade: true, rank });
@@ -550,12 +622,25 @@ export class PushService {
       .run(new Date(now - 7 * 86400_000).toISOString());
     if (!events.length) return { events: 0, sent: 0 };
 
+    // One event, one alert. NSW lists a Watch and Act twice: as the incident
+    // with its pin and as a warning row without any place. Keep the highest
+    // level, and on a tie the row that knows where it is.
+    const placed = (r) => !!r.point || hasArea(r.geometry);
+    const better = (a, b) =>
+      a.rank !== b.rank ? a.rank > b.rank : placed(a.row) && !placed(b.row);
+    const unique = new Map();
+    for (const ev of events) {
+      const key = `${ev.row.sourceFeed ?? region}|${ev.row.sourceId ?? ev.row.id}`;
+      const kept = unique.get(key);
+      if (!kept || better(ev, kept)) unique.set(key, ev);
+    }
+
     const devices = this.devices();
     const markSent = this.db.prepare(
       'INSERT INTO push_sent VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
     );
     const items = [];
-    for (const ev of events) {
+    for (const ev of unique.values()) {
       for (const d of devices) {
         if (!fits(d, ev.row, { upgrade: ev.upgrade })) continue;
         if (markSent.run(d.id, ev.row.id, ev.rank, at).changes === 0) continue;
@@ -563,6 +648,12 @@ export class PushService {
           device: d.id,
           token: d.push_token,
           sound: d.filter.sound,
+          // Never for "Emergency Warnings anywhere": only an Emergency
+          // Warning for your own place may wake you up.
+          critical:
+            d.filter.critical === true &&
+            ev.rank === 3 &&
+            fitsPlace(d, ev.row, { upgrade: ev.upgrade }),
           msg: messageFor(ev.row, d, ev),
         });
       }
