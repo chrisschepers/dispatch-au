@@ -14,6 +14,7 @@
 | UV Sun Index, 03-07 | 1.4.1 | Medische info zonder bronnen | Elk incident noemt de bron (agency) en linkt naar het officiële advies |
 | P2000, 01-10 | Leeftijd (automatisch) | Advertenties in de app, maar Advertising = No | Geen advertentie-SDK in deze app: Advertising = **No** |
 | P2000, 02-10 | 2.3.10 | Android genoemd in "Wat is er nieuw" | iOS-teksten noemen nooit Android of Google Play |
+| Emergencies Near Me (Play), 26-10 | Misleading Claims: "Missing Source Link for Government Information" | De beschrijving noemde de bronnen zonder link naar de officiële sites, en de disclaimer stond pas onderaan | Disclaimer "Not a government app" als tweede alinea; kopje *Sources* met per staat de dienst en de .gov.au-link, plus `/sources` op de website. In de app: *Sources* in Instellingen (link per dienst, licentievermeldingen, privacy en voorwaarden) en per incident de bron met het domein. Play-tekst: `mobile/store/play/beschrijving-en-AU.txt` |
 
 Verder: Apple test op een **iPad**. De app is iPhone-only (`supportsTablet: false`) en draait daar in compatibiliteitsmodus. Een reviewer zit **niet in Australië**: buiten Australië toont de app Melbourne, met de kop "Outside Australia, showing Melbourne".
 
@@ -42,16 +43,27 @@ Tracking: **No**. Verzameld, niet gekoppeld aan identiteit, niet voor tracking:
 
 ## Beschrijving (en-AU)
 
+Sinds de Play-afwijzing van 26-10 met bronnen en de disclaimer bovenaan. De App Store-tekst gaat mee met de volgende iOS-versie; de beschrijving is in App Store Connect alleen met een nieuwe versie te wijzigen.
+
 > Know what is happening near you, live. Emergencies Near Me shows bushfires, floods, road crashes, storms, hazmat incidents and ambulance calls published by Australian emergency services, on one map and in one list, with an alert when something happens within your radius.
+>
+> Not a government app: Emergencies Near Me is an independent app. It does not represent any government, government agency or emergency service, and is not affiliated with or endorsed by them. In an emergency, call 000. Always follow the advice of official emergency services.
 >
 > • Live map of current incidents, updated every minute
 > • Nearby list with distance, status and warning level
 > • Alerts for your area, with a radius per service: for example bushfires 100 km and road crashes 10 km
 > • Advice, Watch and Act and Emergency Warning levels, as issued by the agencies
 > • Victoria, New South Wales, Queensland, South Australia and the ACT in one app
-> • Incident details: agency, status, resources, directions and a link to the official advice
+> • Incident details: agency, status, resources, directions and a link to the official source
 >
-> Emergencies Near Me is independent and not affiliated with any government or emergency service. In an emergency, call 000. Always follow the advice of official emergency services.
+> Sources
+> All incident information comes from the public feeds of these government emergency services. Check the official source for the latest information:
+> • Victoria: VicEmergency, https://emergency.vic.gov.au/respond/
+> • New South Wales: NSW Rural Fire Service, https://www.rfs.nsw.gov.au/fire-information/fires-near-me
+> • Queensland: Queensland Fire Department, https://www.fire.qld.gov.au/Current-Incidents
+> • South Australia: SA Country Fire Service, https://www.cfs.sa.gov.au/incidents/
+> • Australian Capital Territory: ACT Emergency Services Agency, https://esa.act.gov.au/
+> Every incident in the app names its source and links to it. Sources and licences: https://emergenciesnearme.online/sources
 >
 > Subscription: Emergencies Near Me Premium is a yearly auto-renewable subscription with a free trial for eligible new subscribers. Payment is charged to your Apple Account at the end of the trial. The subscription renews automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel it in your Apple Account settings.
 >

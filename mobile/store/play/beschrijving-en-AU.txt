@@ -1,0 +1,24 @@
+Know what is happening near you, live. Emergencies Near Me shows bushfires, floods, road crashes, storms, hazmat incidents and ambulance calls published by Australian emergency services, on one map and in one list, with an alert when something happens within your radius.
+
+Not a government app: Emergencies Near Me is an independent app. It does not represent any government, government agency or emergency service, and is not affiliated with or endorsed by them. In an emergency, call 000. Always follow the advice of official emergency services.
+
+• Live map of current incidents, updated every minute
+• Nearby list with distance, status and warning level
+• Alerts for your area, with a radius per service: for example bushfires 100 km and road crashes 10 km
+• Advice, Watch and Act and Emergency Warning levels, as issued by the agencies
+• Victoria, New South Wales, Queensland, South Australia and the ACT in one app
+• Incident details: agency, status, resources, directions and a link to the official source
+
+Sources
+All incident information comes from the public feeds of these government emergency services. Check the official source for the latest information:
+• Victoria: VicEmergency, https://emergency.vic.gov.au/respond/
+• New South Wales: NSW Rural Fire Service, https://www.rfs.nsw.gov.au/fire-information/fires-near-me
+• Queensland: Queensland Fire Department, https://www.fire.qld.gov.au/Current-Incidents
+• South Australia: SA Country Fire Service, https://www.cfs.sa.gov.au/incidents/
+• Australian Capital Territory: ACT Emergency Services Agency, https://esa.act.gov.au/
+Every incident in the app names its source and links to it. Sources and licences: https://emergenciesnearme.online/sources
+
+Subscription: Emergencies Near Me Premium is a yearly auto-renewable subscription with a free trial for eligible new subscribers. Payment is charged to your Google Play account at the end of the trial. The subscription renews automatically unless cancelled before the end of the current period. Manage or cancel it in the Google Play Store under Payments and subscriptions.
+
+Terms of Use: https://emergenciesnearme.online/terms
+Privacy Policy: https://emergenciesnearme.online/privacy

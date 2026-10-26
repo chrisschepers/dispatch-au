@@ -20,12 +20,16 @@
 5. **Abonnement** in de Play Console: product `premium_year`, basisplan jaarlijks A$9,99, aanbod 3 dagen gratis. In RevenueCat koppelen aan entitlement `premium`, offering `default`, pakket Annual. Publieke `goog_`-sleutel in `mobile/src/aankopen.ts`.
 6. **Gesloten test**: minimaal 12 testers, 14 dagen onafgebroken, daarna productietoegang aanvragen. De testers van 112 Meldingen kunnen opnieuw (zelfde Google-groep).
 
+## Stand van de builds (26-10)
+
+Build 1 en 2 (0.2.0) zijn gebouwd zonder `GOOGLE_MAPS_ANDROID_API_KEY` en zonder `mobile/google-services.json`. De repo heeft alleen de vier `DISPATCH_KEY*`-secrets. Gevolg: geen push, en de Google-kaart heeft geen sleutel (de kaart en het kaartje bij een melding). Regel stap 1 en 2 hierboven vóór de volgende build die testers krijgen. Zonder `PLAY_SERVICE_ACCOUNT_JSON` moet de .aab met de hand naar de Play Console.
+
 ## Winkelvermelding
 
 - **Naam**: Emergencies Near Me
 - **Korte beschrijving** (max 80): Live bushfire, flood and crash alerts near you, across Australia.
-- **Volledige beschrijving**: zoals de App Store-tekst in `docs/APP-REVIEW.md`, maar met "Google Account" in plaats van "Apple Account" en de link naar `https://emergenciesnearme.online/terms`.
-- **Categorie**: Nieuws en tijdschriften (of Weer). Contact: chrisschepers22@gmail.com, website `https://emergenciesnearme.online`.
+- **Volledige beschrijving**: `mobile/store/play/beschrijving-en-AU.txt` (de enige taal is en-AU). Op 26-10 afgewezen onder Misleading Claims ("Missing Source Link for Government Information"). Sindsdien staat bovenaan "Not a government app", en noemt het kopje *Sources* per staat de dienst met de .gov.au-link. Zie de tabel in `docs/APP-REVIEW.md`.
+- **Categorie**: Nieuws en tijdschriften (besluit Chris 26-10: blijft Nieuws, dus bronvermelding overal). Contact: chrisschepers22@gmail.com, website `https://emergenciesnearme.online`.
 - **Banner**: `mobile/store/play/feature-graphic-1024x500.png` (`banner.py`).
 - **Screenshots**: nog maken op een Android-emulator in CI, zodra de Maps-sleutel er is (de iPhone-beelden tonen Apple Maps en horen niet op Play).
 
@@ -41,4 +45,5 @@
 
 - Vragenlijst: geen geweld, seks, drugs, gokken; geen gebruikersinhoud; geen locatiedeling met anderen. Verwachte uitkomst: PEGI 3 / Iedereen.
 - Doelgroep: 18+ (geen kinderapp), geen advertenties.
-- Overheidsapp: **nee**. Nieuws-app: nee. In de beschrijving staat dat de app onafhankelijk is.
+- Overheidsapp: **nee**. In de beschrijving staat dat de app onafhankelijk is.
+- Nieuws- en tijdschrift-apps: **ja**, ingevuld op 24-10. Juridische entiteit Chris Schepers, contact-URL `/support`, commercieel, **aggregator: ja**. Een aggregator moet per bericht de bron tonen: dat doet het meldingscherm ("Source: VicEmergency" en het domein bij de link).

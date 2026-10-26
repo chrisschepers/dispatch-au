@@ -43,7 +43,10 @@ export const sources = {
     staleAfter: 300000,
     url: 'https://emergency.vic.gov.au/public/events-geojson.json',
     adviceUrl: 'https://emergency.vic.gov.au/respond/',
-    attribution: 'Data © State of Victoria. Source: VicEmergency.',
+    // EMV: name the State of Victoria, Australia, link to the notice
+    // (licenseUrl) and show when the data was last updated.
+    attribution:
+      'Data © State of Victoria, Australia. Source: VicEmergency. Licensed under CC BY 3.0 AU.',
     licenseUrl:
       'https://www.emv.vic.gov.au/responsibilities/victorias-warning-system/emergency-data',
   },

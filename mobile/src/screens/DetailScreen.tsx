@@ -23,8 +23,9 @@ import { vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst } fro
 import { T, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from '../components/Drukbaar';
+import { bronVan, domeinVan } from '../bronnen';
 
-type Rt = RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
+type Rt =RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
 
 /**
  * Staat de pin op de echte plek? De backend zegt zelf hoe nauwkeurig hij de
@@ -147,6 +148,7 @@ export default function DetailScreen() {
   }
   const afstand = mijnPlek ? afstandTekst(afstandKm(mijnPlek.lat, mijnPlek.lon, melding)) : null;
   const plaatsNaam = melding.city ? nettePlaats(melding.city) : null;
+  const bron = bronVan(melding.sourceRegion);
 
   async function deel() {
     const plek = plaatsRegel(melding.location, melding.city);
@@ -268,11 +270,13 @@ export default function DetailScreen() {
         </Drukbaar>
       )}
 
-      {/* What the agency publishes: who, the status, how many resources. */}
+      {/* What the agency publishes: who, the status, how many resources.
+          Met de bron en het overheidsdomein erbij: Google Play wil dat elke
+          melding herleidbaar is tot de officiële site (afwijzing 26-10). */}
       <View style={[kaartStijl, styles.blok]}>
         <Text style={styles.blokKop}>From the agency</Text>
         {[
-          ['shield-check-outline', melding.agency || 'Emergency services', melding.sourceRegion ? melding.sourceRegion.toUpperCase() : null],
+          ['shield-check-outline', melding.agency || 'Emergency services', bron ? `Source: ${bron.naam}` : melding.sourceRegion ? melding.sourceRegion.toUpperCase() : null],
           ['progress-check', melding.status || 'Status not published', melding.updated ? `updated ${tijdTekst(melding.updated)}` : null],
           ...(melding.resources ? [['account-group-outline', `${melding.resources} ${melding.resources === 1 ? 'resource' : 'resources'} assigned`, null]] : []),
         ].map(([icoon, titel, sub], i) => (
@@ -288,10 +292,13 @@ export default function DetailScreen() {
           <Drukbaar
             style={[styles.rij, styles.scheiding]}
             onPress={() => { Linking.openURL(melding.officialUrl!).catch(() => {}); }}
-            label="Open official advice"
+            label={`Open official advice on ${domeinVan(melding.officialUrl)}`}
           >
             <MaterialCommunityIcons name="open-in-new" size={20} color={C.accent} style={styles.rijIcoon} />
-            <Text style={[styles.rijTitel, { color: C.accent, flex: 1 }]}>Official advice and warnings</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rijTitel, { color: C.accent }]}>Official advice and warnings</Text>
+              <Text style={styles.rijSub}>{domeinVan(melding.officialUrl)}</Text>
+            </View>
           </Drukbaar>
         ) : null}
       </View>

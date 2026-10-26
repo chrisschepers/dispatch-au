@@ -14,6 +14,7 @@ void test('the website serves its pages, sitemap and assets next to the API', as
       '/incidents',
       '/incidents/vic',
       '/support',
+      '/sources',
       '/privacy',
       '/terms',
     ]) {
@@ -22,6 +23,22 @@ void test('the website serves its pages, sitemap and assets next to the API', as
       assert.match(response.headers.get('content-type'), /^text\/html/, path);
       assert.match(await response.text(), /call <b>000<\/b>|000/, path);
     }
+    // Google Play (26-10-2026): every source with a working link to its
+    // official .gov.au site, and a clear statement that we are not a government.
+    const bronnen = await (await fetch(base + '/sources')).text();
+    for (const host of [
+      'emergency.vic.gov.au',
+      'www.rfs.nsw.gov.au',
+      'www.fire.qld.gov.au',
+      'www.cfs.sa.gov.au',
+      'esa.act.gov.au',
+    ])
+      assert.match(
+        bronnen,
+        new RegExp(`href="https://${host.replaceAll('.', '\\.')}/`),
+        host,
+      );
+    assert.match(bronnen, /does not represent any government/);
     assert.equal((await fetch(base + '/incidents/xx')).status, 404);
     assert.match(
       await (await fetch(base + '/sitemap.xml')).text(),

@@ -292,3 +292,28 @@ void test('one healthy region cannot hide an aged source in the nationwide view'
   assert.equal(isStale(fresh, now), false);
   assert.equal(delayedSourceText(fresh, now), '');
 });
+
+void test('every source names the agency and links to its official .gov.au site', async () => {
+  // Google Play rejected the app on 26-10-2026 for a missing source link to
+  // government information. The app and the backend must name the same sources.
+  const { BRONNEN, bronVan, domeinVan } = await import('../src/bronnen.ts');
+  const { sources } = await import('../../backend/source-config.mjs');
+  assert.deepEqual(
+    BRONNEN.map((b) => b.regio),
+    ['vic', 'nsw', 'qld', 'sa', 'act'],
+  );
+  for (const b of BRONNEN) {
+    assert.match(b.url, /^https:\/\/[a-z.]+\.gov\.au\//, b.regio);
+    assert.match(b.domein, /^[a-z.]+\.gov\.au$/, b.regio);
+    assert.equal(b.naam, sources[b.regio].name, b.regio);
+    assert.equal(b.url, sources[b.regio].adviceUrl, b.regio);
+    assert.equal(b.vermelding, sources[b.regio].attribution, b.regio);
+    assert.equal(b.licentieUrl, sources[b.regio].licenseUrl, b.regio);
+  }
+  assert.equal(
+    domeinVan('https://www.rfs.nsw.gov.au/fire-information/fires-near-me'),
+    'rfs.nsw.gov.au',
+  );
+  assert.equal(bronVan('vic')?.naam, 'VicEmergency');
+  assert.equal(bronVan('au'), null);
+});

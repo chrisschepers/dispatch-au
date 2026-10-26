@@ -27,7 +27,9 @@ import { Drukbaar } from '../components/Drukbaar';
 import { PlaatsZoeker } from '../components/PlaatsZoeker';
 import { Schakelaar } from '../components/Schakelaar';
 import { openRecensiePagina } from '../recensie';
+import { BRONNEN } from '../bronnen';
 
+const SITE = 'https://emergenciesnearme.online';
 const CONTACT = {
   ontwikkelaar: 'Chris Schepers',
   email: 'chrisschepers22@gmail.com',
@@ -366,6 +368,44 @@ export default function InstellingenScreen() {
           ))}
         </View>
 
+        {/* Bronnen. Google Play keurde de app op 26-10 af ("Missing Source
+            Link for Government Information"): bij overheidsinformatie hoort
+            de officiële site met link, en in gewone woorden dat de app geen
+            overheid is. De vermeldingen eronder vragen de CC BY-licenties. */}
+        <Text style={styles.groepKop}>Sources</Text>
+        <View style={kaartStijl}>
+          {BRONNEN.map((b, i) => (
+            <Rij
+              key={b.regio}
+              icoon="shield-check-outline" tegelKleur="#34c759" scheiding={i > 0}
+              titel={b.naam}
+              sub={`${b.staat} · ${b.domein}`}
+              onPress={() => { Linking.openURL(b.url).catch(() => {}); }}
+              label={`${b.naam}, ${b.domein}. Opens the official website`}
+              rechts={<MaterialCommunityIcons name="open-in-new" size={18} color={C.textMuted} />}
+            />
+          ))}
+        </View>
+        <Text style={styles.voetnoot}>
+          Emergencies Near Me is an independent app and does not represent any government or
+          emergency service. Incidents come from the public feeds of the services above and can be
+          delayed or incomplete. In an emergency, call 000.
+        </Text>
+        {/* Elke vermelding opent de licentiepagina van die bron: Victoria
+            eist bij herpublicatie een link naar die pagina. */}
+        <Text style={styles.voetnoot}>
+          {BRONNEN.map((b, i) => (
+            <Text
+              key={b.regio}
+              style={styles.voetnootLink}
+              accessibilityRole="link"
+              onPress={() => { Linking.openURL(b.licentieUrl).catch(() => {}); }}
+            >
+              {i > 0 ? '\n' : ''}{b.vermelding}
+            </Text>
+          ))}
+        </Text>
+
         <View style={kaartStijl}>
           <View style={styles.rij}>
             <View style={[styles.tegel, { backgroundColor: C.chipBg }]}>
@@ -398,6 +438,20 @@ export default function InstellingenScreen() {
             titel="Rate Emergencies Near Me"
             sub="A review helps others find the app"
             onPress={openRecensiePagina}
+            rechts={<MaterialCommunityIcons name="open-in-new" size={18} color={C.textMuted} />}
+          />
+          {/* Het privacybeleid moet ook in de app makkelijk te vinden zijn,
+              niet alleen achter de betaalmuur (eis Google Play). */}
+          <Rij
+            icoon="shield-lock-outline" tegelKleur="#8e8e93" scheiding
+            titel="Privacy Policy"
+            onPress={() => { Linking.openURL(`${SITE}/privacy`).catch(() => {}); }}
+            rechts={<MaterialCommunityIcons name="open-in-new" size={18} color={C.textMuted} />}
+          />
+          <Rij
+            icoon="file-document-outline" tegelKleur="#8e8e93" scheiding
+            titel="Terms of Use"
+            onPress={() => { Linking.openURL(`${SITE}/terms`).catch(() => {}); }}
             rechts={<MaterialCommunityIcons name="open-in-new" size={18} color={C.textMuted} />}
           />
         </View>
@@ -471,6 +525,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   hint: { ...T.klein, color: C.textSecondary, marginTop: 2 },
   waarde: { ...T.body, fontSize: 16, color: C.textSecondary },
   voetnoot: { ...T.klein, color: C.textSecondary, marginTop: 6, marginHorizontal: 4 },
+  voetnootLink: { textDecorationLine: 'underline' },
   dienstNaam: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   tegel: { width: 34, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   midden: { flex: 1, marginLeft: 12 },
