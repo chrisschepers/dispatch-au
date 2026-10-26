@@ -144,7 +144,7 @@ footer{margin-top:56px;padding:28px 0 40px;border-top:1px solid var(--line);colo
 footer a{margin-right:16px}
 @media (max-width:440px){.brand .bn{display:none}nav a{margin-left:14px}.row .r{font-size:12px}}
 .row>div:nth-child(2){min-width:0;overflow-wrap:anywhere}.attr{white-space:pre-line;margin-top:10px}
-.maker{margin-top:10px}.maker a{margin-right:0}
+.maker{margin-top:10px}footer p a{margin-right:0}
 `;
 
 function page({ path, title, description, body, attribution = '' }) {
@@ -164,8 +164,8 @@ function page({ path, title, description, body, attribution = '' }) {
 <nav><a href="/incidents">Incidents</a><a href="/support">Support</a></nav></header>
 ${body}
 <footer>
-<a href="/incidents">Incidents</a><a href="/support">Support</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>
-<p>Emergencies Near Me is an independent app and is not affiliated with any government or emergency service. In an emergency, call <b>000</b>. Always follow the advice of official emergency services.</p>
+<a href="/incidents">Incidents</a><a href="/support">Support</a><a href="/sources">Sources</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>
+<p>Emergencies Near Me is an independent app. It does not represent and is not affiliated with any government or emergency service; the information comes from the official <a href="/sources">sources</a> of the state emergency services. In an emergency, call <b>000</b>. Always follow the advice of official emergency services.</p>
 <p class="maker">Also by the maker: <a href="https://alarmeringenp2000.nl/" hreflang="nl">Alarmeringen P2000</a>, emergency alerts in the Netherlands</p>
 ${attribution ? `<div class="attr">${esc(attribution)}</div>` : ''}
 </footer></div></body></html>`;
@@ -343,7 +343,7 @@ function support() {
     ],
     [
       'Is this an official warning service?',
-      'No. Emergencies Near Me is independent. In an emergency call 000, and follow the advice of your state emergency service.',
+      'No. Emergencies Near Me is independent and does not represent any government or emergency service. The information comes from the official sources listed under Sources. In an emergency call 000, and follow the advice of your state emergency service.',
     ],
   ];
   const body = `<section class="prose"><h1 style="font-size:40px;letter-spacing:-.03em;margin:20px 0 8px">Support</h1>
@@ -354,6 +354,42 @@ ${faq.map(([q, a]) => `<h2>${esc(q)}</h2><p>${esc(a)}</p>`).join('')}
     title: 'Support | Emergencies Near Me',
     description:
       'Help with Emergencies Near Me: coverage, alerts, subscriptions and contact.',
+    body,
+  });
+}
+
+const bare = (url) =>
+  String(url)
+    .replace(/^https?:\/\/(www\.)?/, '')
+    .replace(/\/$/, '');
+
+/**
+ * Where the information comes from. Google Play rejected the app on
+ * 26-10-2026 for a "Missing Source Link for Government Information": an app
+ * that shows government information must name the official sources with a
+ * working link, and make clear it does not represent a government. The store
+ * listing links here.
+ */
+function sourcesPage() {
+  const list = Object.keys(STATES)
+    .filter((r) => sources[r])
+    .map((r) => {
+      const s = sources[r];
+      return `<h2>${esc(STATES[r].name)}: ${esc(s.name)}</h2>
+<p>Official incidents and warnings: <a href="${esc(s.adviceUrl)}">${esc(bare(s.adviceUrl))}</a><br>
+Open data and licence: <a href="${esc(s.licenseUrl)}">${esc(bare(s.licenseUrl))}</a></p>
+<p>${esc(s.attribution)}${s.coverageNote ? ` ${esc(s.coverageNote)}` : ''}</p>`;
+    })
+    .join('');
+  const body = `<section class="prose"><h1 style="font-size:40px;letter-spacing:-.03em;margin:20px 0 8px">Sources</h1>
+<p>Emergencies Near Me is an independent app. It does not represent any government, government agency or emergency service, and is not affiliated with or endorsed by them.</p>
+<p>Every incident and warning in the app and on this website comes from the public feeds of the state emergency services below, and names its source. We show the information as published, shortened where needed for display. It can be delayed or incomplete: always check the official source and follow the advice of emergency services. In an emergency call <b>000</b>.</p>
+${list}</section>`;
+  return page({
+    path: '/sources',
+    title: 'Sources | Emergencies Near Me',
+    description:
+      'Where the information in Emergencies Near Me comes from: the official websites of VicEmergency, NSW Rural Fire Service, Queensland Fire Department, SA Country Fire Service and ACT Emergency Services Agency.',
     body,
   });
 }
@@ -403,6 +439,7 @@ function sitemap() {
       .filter((r) => sources[r])
       .map((r) => `/incidents/${r}`),
     '/support',
+    '/sources',
     '/privacy',
     '/terms',
   ];
@@ -429,6 +466,8 @@ export function renderSite(pathname, store) {
   const m = pathname.match(/^\/incidents\/([a-z]{2,3})$/);
   if (m && STATES[m[1]] && sources[m[1]]) return html(statePage(store, m[1]));
   if (pathname === '/support') return html(support(), 'public, max-age=3600');
+  if (pathname === '/sources')
+    return html(sourcesPage(), 'public, max-age=3600');
   if (pathname === '/terms') return html(terms(), 'public, max-age=3600');
   if (pathname === '/privacy')
     return html(PRIVACY_HTML, 'public, max-age=3600');
