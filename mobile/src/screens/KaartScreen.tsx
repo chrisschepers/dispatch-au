@@ -20,6 +20,7 @@ import { BrandendIcoon, BotsingIcoon, VlammenIcoon, type BrandendObject } from '
 
 import { type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
+import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
 
 /**
  * Boven dit aantal in beeld gaan we groeperen; daaronder losse pins. Op Android
@@ -84,6 +85,27 @@ function Pin({ kleur, icoon, groot, vers, vlammen, brandend, botsing }: {
 }
 
 export default function KaartScreen() {
+  // Android zonder Maps-sleutel: uitleg in plaats van een kaart die crasht.
+  if (!KAART_BESCHIKBAAR) return <KaartNogNiet />;
+  return <KaartMetMeldingen />;
+}
+
+function KaartNogNiet() {
+  const C = useThema();
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: C.bg, gap: 10 }}>
+      <MaterialCommunityIcons name="map-outline" size={40} color={C.textMuted} />
+      <Text style={{ fontSize: 17, fontWeight: '600', color: C.textPrimary, textAlign: 'center' }}>
+        The map is coming soon on Android
+      </Text>
+      <Text style={{ fontSize: 15, color: C.textSecondary, textAlign: 'center' }}>
+        You can already see every incident near you in the Nearby list.
+      </Text>
+    </View>
+  );
+}
+
+function KaartMetMeldingen() {
   const C = useThema();
   const styles = useStijlen(maak_styles);
   const { inst } = useInstellingen();
