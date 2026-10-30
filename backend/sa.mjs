@@ -136,8 +136,10 @@ function parseCAPFeed(feed, now) {
     const parameters = Object.fromEntries(
       list(info.parameter).map((p) => [clean(p.valueName), clean(p.value)]),
     );
-    const level = parameters.WarningLevel;
-    if (!level) throw Error('Missing SA CAP warning classification');
+    // CFS leaves WarningLevel off some plain incidents. On 30-10 a grass fire
+    // and a structure fire without it made this throw, and all of SA stood
+    // still for 21 hours. Warnings always carry a level; missing = incident.
+    const level = parameters.WarningLevel || '';
     const warning = !!level && !/^incident$/i.test(level);
     const kind = warning ? 'warning' : 'incident';
     const title =

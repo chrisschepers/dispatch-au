@@ -17,7 +17,7 @@ const entry = ({
   area = '<circle>-35.48,138.74 0.0</circle>',
   type = 'Burn Off',
 } = {}) =>
-  `<entry><id>${id}-${sent}</id><updated>${sent}</updated><content type="text/xml"><alert xmlns="urn:oasis:names:tc:emergency:cap:1.2"><identifier>${id}-${sent}</identifier><sender>private@example.test</sender><sent>${sent}</sent><status>${status}</status><scope>${scope}</scope><msgType>${msg}</msgType><info><language>en-AU</language><event>Fire</event><effective>${sent}</effective>${expiry ? `<expires>${expiry}</expires>` : ''}<headline>Published warning title</headline><description>PRIVATE FREE TEXT</description><contact>private phone</contact>${param('WarningLevel', level)}${param('Status', 'Controlled')}${param('SubCategory', type)}${param('Category', 'Fire')}${param('ControlAuthority', 'SA Country Fire Service')}${param('Location', 'PUBLISHED SUBURB')}${param('CallToAction', 'Stay Informed')}<area><areaDesc>Published area</areaDesc>${area}</area></info></alert></content></entry>`;
+  `<entry><id>${id}-${sent}</id><updated>${sent}</updated><content type="text/xml"><alert xmlns="urn:oasis:names:tc:emergency:cap:1.2"><identifier>${id}-${sent}</identifier><sender>private@example.test</sender><sent>${sent}</sent><status>${status}</status><scope>${scope}</scope><msgType>${msg}</msgType><info><language>en-AU</language><event>Fire</event><effective>${sent}</effective>${expiry ? `<expires>${expiry}</expires>` : ''}<headline>Published warning title</headline><description>PRIVATE FREE TEXT</description><contact>private phone</contact>${level == null ? '' : param('WarningLevel', level)}${param('Status', 'Controlled')}${param('SubCategory', type)}${param('Category', 'Fire')}${param('ControlAuthority', 'SA Country Fire Service')}${param('Location', 'PUBLISHED SUBURB')}${param('CallToAction', 'Stay Informed')}<area><areaDesc>Published area</areaDesc>${area}</area></info></alert></content></entry>`;
 const feed = (body = '', updated = now) =>
   `<feed xmlns="http://www.w3.org/2005/Atom"><title>CFS public incidents</title><updated>${updated}</updated>${body}</feed>`;
 
@@ -151,3 +151,12 @@ void test('source collector accepts current CAP and ignores a mismatching VIC ad
     fetchSource('vic', async () => response(raw.slice(0, -8)), new Date(now)),
   );
 });
+
+void test('a CFS incident without WarningLevel is an incident, not a reason to drop all of SA (30-10)', () => {
+  const zonder = entry({ id: 'F2610300001', level: null, type: 'Grass Fire' });
+  const met = entry({ id: 'F2610300002', type: 'Structure Fire' });
+  const parsed = parseSA(feed(zonder + met), now);
+  assert.equal(parsed.incidents.length, 2);
+  assert.ok(parsed.incidents.every((i) => i.kind !== 'warning'));
+});
+
