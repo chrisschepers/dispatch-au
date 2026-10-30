@@ -317,3 +317,14 @@ void test('every source names the agency and links to its official .gov.au site'
   assert.equal(bronVan('vic')?.naam, 'VicEmergency');
   assert.equal(bronVan('au'), null);
 });
+
+// Kaarttijden uit de backend (30-10-2026): alleen bekende diensten, 1-168 uur.
+import { geldigeUren } from '../src/kaartTijden.ts';
+void test('kaarttijden uit de backend: geldige waarden over, rest blijft ingebouwd', () => {
+  const basis = { Fire: 72, Ambulance: 24 };
+  assert.deepEqual(geldigeUren({ Ambulance: 12, Onbekend: 5 }, basis), { Fire: 72, Ambulance: 12 });
+  assert.deepEqual(geldigeUren({ Fire: 0, Ambulance: 999 }, basis), basis);
+  assert.deepEqual(geldigeUren({ Fire: '48' }, basis), basis);
+  assert.deepEqual(geldigeUren(null, basis), basis);
+  assert.deepEqual(geldigeUren([1, 2], basis), basis);
+});

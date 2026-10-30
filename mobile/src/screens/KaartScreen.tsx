@@ -14,7 +14,8 @@ import { kaartVenster } from '../kaartVenster';
 import { vertaalMelding } from '../vertaal';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlek, bepaalPlekSnel } from '../locatie';
-import { ALLE_DIENSTKEYS, KAART_TERUGBLIK_UREN } from '../diensten';
+import { ALLE_DIENSTKEYS } from '../diensten';
+import { kaartTerugblikUren } from '../appConfig';
 import { kaartStijlVoor, appleKaartVoor } from '../kaartstijl';
 import { BrandendIcoon, BotsingIcoon, VlammenIcoon, type BrandendObject } from '../components/IncidentIcoon';
 
@@ -148,7 +149,7 @@ function KaartMetMeldingen() {
           lat: beeld.latitude, lon: beeld.longitude,
           radiusKm: nodig * 1.5,
           disciplines: ALLE_DIENSTKEYS,
-          terugblikUren: KAART_TERUGBLIK_UREN,
+          terugblikUren: kaartTerugblikUren(),
           limietPerVenster: 800,
           strikt: true,
         });

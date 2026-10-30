@@ -17,6 +17,7 @@ import { ThemaProvider, useThema } from './src/thema';
 import { type Palet } from './src/theme';
 import { vraagLocatiePermissie } from './src/locatie';
 import { laadInstallToken, zetNotificatieGedrag, meldInstallatie, registreerVoorPushMetInstellingen, werkPushFilterBij } from './src/push';
+import { laadAppConfig } from './src/appConfig';
 import BuurtScreen from './src/screens/BuurtScreen';
 import KaartScreen from './src/screens/KaartScreen';
 import DetailScreen from './src/screens/DetailScreen';
@@ -97,6 +98,8 @@ function Binnenkant() {
   useEffect(() => {
     laadInstallToken();
     zetNotificatieGedrag();
+    // Kaarttijden uit de backend; zonder verbinding de ingebouwde waarden.
+    laadAppConfig();
     // Installatie meteen aanmelden, ook zonder push. Anders telt het dashboard
     // alleen wie meldingen aanzet (zie meldInstallatie).
     meldInstallatie().catch(() => {});
