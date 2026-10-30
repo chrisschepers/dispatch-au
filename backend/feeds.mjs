@@ -8,6 +8,7 @@ import { parseNSW, parseQLD, normalizeVICIdentity } from './regional.mjs';
 import { normalizeFeed, categoryFor } from '../lib/incidents.ts';
 
 import { sources } from './source-config.mjs';
+import { skipCounter } from './skipped.mjs';
 export { sources } from './source-config.mjs';
 
 const text = (v, max = 300) =>
@@ -43,10 +44,14 @@ export function parseACT(xml, now = new Date().toISOString()) {
     : [];
   if (items.length > 15000) throw Error('ACT feed too large');
   const unique = new Map();
+  const skipped = skipCounter();
   for (const item of items) {
     const sourceId = text(item.cadid || item.guid, 160);
     const type = text(item.type);
-    if (!sourceId || !type) throw Error('Incomplete ACT incident');
+    if (!sourceId || !type) {
+      skipped.skip('Incomplete ACT incident');
+      continue;
+    }
     const description = text(item.description, 5000);
     const field = (label) =>
       text(
@@ -95,7 +100,9 @@ export function parseACT(xml, now = new Date().toISOString()) {
       officialUrl: sources.act.adviceUrl,
     });
   }
+  skipped.check(items.length, 'ACT');
   return {
+    skipped: skipped.summary(),
     incidents: [...unique.values()],
     warnings: [],
     fetchedAt: now,

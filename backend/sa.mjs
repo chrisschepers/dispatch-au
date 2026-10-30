@@ -8,6 +8,7 @@ import {
   pointOf,
 } from '../lib/incidents.ts';
 import { actDate } from './time.mjs';
+import { skipCounter } from './skipped.mjs';
 const clean = (v) =>
   typeof v === 'string'
     ? v
@@ -38,12 +39,19 @@ export function parseSA(xml, now = new Date().toISOString()) {
   const items = c.item ? (Array.isArray(c.item) ? c.item : [c.item]) : [];
   if (items.length > 15000) throw Error('SA source too large');
   const unique = new Map();
+  const skipped = skipCounter();
   for (const item of items) {
     const id = clean(item.identifier);
-    if (!/^\d+$/.test(id)) throw Error('Invalid SA ID');
+    if (!/^\d+$/.test(id)) {
+      skipped.skip('Invalid SA ID');
+      continue;
+    }
     const title = clean(item.title),
       m = title.match(/^(.*)\s+\(([^()]*)\)$/);
-    if (!m) throw Error('Invalid SA title');
+    if (!m) {
+      skipped.skip('Invalid SA title');
+      continue;
+    }
     const d = Object.fromEntries(
       String(item.description || '')
         .split(/<br\s*\/?\s*>/i)
@@ -81,7 +89,9 @@ export function parseSA(xml, now = new Date().toISOString()) {
       officialUrl: 'https://www.cfs.sa.gov.au/incidents/',
     });
   }
+  skipped.check(items.length, 'SA');
   return {
+    skipped: skipped.summary(),
     incidents: [...unique.values()],
     warnings: [],
     fetchedAt: now,
@@ -101,6 +111,7 @@ function parseCAPFeed(feed, now) {
   if (entries.length > 15000) throw Error('SA source too large');
   const unique = new Map();
   const cancelled = new Map();
+  const skipped = skipCounter();
   for (const entry of entries) {
     const alert = entry.content?.alert;
     if (
@@ -109,29 +120,41 @@ function parseCAPFeed(feed, now) {
       !dateISO(alert.sent) ||
       !alert.status ||
       !alert.scope
-    )
-      throw Error('Incomplete SA CAP alert');
+    ) {
+      skipped.skip('Incomplete SA CAP alert');
+      continue;
+    }
     // Test/exercise/private messages are not live public incidents.
     if (alert.status !== 'Actual' || alert.scope !== 'Public') continue;
     const sourceId = clean(alert.identifier).replace(
       /-\d{4}-\d{2}-\d{2}T.*$/,
       '',
     );
-    if (!/^[A-Za-z0-9_-]{1,160}$/.test(sourceId))
-      throw Error('Invalid SA CAP identity');
+    if (!/^[A-Za-z0-9_-]{1,160}$/.test(sourceId)) {
+      skipped.skip('Invalid SA CAP identity');
+      continue;
+    }
     if (alert.msgType === 'Cancel') {
       const sent = Date.parse(alert.sent);
       cancelled.set(sourceId, Math.max(cancelled.get(sourceId) || 0, sent));
       continue;
     }
-    if (!['Alert', 'Update'].includes(alert.msgType))
-      throw Error('Unsupported SA CAP message');
+    if (!['Alert', 'Update'].includes(alert.msgType)) {
+      skipped.skip('Unsupported SA CAP message');
+      continue;
+    }
     const info = list(alert.info).find(
       (i) => !i.language || /^en(?:-|$)/i.test(i.language),
     );
-    if (!info) throw Error('Missing SA CAP information');
+    if (!info) {
+      skipped.skip('Missing SA CAP information');
+      continue;
+    }
     const expires = info.expires ? dateISO(info.expires) : null;
-    if (info.expires && !expires) throw Error('Invalid SA CAP expiry');
+    if (info.expires && !expires) {
+      skipped.skip('Invalid SA CAP expiry');
+      continue;
+    }
     if (expires && Date.parse(expires) <= Date.parse(now)) continue;
     const parameters = Object.fromEntries(
       list(info.parameter).map((p) => [clean(p.valueName), clean(p.value)]),
@@ -144,7 +167,10 @@ function parseCAPFeed(feed, now) {
     const kind = warning ? 'warning' : 'incident';
     const title =
       parameters.SubCategory || parameters.Category || clean(info.event);
-    if (!title) throw Error('Missing SA CAP incident type');
+    if (!title) {
+      skipped.skip('Missing SA CAP incident type');
+      continue;
+    }
     const areas = list(info.area);
     const geometries = areas.flatMap((area) => {
       const shapes = list(area.polygon).map((poly) => {
@@ -222,7 +248,9 @@ function parseCAPFeed(feed, now) {
   const rows = [...unique.values()].filter(
     (row) => (cancelled.get(row.sourceId) || 0) < Date.parse(row.updated),
   );
+  skipped.check(entries.length, 'SA CAP');
   return {
+    skipped: skipped.summary(),
     incidents: rows.filter((r) => r.kind === 'incident'),
     warnings: rows.filter((r) => r.kind === 'warning'),
     fetchedAt: now,
