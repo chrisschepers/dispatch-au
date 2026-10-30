@@ -75,12 +75,28 @@ jobs:
           DISPATCH_KEYSTORE_PASSWORD: ${{ secrets.DISPATCH_KEYSTORE_PASSWORD }}
           DISPATCH_KEY_ALIAS: ${{ secrets.DISPATCH_KEY_ALIAS }}
           DISPATCH_KEY_PASSWORD: ${{ secrets.DISPATCH_KEY_PASSWORD }}
+          # Gradle evaluates app.config.ts again to embed the app config
+          # (Constants.expoConfig). Without the key here, build 4 had the key in
+          # its manifest but androidMapsConfigured=false, so it showed "The map
+          # is coming soon on Android" (30-10).
+          GOOGLE_MAPS_ANDROID_API_KEY: ${{ secrets.GOOGLE_MAPS_ANDROID_API_KEY }}
 
       # Play refuses a debug-signed bundle; fail here with a clear message.
       - name: Check the signature
         run: |
           AAB=android/app/build/outputs/bundle/release/app-release.aab
           keytool -printcert -jarfile "$AAB" | grep -q "CN=Android Debug" && { echo "::error::Bundle is debug-signed: check the DISPATCH_* secrets."; exit 1; } || true
+
+      # The map needs both: the key in the manifest (native SDK) and the flag in
+      # the embedded app config (the app decides whether to show it). Never print the key.
+      - name: Check the map config
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          rm -rf /tmp/aab && mkdir -p /tmp/aab
+          unzip -q -o "$AAB" 'base/assets/app.config' 'base/manifest/AndroidManifest.xml' -d /tmp/aab
+          node -e "const c=JSON.parse(require('fs').readFileSync('/tmp/aab/base/assets/app.config','utf8')); if (c.extra?.androidMapsConfigured!==true) { console.log('::error::androidMapsConfigured is not true in the embedded app config'); process.exit(1) }"
+          strings -n 4 /tmp/aab/base/manifest/AndroidManifest.xml | grep -q 'com.google.android.geo.API_KEY' || { echo "::error::Maps key missing from the manifest"; exit 1; }
+          echo "Map config OK"
 
       - name: Keep the bundle
         # A full Actions storage must never block the Play upload below.
