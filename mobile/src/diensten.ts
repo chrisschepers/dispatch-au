@@ -41,14 +41,18 @@ export const TERUGBLIK_UREN: Record<string, number> = {
   Other: 24 * 3,
 };
 
-/** The map shows every service with its own, shorter window. */
+/**
+ * The map shows every service with its own window. Since 30-10 the backend
+ * supplies these (/v1/config, see appConfig.ts); this is the fallback. Non-fire
+ * services stay longer than before (6-24 h), so the map shows more variety.
+ */
 export const KAART_TERUGBLIK_UREN: Record<string, number> = {
   Fire: 24 * 3,
   Storm: 24 * 3,
-  Hazmat: 24,
-  Rescue: 12,
-  Ambulance: 6,
-  Other: 24,
+  Hazmat: 48,
+  Other: 48,
+  Rescue: 24,
+  Ambulance: 24,
 };
 
 /** Alle diensten, voor de plekken die niet filteren (de kaart). */

@@ -4,6 +4,7 @@ import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { fetchSource, sources } from './feeds.mjs';
 import { skippedByRegion } from './skipped.mjs';
+import { appConfig } from './app-config.mjs';
 import { IncidentStore } from './store.mjs';
 import { PushService } from './push.mjs';
 import { renderSite } from './site.mjs';
@@ -90,6 +91,10 @@ export function createServer(store, push = null) {
       return send(405, { error: 'Method not allowed' });
     try {
       if (url.pathname === '/health') return send(200, { ok: true });
+      if (url.pathname === '/v1/config') {
+        res.setHeader('Cache-Control', 'public, max-age=300');
+        return send(200, appConfig());
+      }
       const site = renderSite(url.pathname, store);
       if (site) {
         res.setHeader('Content-Type', site.type);
