@@ -3,6 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { fetchSource, sources } from './feeds.mjs';
+import { skippedByRegion } from './skipped.mjs';
 import { IncidentStore } from './store.mjs';
 import { PushService } from './push.mjs';
 import { renderSite } from './site.mjs';
@@ -98,9 +99,11 @@ export function createServer(store, push = null) {
       }
       if (url.pathname === '/v1/status' || url.pathname === '/health/ready') {
         const checkedAt = new Date().toISOString();
-        const health = Object.keys(sources).map((r) =>
-          store.health(r, Date.parse(checkedAt)),
-        );
+        const health = Object.keys(sources).map((r) => ({
+          ...store.health(r, Date.parse(checkedAt)),
+          // Records the last snapshot skipped instead of failing the state.
+          skipped: skippedByRegion.get(r) ?? null,
+        }));
         const ok = health.every((s) => !s.stale);
         res.setHeader('Cache-Control', 'no-store');
         return send(url.pathname === '/health/ready' && !ok ? 503 : 200, {
@@ -141,6 +144,10 @@ async function main() {
   const collect = async (region) => {
     try {
       const feed = await fetchSource(region);
+      skippedByRegion.set(
+        region,
+        feed.skipped ? { ...feed.skipped, at: new Date().toISOString() } : null,
+      );
       if (!stopping) {
         const accepted = store.ingest(region, feed);
         // Alerts after a successful ingest. A push failure must never stop
@@ -162,6 +169,7 @@ async function main() {
             accepted,
             incidents: feed.incidents.length,
             warnings: feed.warnings.length,
+            skipped: feed.skipped?.count || 0,
             at: new Date().toISOString(),
           }),
         );

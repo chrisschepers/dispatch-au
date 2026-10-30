@@ -5,6 +5,7 @@ import {
   categoryFor,
   dateISO,
 } from '../lib/incidents.ts';
+import { skipCounter } from './skipped.mjs';
 const clean = (v) =>
   typeof v === 'string'
     ? v
@@ -75,16 +76,24 @@ function base(region, id, geometry) {
 }
 export function parseNSW(raw, now = new Date().toISOString()) {
   const unique = new Map();
-  for (const f of features(raw)) {
+  const skipped = skipCounter();
+  const list = features(raw);
+  for (const f of list) {
     const p = f.properties;
     const id =
       typeof p?.guid === 'string'
         ? p.guid.match(/\/incidents\/(\d+)\/?$/)?.[1]
         : null;
-    if (!id) throw Error('Missing NSW incident ID');
+    if (!id) {
+      skipped.skip('Missing NSW incident ID');
+      continue;
+    }
     const d = fields(p.description),
       type = d.TYPE;
-    if (!type) throw Error('Missing NSW incident type');
+    if (!type) {
+      skipped.skip('Missing NSW incident type');
+      continue;
+    }
     const level = ['Advice', 'Watch and Act', 'Emergency Warning'].includes(
       p.category,
     )
@@ -109,7 +118,9 @@ export function parseNSW(raw, now = new Date().toISOString()) {
     // reinterpret it as a newly reported incident. Preserve first-seen instead.
     unique.set(row.id, row);
   }
+  skipped.check(list.length, 'NSW');
   return {
+    skipped: skipped.summary(),
     incidents: [...unique.values()],
     warnings: [...unique.values()]
       .filter((r) => ['Watch and Act', 'Emergency Warning'].includes(r.level))
@@ -131,10 +142,15 @@ export function parseQLD(raw, now = new Date().toISOString()) {
     warnings = [];
   let published = null;
   const seen = new Set();
-  for (const f of features(raw)) {
+  const skipped = skipCounter();
+  const list = features(raw);
+  for (const f of list) {
     const p = f.properties,
       id = clean(p?.UniqueID);
-    if (!id || seen.has(id)) throw Error('Missing or duplicate Queensland ID');
+    if (!id || seen.has(id)) {
+      skipped.skip(id ? 'Duplicate Queensland ID' : 'Missing Queensland ID');
+      continue;
+    }
     seen.add(id);
     const issued = dateISO(p.PublishDateLocal_ISO);
     if (issued && (!published || issued > published)) published = issued;
@@ -176,7 +192,9 @@ export function parseQLD(raw, now = new Date().toISOString()) {
       incidents.push(row);
     }
   }
+  skipped.check(list.length, 'Queensland');
   return {
+    skipped: skipped.summary(),
     incidents,
     warnings,
     fetchedAt: now,

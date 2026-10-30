@@ -160,3 +160,12 @@ void test('a CFS incident without WarningLevel is an incident, not a reason to d
   assert.ok(parsed.incidents.every((i) => i.kind !== 'warning'));
 });
 
+
+void test('SA: an unsupported CAP message is skipped instead of failing the feed (30-10)', () => {
+  const goed = entry({ id: 'F2610300003' });
+  const vreemd = entry({ id: 'F2610300004', msg: 'Ack' });
+  const parsed = parseSA(feed(goed + vreemd), now);
+  assert.equal(parsed.incidents.length, 1);
+  assert.deepEqual(parsed.skipped, { count: 1, reasons: { 'Unsupported SA CAP message': 1 } });
+  assert.throws(() => parseSA(feed(vreemd), now), /Every SA CAP record rejected/);
+});
