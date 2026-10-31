@@ -5,17 +5,22 @@ import { ICONEN } from '../src/iconen.ts';
 
 const lees = (pad) => readFileSync(new URL(pad, import.meta.url), 'utf8');
 
-// Per SF-naam de eerste SF Symbols-versie, uit de typen van
-// sf-symbols-typescript (elke versie somt alleen zijn nieuwe namen op).
+// Per SF-naam de eerste SF Symbols-versie en de iOS-versie die hem
+// meebrengt, uit de typen van sf-symbols-typescript: elke versie somt alleen
+// zijn nieuwe namen op, met erboven een kop als ' * iOS v16.1+,'.
 function sfVersies() {
   const versie = new Map();
   let huidig = null;
+  let ios = null;
+  let laatsteIos = null;
   for (const regel of lees('../node_modules/sf-symbols-typescript/dist/index.d.ts').split('\n')) {
+    const iosKop = regel.match(/^\s*\*\s*iOS v(\d+)\.(\d+)\+/);
+    if (iosKop) { laatsteIos = Number(iosKop[1]) * 100 + Number(iosKop[2]); continue; }
     const kop = regel.match(/^export type SFSymbols(\d+)_(\d+)\s*=/);
-    if (kop) { huidig = Number(kop[1]) + Number(kop[2]) / 10; continue; }
+    if (kop) { huidig = Number(kop[1]) + Number(kop[2]) / 10; ios = laatsteIos; continue; }
     if (regel.startsWith('export ')) { huidig = null; continue; }
     const naam = regel.match(/^\s*\|\s*'([^']+)'/);
-    if (naam && huidig != null && !versie.has(naam[1])) versie.set(naam[1], huidig);
+    if (naam && huidig != null && !versie.has(naam[1])) versie.set(naam[1], { sf: huidig, ios });
   }
   return versie;
 }
@@ -23,20 +28,24 @@ function sfVersies() {
 const SF = sfVersies();
 const MDI = JSON.parse(lees('../node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/MaterialCommunityIcons.json'));
 
-// De app draait vanaf iOS 16.4; SF Symbols 4.0 hoort bij iOS 16.0.
+// De app draait vanaf iOS 16.4: alles tot en met SF Symbols 4.2 (iOS 16.4)
+// mag, niets wat pas met iOS 17 of later komt.
+const MIN_IOS = 1604;
 function sfOk(naam) {
   const v = SF.get(naam);
   assert.ok(v != null, `${naam} is no SF Symbol`);
-  assert.ok(v <= 4.0, `${naam} needs SF Symbols ${v}, newer than 4.0`);
+  assert.ok(v.ios != null && v.ios <= MIN_IOS, `${naam} needs SF Symbols ${v.sf} (iOS ${v.ios}), newer than iOS 16.4`);
 }
 
-test('the version table knows old and new symbols', () => {
-  assert.equal(SF.get('mappin'), 1.0);
-  assert.equal(SF.get('flag.checkered'), 4.0);
-  assert.equal(SF.get('flask'), 5.0);
+test('the version table knows old and new symbols and their iOS version', () => {
+  assert.deepEqual(SF.get('mappin'), { sf: 1.0, ios: 1300 });
+  assert.deepEqual(SF.get('flag.checkered'), { sf: 4.0, ios: 1600 });
+  assert.deepEqual(SF.get('hazardsign.fill'), { sf: 4.1, ios: 1601 });
+  assert.deepEqual(SF.get('flask'), { sf: 5.0, ios: 1700 });
+  assert.throws(() => sfOk('flask'));
 });
 
-test('every chrome icon has an SF Symbol from SF 4.0 or earlier', () => {
+test('every chrome icon has an SF Symbol that ships with iOS 16.4', () => {
   for (const { ios } of Object.values(ICONEN)) sfOk(ios);
 });
 
@@ -46,7 +55,7 @@ test('every chrome icon has an Android name in the MDI font', () => {
   }
 });
 
-test('service SF Symbols are SF 4.0 or earlier and MDI names exist', () => {
+test('service SF Symbols ship with iOS 16.4 and MDI names exist', () => {
   // diensten.ts importeert het thema (react-native), dus de bron lezen.
   const bron = lees('../src/diensten.ts');
   const sf = [...bron.matchAll(/\bsf: '([^']+)'/g)].map((m) => m[1]);

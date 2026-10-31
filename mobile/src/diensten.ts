@@ -28,15 +28,16 @@ export interface Dienst {
  *
  * `sf` is alleen voor iOS-chrome: de dienst-tegeltjes in Instellingen en de
  * chips boven de lijst op iOS (DienstIcoon in components/Icoon). Allemaal uit
- * SF Symbols 4.0 of eerder; Android gebruikt daar gewoon `icoon`. Hazmat
- * krijgt een reageerbuis: het gevarensymbool (hazardsign) kwam pas in 4.1.
+ * SF Symbols 4.2 of eerder, de set van iOS 16.4 (tests/iconen.test.mjs);
+ * Android gebruikt daar gewoon `icoon`. Hazmat krijgt het gevarenbord en
+ * Rescue een auto van opzij (beide SF Symbols 4.1, iOS 16.1).
  */
 export const DIENSTEN: Dienst[] = [
   { key: 'Fire', label: 'Fire', volleNaam: 'Fire and bushfire', icoon: 'fire-truck', sf: 'flame.fill', kleur: C.brandweer },
   { key: 'Ambulance', label: 'Ambulance', volleNaam: 'Ambulance (ACT)', icoon: 'ambulance', sf: 'cross.case.fill', kleur: C.ambulance },
-  { key: 'Rescue', label: 'Rescue', volleNaam: 'Rescue and road crash', icoon: 'car-emergency', sf: 'car.fill', kleur: C.politie },
+  { key: 'Rescue', label: 'Rescue', volleNaam: 'Rescue and road crash', icoon: 'car-emergency', sf: 'car.side.fill', kleur: C.politie },
   { key: 'Storm', label: 'Storm & flood', volleNaam: 'Storm, flood and SES', icoon: 'weather-pouring', sf: 'cloud.heavyrain.fill', kleur: C.knrm },
-  { key: 'Hazmat', label: 'Hazmat', volleNaam: 'Hazardous materials', icoon: 'biohazard', sf: 'testtube.2', kleur: C.mmt },
+  { key: 'Hazmat', label: 'Hazmat', volleNaam: 'Hazardous materials', icoon: 'biohazard', sf: 'hazardsign.fill', kleur: C.mmt },
   { key: 'Other', label: 'Other', volleNaam: 'Other incidents', icoon: 'alert-circle-outline', sf: 'exclamationmark.circle.fill', kleur: C.dienstOnbekend },
 ];
 

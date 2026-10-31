@@ -12,9 +12,9 @@
  *   Hieronder staat alleen een type-import; Babel haalt die weg, dus Android
  *   bundelt het pakket niet.
  *
- * Elke SF-naam bestaat in SF Symbols 4.0 of eerder (iOS 16, de app draait
- * vanaf 16.4); tests/iconen.test.mjs controleert dat, en ook dat elke
- * Android-naam in het MDI-font zit. Dus geen namen uit SF 5 of later, zoals
+ * Elke SF-naam bestaat in SF Symbols 4.2 of eerder (de set van iOS 16.4,
+ * waar de app vanaf draait); tests/iconen.test.mjs controleert dat, en ook
+ * dat elke Android-naam in het MDI-font zit. Dus geen namen uit SF 5 of later, zoals
  * dot.scope, mappin.and.ellipse.circle.fill of flask.
  */
 import type React from 'react';
