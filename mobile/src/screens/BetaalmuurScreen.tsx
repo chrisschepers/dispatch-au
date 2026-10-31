@@ -104,7 +104,7 @@ export default function BetaalmuurScreen() {
       knopUit={toegang === 'wacht'}
       onder={
         <View style={styles.onder}>
-          <Drukbaar onPress={herstelNu} disabled={bezig} trillen={false}>
+          <Drukbaar style={styles.tekstKnop} onPress={herstelNu} disabled={bezig} trillen={false}>
             <Text style={styles.herstel}>Restore purchase</Text>
           </Drukbaar>
           <Text style={styles.klein}>
@@ -114,13 +114,13 @@ export default function BetaalmuurScreen() {
             The subscription renews every year until you cancel it in your {account} settings.
           </Text>
           <View style={styles.links}>
-            <Drukbaar onPress={() => Linking.openURL(beheerUrl).catch(() => {})} trillen={false}>
+            <Drukbaar style={styles.tekstKnop} rol="link" onPress={() => Linking.openURL(beheerUrl).catch(() => {})} trillen={false}>
               <Text style={styles.link}>Manage</Text>
             </Drukbaar>
-            <Drukbaar onPress={() => Linking.openURL(VOORWAARDEN).catch(() => {})} trillen={false}>
+            <Drukbaar style={styles.tekstKnop} rol="link" onPress={() => Linking.openURL(VOORWAARDEN).catch(() => {})} trillen={false}>
               <Text style={styles.link}>Terms of Use</Text>
             </Drukbaar>
-            <Drukbaar onPress={() => Linking.openURL(PRIVACY).catch(() => {})} trillen={false}>
+            <Drukbaar style={styles.tekstKnop} rol="link" onPress={() => Linking.openURL(PRIVACY).catch(() => {})} trillen={false}>
               <Text style={styles.link}>Privacy</Text>
             </Drukbaar>
           </View>
@@ -133,7 +133,7 @@ export default function BetaalmuurScreen() {
 function Regel({ icoon, tekst }: { icoon: IcoonNaam; tekst: string }) {
   return (
     <View style={styles.regel}>
-      <Icoon naam={icoon} grootte={18} kleur="#ffb340" />
+      <Icoon naam={icoon} grootte={18} kleur={INTRO.waarschuwing} />
       <Text style={styles.regelTekst}>{tekst}</Text>
     </View>
   );
@@ -145,12 +145,18 @@ const styles = StyleSheet.create({
   tekst: { fontSize: 15.5, lineHeight: 22, color: INTRO.zacht, textAlign: 'center', marginTop: 6 },
   regel: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12,
-    backgroundColor: '#1c1c1e', borderRadius: 12, padding: 12,
+    backgroundColor: INTRO.vlak, borderRadius: 12, padding: 12,
   },
   regelTekst: { flex: 1, fontSize: 14, lineHeight: 19, color: INTRO.tekst },
-  onder: { alignItems: 'center', gap: 8, marginTop: -4 },
-  herstel: { fontSize: 15, color: INTRO.tekst, paddingVertical: 4 },
-  klein: { fontSize: 11.5, lineHeight: 16, color: '#8e8e93', textAlign: 'center' },
-  links: { flexDirection: 'row', gap: 20 },
-  link: { fontSize: 12.5, color: '#c7c7cc', textDecorationLine: 'underline' },
+  // Kleinere tussenruimte: de tekstknoppen hebben nu zelf ruimte om hun tekst.
+  onder: { alignItems: 'center', gap: 4, marginTop: -4 },
+  // Tekstknop met een echte raakzone: met de hitSlop van Drukbaar minstens
+  // 44 pt / 48 dp hoog. De ronding staat op de Drukbaar zelf, zodat de
+  // Android-drukstaat de pilvorm van een M3-tekstknop krijgt.
+  tekstKnop: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 20 },
+  herstel: { fontSize: 15, color: INTRO.tekst },
+  klein: { fontSize: 12, lineHeight: 16, color: INTRO.klein, textAlign: 'center' },
+  // Past de rij niet (grote tekst), dan loopt hij door op een volgende regel.
+  links: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', rowGap: 4, columnGap: 8 },
+  link: { fontSize: 12.5, color: INTRO.link, textDecorationLine: 'underline' },
 });

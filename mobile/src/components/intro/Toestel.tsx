@@ -18,10 +18,15 @@ export const SCHERM_B = 320;
 export const SCHERM_H = 693;
 const RAND = 7;
 
-/** Hoe breed mag het toestel zijn in een vak van b×h punten. */
+/**
+ * Hoe breed mag het toestel zijn in een vak van b×h punten. Nooit hoger dan
+ * het vak: de oude ondergrens van 120 breed maakte hem in een laag vak
+ * hoger dan dat vak, en dan schoof hij over de titel. IntroSchil toont hem
+ * pas vanaf een vak van 140 hoog.
+ */
 export function toestelBreedte(b: number, h: number): number {
   const opHoogte = (h - 2 * RAND) * (SCHERM_B / SCHERM_H) + 2 * RAND;
-  return Math.max(120, Math.min(b * 0.72, opHoogte, 340));
+  return Math.min(b * 0.72, opHoogte, 340);
 }
 
 export function Toestel({ breedte, children, donker = false }: {

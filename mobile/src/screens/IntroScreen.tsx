@@ -1,6 +1,6 @@
 /**
  * Startscherm (wens Chris 27-09, naar het voorbeeld van Alarmeringen P2000):
- * zeven stappen, elk met een telefoontje dat laat zien wat je krijgt. Na de
+ * zes stappen, elk met een telefoontje dat laat zien wat je krijgt. Na de
  * laatste stap volgt de proefperiode (BetaalmuurScreen), in dezelfde opmaak.
  *
  * Volgorde met een reden:
@@ -13,9 +13,13 @@
  * 4. als laatste "klaar", zodat wie de proef start een werkende app heeft.
  *
  * Bewust géén vegen: twee stappen zijn vragen, en die beantwoord je met de
- * knop, niet per ongeluk met je duim. Terug kan altijd met de knop linksboven.
+ * knop, niet per ongeluk met je duim. Terug kan met de knop linksboven
+ * (behalve op de toestemmingsstappen, zie onder) en op Android met de
+ * systeemterug. De twee rondleidingsstappen uit punt 3 hebben rechtsboven
+ * "Skip", naar "klaar": die houdt de 000-melding en leidt naar de proef.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { BackHandler, Platform } from 'react-native';
 import { useInstellingen } from '../instellingen';
 import { vraagLocatiePermissie } from '../locatie';
 import { registreerVoorPushMetInstellingen } from '../push';
@@ -33,6 +37,8 @@ interface Stap {
   scherm: React.ReactNode;
   donker?: boolean;
   actie?: 'locatie' | 'meldingen';
+  /** Rondleiding, geen vraag: mag je overslaan (Apple HIG: onboarding is overslaanbaar). */
+  overslaanbaar?: boolean;
 }
 
 const STAPPEN: Stap[] = [
@@ -62,12 +68,14 @@ const STAPPEN: Stap[] = [
     tekst: 'Choose what you follow, each with its own radius: a bushfire 50 km away matters, a road crash usually only nearby.',
     knop: 'Continue',
     scherm: <SchermDiensten />,
+    overslaanbaar: true,
   },
   {
     titel: 'Everything about an incident',
     tekst: 'Map, Look Around, directions, the agency, warning level and timeline.',
     knop: 'Continue',
     scherm: <SchermDetail />,
+    overslaanbaar: true,
   },
   {
     titel: 'Ready to go',
@@ -82,6 +90,22 @@ export default function IntroScreen({ klaar }: Props) {
   const [stap, setStap] = useState(0);
   const [bezig, setBezig] = useState(false);
   const huidig = STAPPEN[stap]!;
+
+  // Android: de systeemterug gaat een stap terug en sluit de app pas op de
+  // eerste stap (tot nu toe sloot hij hem op elke stap). Ook op de
+  // toestemmingsstappen: "geen weg terug vóór de systeemvraag" is Apples
+  // 5.1.1(iv) en geldt alleen voor iOS. Terwijl een vraag of de aanmelding
+  // loopt (bezig) slikken we hem in, zodat die niet half wordt afgebroken.
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (bezig) return true;
+      if (stap === 0) return false;
+      setStap(stap - 1);
+      return true;
+    });
+    return () => sub.remove();
+  }, [stap, bezig]);
 
   async function verder() {
     if (huidig.actie === 'locatie') {
@@ -117,6 +141,9 @@ export default function IntroScreen({ klaar }: Props) {
       // Index 02-07). The button always leads to the prompt, labelled
       // "Continue" rather than "Allow", which Apple also flags.
       onTerug={stap > 0 && !huidig.actie ? () => setStap(stap - 1) : undefined}
+      // Skip landt op "klaar", niet meteen in de app: daar staan de
+      // 000-melding en de weg naar de proefperiode.
+      onOverslaan={huidig.overslaanbaar ? () => setStap(STAPPEN.length - 1) : undefined}
     />
   );
 }
