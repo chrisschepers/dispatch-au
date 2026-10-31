@@ -17,6 +17,11 @@
  *    zodat gevoel en beeld op dezelfde frame vallen. Standaard uit: een tik
  *    op elke rij is ruis, en dan zet je trillen in je hele telefoon uit.
  *  - Bij "verminder beweging" vervalt het schalen; de tik blijft.
+ *  - Een rij licht pas na 100 ms op, zoals UIScrollView zijn aanraking even
+ *    vasthoudt (delaysContentTouches). Wie op een rij begint te scrollen,
+ *    ziet hem dan niet grijs flitsen. Een snelle tik telt gewoon: Pressability
+ *    geeft bij loslaten binnen die tijd alsnog onPressIn, onPress en
+ *    onPressOut. Knoppen reageren wel meteen.
  *
  * Android, volgens Material 3 (R7.5): een rimpel of drukstaat over het
  * element, geen schalen en geen trilling (Material-bediening trilt niet bij
@@ -142,6 +147,7 @@ export function Drukbaar({
     return (
       <AnimatedPressable
         {...gedeeld}
+        unstable_pressDelay={markeer ? 100 : undefined}
         onPressIn={() => {
           if (markeer) setIngedrukt(true);
           else naar(schaal);

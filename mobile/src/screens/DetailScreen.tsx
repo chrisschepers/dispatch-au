@@ -3,7 +3,7 @@
  * voertuig, plus de oorspronkelijke meldtekst voor wie het naadje wil weten.
  * Codes vertalen we; we verbergen ze niet voor wie doorleest.
  */
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Share, Image, Linking, Platform, Pressable, useWindowDimensions,
 } from 'react-native';
@@ -98,7 +98,17 @@ export default function DetailScreen() {
   // Terug uit een melding: het moment om eventueel om een recensie te vragen
   // (recensie.ts beslist of het er de tijd voor is). Kort wachten zodat de
   // terug-animatie eerst klaar is.
-  useEffect(() => () => { setTimeout(() => { void misschienVragen(); }, 700); }, []);
+  // Niet als je via het kaartje weggaat: in de kaartstapel haalt dat Detail
+  // van de stapel (pop terug naar de kaart), en dan kwam de vraag over de
+  // kaart heen die je net opende.
+  // In de stapel van Buurt of Zoeken blijft Detail staan (alleen het tabblad
+  // wisselt); kom je terug, dan telt een gewone terug weer.
+  const naarKaart = useRef(false);
+  useEffect(() => navigation.addListener('focus', () => { naarKaart.current = false; }), [navigation]);
+  useEffect(() => () => {
+    if (naarKaart.current) return;
+    setTimeout(() => { void misschienVragen(); }, 700);
+  }, []);
 
   useEffect(() => {
     bepaalPlekSnel(inst).then((p) => { if (p && p.bron !== 'geen' && p.bron !== 'buiten-au') setMijnPlek(p); }).catch(() => {});
@@ -252,9 +262,12 @@ export default function DetailScreen() {
           // pop: in de kaartstapel terug naar de bestaande kaart in plaats
           // van een tweede kaart erbovenop. t: ook bij dezelfde plek als de
           // vorige keer opnieuw inzoomen.
-          onPress={() => navigation.navigate('KaartTab', {
-            screen: 'Kaart', params: { lat, lon, id: melding.id, t: Date.now() }, pop: true,
-          })}
+          onPress={() => {
+            naarKaart.current = true;
+            navigation.navigate('KaartTab', {
+              screen: 'Kaart', params: { lat, lon, id: melding.id, t: Date.now() }, pop: true,
+            });
+          }}
         >
           <MiniKaart lat={lat} lon={lon} kleur={v.kleur} />
           {/* Straatbeeld linksboven, zoals in de grote app. Alleen als de pin

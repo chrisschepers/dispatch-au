@@ -10,7 +10,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Linking, Platform, Alert, Share, ToastAndroid, PlatformColor,
+  View, Text, StyleSheet, ScrollView, Linking, Platform, Alert, Share, ToastAndroid, PlatformColor, Keyboard,
   type ColorValue,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -184,6 +184,18 @@ export default function InstellingenScreen() {
   const [gebruikerId, setGebruikerId] = useState<string | null>(null);
   useEffect(() => { huidigeGebruiker().then(setGebruikerId).catch(() => {}); }, [inst.notificaties]);
 
+  // Android: de app loopt van rand tot rand, dus het venster krimpt niet
+  // voor het toetsenbord en automaticallyAdjustKeyboardInsets is alleen iOS.
+  // Zonder ruimte onderin bleven PlaatsZoeker en zijn suggesties onder het
+  // toetsenbord liggen. Zelfde aanpak als ZoekScreen.
+  const [toetsenbord, setToetsenbord] = useState(0);
+  useEffect(() => {
+    if (isIOS) return;
+    const aan = Keyboard.addListener('keyboardDidShow', (e) => setToetsenbord(e.endCoordinates.height));
+    const uit = Keyboard.addListener('keyboardDidHide', () => setToetsenbord(0));
+    return () => { aan.remove(); uit.remove(); };
+  }, []);
+
   /** Welke dienst zijn schuif open heeft, en de waarde tijdens het slepen. */
   const [open_, setOpen] = useState<string | null>(null);
   const [live, setLive] = useState<Record<string, number>>({});
@@ -215,7 +227,10 @@ export default function InstellingenScreen() {
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
-      contentContainerStyle={[styles.inhoud, kolom, { paddingHorizontal: marge }]}
+      contentContainerStyle={[
+        styles.inhoud, kolom, { paddingHorizontal: marge },
+        toetsenbord > 0 && { paddingBottom: 32 + toetsenbord },
+      ]}
     >
       {/* Opzet gelijk aan het voorbeeld op het startscherm (wens Chris
           27-09): elke rij een icoon (op iOS in een gekleurd tegeltje), een
