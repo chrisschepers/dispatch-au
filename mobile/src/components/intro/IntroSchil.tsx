@@ -16,9 +16,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { mindeBeweging } from '../../theme';
 import { Drukbaar } from '../Drukbaar';
+import { Icoon } from '../Icoon';
 import { Toestel, toestelBreedte } from './Toestel';
 
 export const INTRO = {
@@ -78,7 +78,8 @@ export function IntroSchil({
       <View style={styles.kop}>
         {onTerug ? (
           <Drukbaar style={styles.terug} onPress={onTerug} label="Back" trillen={false} disabled={bezig}>
-            <MaterialCommunityIcons name="chevron-left" size={28} color={INTRO.tekst} />
+            {/* iOS een chevron, Android de Material-pijl naar links. */}
+            <Icoon naam="terug" grootte={24} kleur={INTRO.tekst} gewicht="semibold" />
           </Drukbaar>
         ) : null}
       </View>

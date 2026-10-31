@@ -10,9 +10,9 @@
  */
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { PALET_LICHT } from '../../theme';
+import { PALET_LICHT, isIOS } from '../../theme';
 import { VastThema } from '../../thema';
+import { Icoon } from '../Icoon';
 
 export const SCHERM_B = 320;
 export const SCHERM_H = 693;
@@ -60,9 +60,10 @@ function StatusBalk({ wit }: { wit: boolean }) {
       <Text style={[styles.klok, { color: kleur }]}>9:41</Text>
       <View style={styles.eiland} />
       <View style={styles.icoontjes}>
-        <MaterialCommunityIcons name="signal-cellular-3" size={14} color={kleur} />
-        <MaterialCommunityIcons name="wifi" size={14} color={kleur} />
-        <MaterialCommunityIcons name="battery-high" size={17} color={kleur} style={{ transform: [{ rotate: '90deg' }] }} />
+        <Icoon naam="signaal" grootte={14} kleur={kleur} />
+        <Icoon naam="wifi" grootte={14} kleur={kleur} />
+        {/* De MDI-batterij staat rechtop; SF battery.100 ligt al. */}
+        <Icoon naam="batterij" grootte={17} kleur={kleur} style={isIOS ? undefined : { transform: [{ rotate: '90deg' }] }} />
       </View>
     </View>
   );

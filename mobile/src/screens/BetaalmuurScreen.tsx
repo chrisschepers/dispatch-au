@@ -17,10 +17,11 @@
  */
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, Linking, Platform } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAbonnement } from '../abonnement';
 import { periodeTekst, perPeriode } from '../abonnementRegels';
 import { Drukbaar } from '../components/Drukbaar';
+import { Icoon } from '../components/Icoon';
+import type { IcoonNaam } from '../iconen';
 import { IntroSchil, INTRO } from '../components/intro/IntroSchil';
 import { SchermProef } from '../components/intro/Schermpjes';
 import { toonRevenueCatPaywall } from '../aankopen';
@@ -91,9 +92,9 @@ export default function BetaalmuurScreen() {
       extra={
         <>
           {toegang === 'wacht' && (
-            <Regel icoon="clock-outline" tekst={`${Winkel} is still processing your payment. The app opens as soon as it is done.`} />
+            <Regel icoon="wacht" tekst={`${Winkel} is still processing your payment. The app opens as soon as it is done.`} />
           )}
-          {fout ? <Regel icoon="alert-circle-outline" tekst={fout} /> : null}
+          {fout ? <Regel icoon="fout" tekst={fout} /> : null}
         </>
       }
       knop={knop}
@@ -128,10 +129,10 @@ export default function BetaalmuurScreen() {
   );
 }
 
-function Regel({ icoon, tekst }: { icoon: string; tekst: string }) {
+function Regel({ icoon, tekst }: { icoon: IcoonNaam; tekst: string }) {
   return (
     <View style={styles.regel}>
-      <MaterialCommunityIcons name={icoon as never} size={18} color="#ffb340" />
+      <Icoon naam={icoon} grootte={18} kleur="#ffb340" />
       <Text style={styles.regelTekst}>{tekst}</Text>
     </View>
   );

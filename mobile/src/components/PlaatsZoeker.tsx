@@ -12,10 +12,10 @@ import React, { useRef, useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ActivityIndicator, Keyboard,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { T, type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
 import { Drukbaar } from './Drukbaar';
+import { Icoon } from './Icoon';
 
 export interface PlaatsKeuze { naam: string; lat: number; lon: number }
 
@@ -90,13 +90,13 @@ export function PlaatsZoeker({
       {waarde ? (
         // Gekozen plaats: tik erop om hem te wissen en opnieuw te zoeken.
         <Drukbaar style={styles.gekozen} onPress={() => { onWis(); setTekst(''); setSuggesties([]); }}>
-          <MaterialCommunityIcons name="map-marker" size={16} color={C.accent} />
+          <Icoon naam="plaats" grootte={16} kleur={C.accent} />
           <Text style={styles.gekozenTekst}>{waarde}</Text>
-          <MaterialCommunityIcons name="close-circle" size={17} color={C.textMuted} />
+          <Icoon naam="wissen" grootte={17} kleur={C.textMuted} />
         </Drukbaar>
       ) : (
         <View style={styles.invoerRij}>
-          <MaterialCommunityIcons name="map-marker-outline" size={18} color={C.textMuted} />
+          <Icoon naam="plaatsZoeken" grootte={18} kleur={C.textMuted} />
           <TextInput
             style={styles.invoer}
             value={tekst}
@@ -125,7 +125,7 @@ export function PlaatsZoeker({
                 Keyboard.dismiss();
               }}
             >
-              <MaterialCommunityIcons name="map-marker" size={16} color={C.textMuted} />
+              <Icoon naam="plaats" grootte={16} kleur={C.textMuted} />
               <Text style={styles.suggestieTekst}>{s.naam}</Text>
             </Drukbaar>
           ))}

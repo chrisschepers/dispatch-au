@@ -13,6 +13,7 @@ import {
 import { T, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from './Drukbaar';
+import { Icoon } from './Icoon';
 
 interface Props {
   m: Melding;
@@ -72,7 +73,7 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
             18-08). Alleen tonen als het speelt, dus geen vast label. */}
         {v.opschaling ? (
           <View style={styles.opschaling}>
-            <MaterialCommunityIcons name="arrow-up-bold" size={11} color={C.accent} />
+            <Icoon naam="opschaling" grootte={11} kleur={C.accent} gewicht="bold" />
             <Text style={styles.opschalingTekst}>{v.opschaling}</Text>
           </View>
         ) : null}
@@ -87,7 +88,7 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
       <View style={styles.rechts}>
         <Text style={styles.tijd}>{tijd}</Text>
         {km ? <Text style={styles.afstand}>{km}</Text> : null}
-        <MaterialCommunityIcons name="chevron-right" size={18} color={C.textMuted} />
+        <Icoon naam="chevron" grootte={18} kleur={C.textMuted} gewicht="semibold" />
       </View>
     </Drukbaar>
   );

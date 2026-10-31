@@ -10,7 +10,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useInstellingen } from '../instellingen';
 import { vraagLocatiePermissie } from '../locatie';
@@ -21,11 +20,14 @@ import { T, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import {
   DIENSTEN, wisselDienst, straalVoor, straalTekst, MAX_STRAAL_KM, LANDELIJK_KM, LANDELIJK_MOGELIJK,
+  type Dienst,
 } from '../diensten';
 import { StraalSchuif } from '../components/StraalSchuif';
 import { Drukbaar } from '../components/Drukbaar';
 import { PlaatsZoeker } from '../components/PlaatsZoeker';
 import { Schakelaar } from '../components/Schakelaar';
+import { Icoon, DienstIcoon } from '../components/Icoon';
+import type { IcoonNaam } from '../iconen';
 import { openRecensiePagina } from '../recensie';
 import { BRONNEN } from '../bronnen';
 
@@ -186,7 +188,7 @@ export default function InstellingenScreen() {
         <Text style={styles.groepKop}>Alerts</Text>
         <View style={kaartStijl}>
           <Rij
-            icoon="bell-ring" tegelKleur={C.accent}
+            icoon="meldingen" tegelKleur={C.accent}
             titel="Receive alerts"
             sub={inst.notificaties
               ? 'An alert when something happens near you'
@@ -199,7 +201,7 @@ export default function InstellingenScreen() {
                   Chris miste een ambulance op 4 km omdat die als A2 binnenkwam
                   (15-08). Zelfde woorden als in de lijst. */}
               <Rij
-                icoon="lightning-bolt" tegelKleur="#ff9500" scheiding
+                icoon="alleenWaarschuwingen" tegelKleur="#ff9500" scheiding
                 titel="Warnings only"
                 sub="Only Advice, Watch and Act or Emergency Warning"
                 rechts={<Schakelaar value={inst.alleenGroot} onValueChange={(v) => zet('alleenGroot', v)} />}
@@ -211,7 +213,7 @@ export default function InstellingenScreen() {
               ook als de gewone meldingen uit staan (backend gripOnly is een
               override), dus altijd zichtbaar. */}
           <Rij
-            icoon="alert-octagon" tegelKleur="#f59e0b" scheiding
+            icoon="noodwaarschuwing" tegelKleur="#f59e0b" scheiding
             titel="Emergency Warnings anywhere"
             sub="An alert for every Emergency Warning in Australia"
             rechts={<Schakelaar value={inst.gripAlarm} onValueChange={toggleGrip} />}
@@ -224,7 +226,7 @@ export default function InstellingenScreen() {
         <Text style={styles.groepKop}>Distance</Text>
         <View style={kaartStijl}>
           <Rij
-            icoon="map-marker-radius" tegelKleur={C.accent}
+            icoon="buurt" tegelKleur={C.accent}
             titel="Radius"
             sub={perDienstAan ? 'Set per service' : 'Applies to your alerts and to Nearby'}
             rechts={perDienstAan ? null : <Text style={[styles.waarde, { color: C.accent, fontWeight: '600' }]}>{straalTekst(live.__ ?? inst.straalKm)}</Text>}
@@ -244,7 +246,7 @@ export default function InstellingenScreen() {
             </View>
           )}
           <Rij
-            icoon="tune-variant" tegelKleur="#5856d6" scheiding
+            icoon="perDienst" tegelKleur="#5856d6" scheiding
             titel="Set per service"
             sub="For example bushfires 100 km and road crashes 10 km"
             rechts={<Schakelaar value={perDienstAan} onValueChange={zetPerDienst} />}
@@ -255,7 +257,7 @@ export default function InstellingenScreen() {
             return (
               <View key={d.key}>
                 <Rij
-                  icoon={d.icoon} tegelKleur={d.kleur} scheiding
+                  icoon={{ dienst: d }} tegelKleur={d.kleur} scheiding
                   titel={d.label}
                   sub={open && LANDELIJK_MOGELIJK.has(d.key) ? 'All the way right: anywhere in Australia' : undefined}
                   onPress={() => setOpen(open ? null : d.key)}
@@ -263,7 +265,7 @@ export default function InstellingenScreen() {
                   rechts={(
                     <View style={styles.rechtsWaarde}>
                       <Text style={[styles.waarde, { color: d.kleur, fontWeight: '600' }]}>{straalTekst(km)}</Text>
-                      <MaterialCommunityIcons name={open ? 'chevron-up' : 'chevron-down'} size={20} color={C.textMuted} />
+                      <Icoon naam={open ? 'inklappen' : 'uitklappen'} grootte={20} kleur={C.textMuted} gewicht="semibold" />
                     </View>
                   )}
                 />
@@ -300,7 +302,7 @@ export default function InstellingenScreen() {
                 return (
                   <Rij
                     key={d.key}
-                    icoon={d.icoon} tegelKleur={d.kleur} scheiding={i > 0}
+                    icoon={{ dienst: d }} tegelKleur={d.kleur} scheiding={i > 0}
                     titel={d.label}
                     sub={aan ? (km >= LANDELIJK_KM ? 'Anywhere in Australia' : `Within ${km} km`) : 'Off'}
                     rechts={<Schakelaar value={aan} onValueChange={() => toggleDienst(d.key)} />}
@@ -318,7 +320,7 @@ export default function InstellingenScreen() {
         <Text style={styles.groepKop}>Location</Text>
         <View style={kaartStijl}>
           <Rij
-            icoon="crosshairs-gps" tegelKleur="#007aff"
+            icoon="mijnPlek" tegelKleur="#007aff"
             titel="Current location"
             sub={inst.volgLocatie
               ? 'Incidents around where you are'
@@ -362,7 +364,7 @@ export default function InstellingenScreen() {
                 {hint && <Text style={styles.hint}>{hint}</Text>}
               </View>
               {inst.thema === sleutel && (
-                <MaterialCommunityIcons name="check" size={20} color={C.accent} />
+                <Icoon naam="gekozen" grootte={20} kleur={C.accent} gewicht="semibold" />
               )}
             </Drukbaar>
           ))}
@@ -377,12 +379,12 @@ export default function InstellingenScreen() {
           {BRONNEN.map((b, i) => (
             <Rij
               key={b.regio}
-              icoon="shield-check-outline" tegelKleur="#34c759" scheiding={i > 0}
+              icoon="bron" tegelKleur="#34c759" scheiding={i > 0}
               titel={b.naam}
               sub={`${b.staat} · ${b.domein}`}
               onPress={() => { Linking.openURL(b.url).catch(() => {}); }}
               label={`${b.naam}, ${b.domein}. Opens the official website`}
-              rechts={<MaterialCommunityIcons name="open-in-new" size={18} color={C.textMuted} />}
+              rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
             />
           ))}
         </View>
@@ -409,7 +411,7 @@ export default function InstellingenScreen() {
         <View style={kaartStijl}>
           <View style={styles.rij}>
             <View style={[styles.tegel, { backgroundColor: C.chipBg }]}>
-              <MaterialCommunityIcons name="account-outline" size={19} color={C.textSecondary} />
+              <Icoon naam="ontwikkelaar" grootte={19} kleur={C.textSecondary} />
             </View>
             <View style={styles.midden}>
               <Text style={styles.tegelLabel}>Developer</Text>
@@ -422,37 +424,37 @@ export default function InstellingenScreen() {
               begint elk supportgesprek met heen-en-weer (wens Chris 16-08). */}
           <Drukbaar style={[styles.rij, styles.scheiding]} onPress={mailSupport}>
             <View style={[styles.tegel, { backgroundColor: C.accentSoft }]}>
-              <MaterialCommunityIcons name="email-outline" size={19} color={C.accent} />
+              <Icoon naam="email" grootte={19} kleur={C.accent} />
             </View>
             <View style={styles.midden}>
               <Text style={styles.tegelLabel}>Email</Text>
               <Text style={[styles.tegelWaarde, { color: C.accent }]}>{CONTACT.email}</Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={C.textMuted} />
+            <Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />
           </Drukbaar>
         </View>
 
         <View style={kaartStijl}>
           <Rij
-            icoon="star" tegelKleur="#ffcc00"
+            icoon="beoordelen" tegelKleur="#ffcc00"
             titel="Rate Emergencies Near Me"
             sub="A review helps others find the app"
             onPress={openRecensiePagina}
-            rechts={<MaterialCommunityIcons name="open-in-new" size={18} color={C.textMuted} />}
+            rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
           />
           {/* Het privacybeleid moet ook in de app makkelijk te vinden zijn,
               niet alleen achter de betaalmuur (eis Google Play). */}
           <Rij
-            icoon="shield-lock-outline" tegelKleur="#8e8e93" scheiding
+            icoon="privacy" tegelKleur="#8e8e93" scheiding
             titel="Privacy Policy"
             onPress={() => { Linking.openURL(`${SITE}/privacy`).catch(() => {}); }}
-            rechts={<MaterialCommunityIcons name="open-in-new" size={18} color={C.textMuted} />}
+            rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
           />
           <Rij
-            icoon="file-document-outline" tegelKleur="#8e8e93" scheiding
+            icoon="voorwaarden" tegelKleur="#8e8e93" scheiding
             titel="Terms of Use"
             onPress={() => { Linking.openURL(`${SITE}/terms`).catch(() => {}); }}
-            rechts={<MaterialCommunityIcons name="open-in-new" size={18} color={C.textMuted} />}
+            rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
           />
         </View>
 
@@ -474,7 +476,7 @@ export default function InstellingenScreen() {
                 {gebruikerId ?? 'Not known yet'}
               </Text>
             </View>
-            {gebruikerId ? <MaterialCommunityIcons name="share-variant-outline" size={18} color={C.textMuted} /> : null}
+            {gebruikerId ? <Icoon naam="delen" grootte={18} kleur={C.textMuted} /> : null}
           </Drukbaar>
         </View>
         <Text style={styles.voetnoot}>
@@ -485,18 +487,24 @@ export default function InstellingenScreen() {
   );
 }
 
-/** Eén instellingenrij: gekleurd tegeltje, titel, één regel uitleg, iets rechts. */
+/**
+ * Eén instellingenrij: gekleurd tegeltje, titel, één regel uitleg, iets rechts.
+ * Het tegeltje is een chrome-icoon uit iconen.ts, of het icoon van een dienst
+ * (op iOS zijn SF Symbol, op Android het MDI-vakicoon).
+ */
 function Rij({
   icoon, tegelKleur, titel, sub, subKleur, rechts, onPress, scheiding, label,
 }: {
-  icoon: string; tegelKleur: string; titel: string; sub?: string; subKleur?: string;
+  icoon: IcoonNaam | { dienst: Dienst }; tegelKleur: string; titel: string; sub?: string; subKleur?: string;
   rechts?: React.ReactNode; onPress?: () => void; scheiding?: boolean; label?: string;
 }) {
   const styles = useStijlen(maak_styles);
   const inhoud = (
     <>
       <View style={[styles.tegeltje, { backgroundColor: tegelKleur }]}>
-        <MaterialCommunityIcons name={icoon as never} size={17} color="#fff" />
+        {typeof icoon === 'string'
+          ? <Icoon naam={icoon} grootte={17} kleur="#fff" />
+          : <DienstIcoon dienst={icoon.dienst} grootte={17} kleur="#fff" />}
       </View>
       <View style={styles.rijMidden}>
         <Text style={styles.label}>{titel}</Text>

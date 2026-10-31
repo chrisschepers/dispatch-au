@@ -14,6 +14,8 @@ import type { Melding } from '../../api';
 import { DIENSTEN } from '../../diensten';
 import { PALET_LICHT as C, T } from '../../theme';
 import { MeldingRij } from '../MeldingRij';
+import { Icoon } from '../Icoon';
+import type { IcoonNaam } from '../../iconen';
 import { NepKaart } from './NepKaart';
 import { SCHERM_B, SCHERM_H } from './Toestel';
 
@@ -232,7 +234,7 @@ export function SchermDiensten() {
       <View style={s.groep}>
         <View style={s.instRij}>
           <View style={[s.instIcoon, { backgroundColor: '#ff9500' }]}>
-            <MaterialCommunityIcons name="alert" size={15} color="#fff" />
+            <Icoon naam="waarschuwing" grootte={15} kleur="#fff" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={s.rijLabel}>Warnings only</Text>
@@ -247,6 +249,11 @@ export function SchermDiensten() {
     </View>
   );
 }
+
+const DETAIL_RIJEN: Array<{ icoon: IcoonNaam; naam: string; post: string; nr: string }> = [
+  { icoon: 'bron', naam: 'CFA', post: 'Country Fire Authority', nr: 'VIC' },
+  { icoon: 'eenheden', naam: '6 resources', post: 'assigned to this incident', nr: 'Live' },
+];
 
 /** Detail van een melding: kaart, straatbeeld, route en voertuigen. */
 export function SchermDetail() {
@@ -266,7 +273,7 @@ export function SchermDetail() {
             <Rect x={78} y={18} width={9} height={10} fill="#e8eef5" />
           </Svg>
           <View style={s.verrekijker}>
-            <MaterialCommunityIcons name="binoculars" size={11} color="#fff" />
+            <Icoon naam="straatbeeld" grootte={11} kleur="#fff" />
           </View>
         </View>
       </View>
@@ -280,7 +287,7 @@ export function SchermDetail() {
         <View style={s.kaartje}>
           <View style={s.navRij}>
             <View style={s.navIcoon}>
-              <MaterialCommunityIcons name="navigation-variant" size={15} color="#fff" />
+              <Icoon naam="route" grootte={15} kleur="#fff" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.rijLabel}>Lancefield Rd, Kilmore</Text>
@@ -291,12 +298,9 @@ export function SchermDetail() {
         </View>
         <Text style={s.groepKop}>FROM THE AGENCY</Text>
         <View style={s.kaartje}>
-          {[
-            ['shield-check-outline', 'CFA', 'Country Fire Authority', 'VIC'],
-            ['account-group-outline', '6 resources', 'assigned to this incident', 'Live'],
-          ].map(([icoon, naam, post, nr], i) => (
+          {DETAIL_RIJEN.map(({ icoon, naam, post, nr }, i) => (
             <View key={nr} style={[s.voertuig, i > 0 && s.scheiding]}>
-              <MaterialCommunityIcons name={icoon as never} size={18} color={C.brandweer} />
+              <Icoon naam={icoon} grootte={18} kleur={C.brandweer} />
               <View style={{ flex: 1 }}>
                 <Text style={s.rijLabel}>{naam}</Text>
                 <Text style={s.rijSub}>{post}</Text>
@@ -325,10 +329,10 @@ export function SchermDetail() {
 
 /** Trial preview on the paywall: what you get today, during and after. */
 export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null; proefTekst: string }) {
-  const stappen = [
-    { icoon: 'lock-open-variant', kleur: C.success, kop: 'Today', tekst: 'Everything unlocked, free.' },
-    { icoon: 'bell-ring', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`, tekst: 'Alerts, the map and every incident near you.' },
-    { icoon: 'star', kleur: C.accent, kop: 'After that', tekst: prijsZin ? `${prijsZin}. Cancel any time.` : 'The yearly price. Cancel any time.' },
+  const stappen: Array<{ icoon: IcoonNaam; kleur: string; kop: string; tekst: string }> = [
+    { icoon: 'ontgrendeld', kleur: C.success, kop: 'Today', tekst: 'Everything unlocked, free.' },
+    { icoon: 'meldingen', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`, tekst: 'Alerts, the map and every incident near you.' },
+    { icoon: 'beoordelen', kleur: C.accent, kop: 'After that', tekst: prijsZin ? `${prijsZin}. Cancel any time.` : 'The yearly price. Cancel any time.' },
   ];
   return (
     <View style={s.scherm}>
@@ -342,7 +346,7 @@ export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null;
           <View key={st.kop} style={s.tlRij}>
             <View style={s.tlKolom}>
               <View style={[s.tlBol, { backgroundColor: st.kleur }]}>
-                <MaterialCommunityIcons name={st.icoon as never} size={15} color="#fff" />
+                <Icoon naam={st.icoon} grootte={15} kleur="#fff" />
               </View>
               {i < stappen.length - 1 && <View style={s.tlLijn} />}
             </View>
@@ -356,7 +360,7 @@ export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null;
       <View style={s.voordelen}>
         {['Live incidents near you', 'Bushfire, flood and crash alerts', 'Every state in one app', 'No ads'].map((t) => (
           <View key={t} style={s.voordeel}>
-            <MaterialCommunityIcons name="check-circle" size={17} color={C.success} />
+            <Icoon naam="inbegrepen" grootte={17} kleur={C.success} />
             <Text style={s.voordeelTekst}>{t}</Text>
           </View>
         ))}

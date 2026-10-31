@@ -23,6 +23,8 @@ import { vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst } fro
 import { T, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from '../components/Drukbaar';
+import { Icoon } from '../components/Icoon';
+import type { IcoonNaam } from '../iconen';
 import { bronVan, domeinVan } from '../bronnen';
 
 type Rt =RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
@@ -149,6 +151,12 @@ export default function DetailScreen() {
   const afstand = mijnPlek ? afstandTekst(afstandKm(mijnPlek.lat, mijnPlek.lon, melding)) : null;
   const plaatsNaam = melding.city ? nettePlaats(melding.city) : null;
   const bron = bronVan(melding.sourceRegion);
+  // Rijen van het blok "From the agency" hieronder.
+  const vanDeDienst: Array<{ icoon: IcoonNaam; titel: string; sub: string | null }> = [
+    { icoon: 'bron', titel: melding.agency || 'Emergency services', sub: bron ? `Source: ${bron.naam}` : melding.sourceRegion ? melding.sourceRegion.toUpperCase() : null },
+    { icoon: 'status', titel: melding.status || 'Status not published', sub: melding.updated ? `updated ${tijdTekst(melding.updated)}` : null },
+    ...(melding.resources ? [{ icoon: 'eenheden' as const, titel: `${melding.resources} ${melding.resources === 1 ? 'resource' : 'resources'} assigned`, sub: null }] : []),
+  ];
 
   async function deel() {
     const plek = plaatsRegel(melding.location, melding.city);
@@ -186,7 +194,7 @@ export default function DetailScreen() {
       {/* Australian Warning System level, with the agency's own advice. */}
       {v.opschaling ? (
         <View style={styles.opschaling}>
-          <MaterialCommunityIcons name="alert" size={20} color={C.accent} />
+          <Icoon naam="waarschuwing" grootte={20} kleur={C.accent} />
           <Text style={styles.opschalingTekst}>
             {v.opschaling}{melding.action ? ` · ${melding.action}` : ''}
           </Text>
@@ -225,7 +233,7 @@ export default function DetailScreen() {
                 }}
               />
               <View style={styles.straatbeeldIcoon}>
-                <MaterialCommunityIcons name="binoculars" size={14} color="#fff" />
+                <Icoon naam="straatbeeld" grootte={14} kleur="#fff" />
               </View>
             </Drukbaar>
           )}
@@ -255,7 +263,7 @@ export default function DetailScreen() {
           label={`Directions to ${plaatsNaam ?? 'the incident'}${afstand ? `, ${afstand}` : ''}`}
         >
           <View style={styles.navIcoon}>
-            <MaterialCommunityIcons name="navigation-variant" size={19} color="#fff" />
+            <Icoon naam="route" grootte={19} kleur="#fff" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.rijTitel} numberOfLines={1}>
@@ -266,7 +274,7 @@ export default function DetailScreen() {
             </Text>
           </View>
           {afstand ? <Text style={styles.nummer}>{afstand}</Text> : null}
-          <MaterialCommunityIcons name="chevron-right" size={18} color={C.textMuted} />
+          <Icoon naam="chevron" grootte={18} kleur={C.textMuted} gewicht="semibold" />
         </Drukbaar>
       )}
 
@@ -275,13 +283,9 @@ export default function DetailScreen() {
           melding herleidbaar is tot de officiële site (afwijzing 26-10). */}
       <View style={[kaartStijl, styles.blok]}>
         <Text style={styles.blokKop}>From the agency</Text>
-        {[
-          ['shield-check-outline', melding.agency || 'Emergency services', bron ? `Source: ${bron.naam}` : melding.sourceRegion ? melding.sourceRegion.toUpperCase() : null],
-          ['progress-check', melding.status || 'Status not published', melding.updated ? `updated ${tijdTekst(melding.updated)}` : null],
-          ...(melding.resources ? [['account-group-outline', `${melding.resources} ${melding.resources === 1 ? 'resource' : 'resources'} assigned`, null]] : []),
-        ].map(([icoon, titel, sub], i) => (
-          <View key={String(icoon)} style={[styles.rij, i > 0 && styles.scheiding]}>
-            <MaterialCommunityIcons name={icoon as never} size={20} color={v.kleur} style={styles.rijIcoon} />
+        {vanDeDienst.map(({ icoon, titel, sub }, i) => (
+          <View key={icoon} style={[styles.rij, i > 0 && styles.scheiding]}>
+            <Icoon naam={icoon} grootte={20} kleur={v.kleur} style={styles.rijIcoon} />
             <View style={{ flex: 1 }}>
               <Text style={styles.rijTitel}>{titel}</Text>
               {sub ? <Text style={styles.rijSub}>{sub}</Text> : null}
@@ -294,7 +298,7 @@ export default function DetailScreen() {
             onPress={() => { Linking.openURL(melding.officialUrl!).catch(() => {}); }}
             label={`Open official advice on ${domeinVan(melding.officialUrl)}`}
           >
-            <MaterialCommunityIcons name="open-in-new" size={20} color={C.accent} style={styles.rijIcoon} />
+            <Icoon naam="extern" grootte={20} kleur={C.accent} style={styles.rijIcoon} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.rijTitel, { color: C.accent }]}>Official advice and warnings</Text>
               <Text style={styles.rijSub}>{domeinVan(melding.officialUrl)}</Text>
@@ -316,10 +320,11 @@ export default function DetailScreen() {
                   laatste: anders lijkt het alsof er nog iets komt. */}
               <View style={styles.tlKolom}>
                 <View style={[styles.tlBol, { backgroundColor: r.soort === 'alarmering' ? v.kleur : C.accent }]}>
-                  <MaterialCommunityIcons
-                    name={r.soort === 'alarmering' ? 'flash' : r.soort === 'opschaling' ? 'arrow-up-bold' : 'flag-checkered'}
-                    size={13}
-                    color="#fff"
+                  <Icoon
+                    naam={r.soort === 'alarmering' ? 'alarmering' : r.soort === 'opschaling' ? 'opschaling' : 'afgerond'}
+                    grootte={13}
+                    kleur="#fff"
+                    gewicht={r.soort === 'opschaling' ? 'bold' : 'regular'}
                   />
                 </View>
                 {i < verloop.length - 1 && <View style={styles.tlLijn} />}
@@ -402,7 +407,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 10, marginTop: 2,
   },
   opschalingTekst: { ...T.rij, color: C.accent, flex: 1 },
-  rijIcoon: { width: 24, textAlign: 'center' },
+  rijIcoon: { width: 24 },
   rij: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, gap: 10 },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.separator },
   rijTitel: { ...T.body, color: C.textPrimary },

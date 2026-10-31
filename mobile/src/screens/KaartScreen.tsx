@@ -21,6 +21,7 @@ import { BrandendIcoon, BotsingIcoon, VlammenIcoon, type BrandendObject } from '
 
 import { type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
+import { Icoon } from '../components/Icoon';
 import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
 
 /**
@@ -95,7 +96,7 @@ function KaartNogNiet() {
   const C = useThema();
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: C.bg, gap: 10 }}>
-      <MaterialCommunityIcons name="map-outline" size={40} color={C.textMuted} />
+      <Icoon naam="kaart" grootte={40} kleur={C.textMuted} />
       <Text style={{ fontSize: 17, fontWeight: '600', color: C.textPrimary, textAlign: 'center' }}>
         The map is coming soon on Android
       </Text>
