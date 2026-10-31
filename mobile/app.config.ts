@@ -72,6 +72,11 @@ const config: ExpoConfig = {
       {
         // TestFlight and App Store builds talk to Apple's production push service.
         mode: 'production',
+        // Android status bar and shade: the broadcast glyph from the adaptive
+        // icon, white on transparent (96 px, about 20 of 24 dp), tinted in the
+        // brand red. Without it Android shows a grey square of the launcher icon.
+        icon: './assets/notification-icon.png',
+        color: '#e5372c',
         sounds: [
           './assets/sounds/zacht.wav', './assets/sounds/tik.wav', './assets/sounds/melodie.wav',
           './assets/sounds/pager.wav', './assets/sounds/bel.wav', './assets/sounds/dubbel.wav',
