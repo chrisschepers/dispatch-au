@@ -57,6 +57,7 @@ const config: ExpoConfig = {
     './plugins/with-native-module-name.cjs',
     './plugins/with-release-signing.cjs',
     './plugins/with-android-label.cjs',
+    './plugins/with-tab-iconen.cjs',
     'expo-font',
     [
       'expo-notifications',
