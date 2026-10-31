@@ -4,7 +4,9 @@
  * heli's, geen posten: dit is de kaart voor de vraag "waar is dat?".
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, AccessibilityInfo } from 'react-native';
+import {
+  View, Text, StyleSheet, Pressable, Platform, AccessibilityInfo, useWindowDimensions,
+} from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
@@ -13,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-screens/experimental';
 import { haalMeldingenPerVenster, type Melding } from '../api';
 import { kaartVenster } from '../kaartVenster';
-import { vertaalMelding } from '../vertaal';
+import { vertaalMelding, plaatsRegel, type VertaaldeMelding } from '../vertaal';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlek, bepaalPlekSnel } from '../locatie';
 import { ALLE_DIENSTKEYS } from '../diensten';
@@ -29,19 +31,26 @@ import { ZwevendVlak, useGlas } from '../components/ZwevendVlak';
 import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
 import type { StapelParams } from '../navigatie';
 import { MAX_SMAL } from '../inhoudMaat';
+import { groepeer, zoomVan, opEenPlek, type GroepPunt, type KaartGroep } from '../kaartGroepen';
+import { opKleur } from '../kleur';
 
 /**
- * Boven dit aantal in beeld gaan we groeperen; daaronder losse pins. Op Android
- * lager: daar is elke marker een bitmap die het toestel apart moet tekenen, en
- * de pins dragen sinds 18-08 een icoon. Op eenvoudige toestellen (en die zijn
- * er op Android nu eenmaal veel) scheelt eerder groeperen merkbaar.
+ * Pins die op het scherm dichter bij elkaar staan dan dit, worden één groep
+ * (zie kaartGroepen.ts). Gelijk aan het kleinste tikvlak van het platform
+ * (44 pt HIG, 48 dp M3): twee pins die dichter op elkaar staan, kun je toch
+ * niet los aantikken.
  */
-const LOS_MAX = Platform.OS === 'android' ? 55 : 90;
+const GROEP_AFSTAND = Platform.OS === 'android' ? 48 : 44;
+/**
+ * Meer pins in beeld dan dit, dan groeperen we ruimer. Op Android lager:
+ * daar is elke marker een bitmap die het toestel apart moet tekenen, en op
+ * eenvoudige toestellen (en die zijn er op Android nu eenmaal veel) scheelt
+ * dat merkbaar.
+ */
+const MAX_PINS = Platform.OS === 'android' ? 60 : 150;
 
 /** Landelijk uitzicht: het beeld waarmee de kaart opent als we nog niets weten. */
 const NL_REGIO = { latitude: -28, longitude: 140, latitudeDelta: 32, longitudeDelta: 32 };
-/** Aantal rastervakken over de breedte van het beeld bij het groeperen. */
-const RASTER = Platform.OS === 'android' ? 6 : 8;
 
 type Nav = NativeStackNavigationProp<StapelParams, 'Kaart'>;
 
@@ -62,9 +71,11 @@ function Pin({ kleur, icoon, groot, vers, vlammen, brandend, botsing }: {
   kleur: string; icoon: string; groot: boolean; vers: boolean;
   vlammen?: 1 | 2 | 3; brandend?: BrandendObject; botsing?: boolean;
 }) {
-  const C = useThema();
   const styles = useStijlen(maak_styles);
   const maat = vers || groot ? 36 : 28;
+  // Symbool in wit of bijna-zwart, wat het best leest op de dienstkleur: wit
+  // op het amber van de ambulance haalt maar ~2:1.
+  const glyph = opKleur(kleur);
   return (
     <View style={styles.pinWrap}>
       {vers && (
@@ -77,17 +88,36 @@ function Pin({ kleur, icoon, groot, vers, vlammen, brandend, botsing }: {
       )}
       <View style={[styles.bol, { backgroundColor: kleur, width: maat, height: maat, borderRadius: maat / 2 }]}>
         {brandend ? (
-          <BrandendIcoon object={brandend} maat={Math.round(maat * 0.72)} kleur="#fff" fond={kleur} />
+          <BrandendIcoon object={brandend} maat={Math.round(maat * 0.72)} kleur={glyph} fond={kleur} />
         ) : botsing ? (
-          <BotsingIcoon maat={Math.round(maat * 0.72)} kleur="#fff" fond={kleur} />
+          <BotsingIcoon maat={Math.round(maat * 0.72)} kleur={glyph} fond={kleur} />
         ) : vlammen ? (
-          <VlammenIcoon vlammen={vlammen} maat={Math.round(maat * 0.68)} kleur="#fff" />
+          <VlammenIcoon vlammen={vlammen} maat={Math.round(maat * 0.68)} kleur={glyph} />
         ) : (
-          <MaterialCommunityIcons name={icoon as never} size={Math.round(maat * 0.54)} color="#fff" />
+          <MaterialCommunityIcons name={icoon as never} size={Math.round(maat * 0.54)} color={glyph} />
         )}
       </View>
       {/* Wit driehoekje onder de bol: de punt staat op de coördinaat. */}
       <View style={styles.punt} />
+    </View>
+  );
+}
+
+/**
+ * Een groepje pins: een bol met het aantal, groter naarmate er meer in
+ * zitten. De doorzichtige rand eromheen maakt het tikvlak minstens 44 pt
+ * (iOS) of 48 dp (Android), ook voor de kleinste bol.
+ */
+function GroepBol({ aantal, vulling }: { aantal: number; vulling: string }) {
+  const styles = useStijlen(maak_styles);
+  const maat = aantal < 10 ? 32 : aantal < 100 ? 38 : 44;
+  return (
+    <View style={styles.groepVak}>
+      <View style={[styles.groep, { width: maat, height: maat, borderRadius: maat / 2, backgroundColor: vulling }]}>
+        <Text style={[styles.groepTekst, { color: opKleur(vulling) }]} maxFontSizeMultiplier={1.2}>
+          {aantal > 99 ? '99+' : aantal}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -118,6 +148,7 @@ function KaartMetMeldingen() {
   const styles = useStijlen(maak_styles);
   const { inst } = useInstellingen();
   const navigation = useNavigation<Nav>();
+  const { width } = useWindowDimensions();
   // Bovenrand op Android, voor de knoppenlaag en de kaartpadding. Uit
   // safe-area-context en niet de SafeAreaView van react-native-screens: op
   // Android mag die maar één keer per tabblad (zie androidLaag in
@@ -264,41 +295,53 @@ function KaartMetMeldingen() {
 
   // Geen enkele melding weglaten (keuze Chris 16-08), maar honderden losse
   // pins leggen de kaart plat — de app bevroor (16-08). Daarom groeperen we
-  // wat te dicht op elkaar staat om te kunnen onderscheiden: één bolletje met
-  // een aantal, dat bij inzoomen weer uit elkaar valt. Er verdwijnt niets, je
-  // ziet het alleen samengevat tot het zin heeft ze los te tekenen.
-  const zichtbaar = React.useMemo(() => {
-    if (!regio || !ingezoomd) return [];
+  // wat op het scherm te dicht op elkaar staat om los aan te tikken: één
+  // bolletje met een aantal, dat bij inzoomen weer uit elkaar valt. Er
+  // verdwijnt niets, je ziet het alleen samengevat tot het zin heeft ze los
+  // te tekenen.
+  //
+  // Eén keer per melding vertalen: groeperen en tekenen hebben allebei de
+  // kleur en de grootte nodig.
+  const vertaald = React.useMemo(() => {
+    const per = new Map<string, VertaaldeMelding>();
+    for (const m of meldingen) per.set(m.id, vertaalMelding(m));
+    return per;
+  }, [meldingen]);
+  // Zoom op halve stappen: slepen laat hem gelijk, dus groeperen gebeurt
+  // alleen bij zoomen of nieuwe meldingen.
+  const zoom = regio && ingezoomd ? zoomVan(regio.longitudeDelta, width) : null;
+  const puntVan = React.useCallback((m: Melding): GroepPunt => {
+    const v = vertaald.get(m.id);
+    return {
+      id: m.id,
+      lat: m.lat as number,
+      lon: (m.lon ?? m.lng) as number,
+      gewicht: (isVers(m.timestamp) ? 2 : 0) + (v?.groot ? 1 : 0),
+      tijd: Date.parse(m.timestamp),
+    };
+  }, [vertaald]);
+  const alleGroepen = React.useMemo(
+    () => (zoom == null ? [] : groepeer(meldingen, puntVan, zoom, GROEP_AFSTAND)),
+    [meldingen, puntVan, zoom],
+  );
+
+  /** De groepen in beeld (met wat marge), zo nodig ruimer gegroepeerd. */
+  const groepen = React.useMemo(() => {
+    if (!regio || zoom == null) return [];
     const marge = 1.15;
     const dLat = (regio.latitudeDelta / 2) * marge;
     const dLon = (regio.longitudeDelta / 2) * marge;
-    return meldingen.filter((m) => {
-      const lat = m.lat as number, lon = (m.lon ?? m.lng) as number;
-      return Math.abs(lat - regio.latitude) <= dLat && Math.abs(lon - regio.longitude) <= dLon;
-    });
-  }, [meldingen, regio, ingezoomd]);
-
-  /** Losse pins als het er weinig zijn, anders groepjes per rastervak. */
-  const groepen = React.useMemo(() => {
-    if (!regio || zichtbaar.length <= LOS_MAX) {
-      return zichtbaar.map((m) => ({ sleutel: m.id, lat: m.lat as number, lon: (m.lon ?? m.lng) as number, leden: [m] }));
+    const inBeeld = (gs: KaartGroep<Melding>[]) => gs.filter((g) =>
+      Math.abs(g.lat - regio.latitude) <= dLat && Math.abs(g.lon - regio.longitude) <= dLon);
+    let uit = inBeeld(alleGroepen);
+    // Nog te veel voor een vloeiende kaart: tot drie keer 1,5 × zo ruim.
+    let afstand = GROEP_AFSTAND;
+    for (let i = 0; i < 3 && uit.length > MAX_PINS; i++) {
+      afstand *= 1.5;
+      uit = inBeeld(groepeer(meldingen, puntVan, zoom, afstand));
     }
-    // Rastervak ≈ 1/RASTER van het beeld: dichter bij elkaar dan dat kun je
-    // op dit zoomniveau toch niet uit elkaar houden.
-    const stapLat = regio.latitudeDelta / RASTER;
-    const stapLon = regio.longitudeDelta / RASTER;
-    const vakken = new Map<string, { sleutel: string; lat: number; lon: number; leden: Melding[] }>();
-    for (const m of zichtbaar) {
-      const lat = m.lat as number, lon = (m.lon ?? m.lng) as number;
-      const rij = Math.max(0, Math.min(RASTER - 1, Math.floor((lat - regio.latitude + regio.latitudeDelta / 2) / stapLat)));
-      const kol = Math.max(0, Math.min(RASTER - 1, Math.floor((lon - regio.longitude + regio.longitudeDelta / 2) / stapLon)));
-      const sleutel = `${rij}:${kol}`;
-      const bestaand = vakken.get(sleutel);
-      if (bestaand) bestaand.leden.push(m);
-      else vakken.set(sleutel, { sleutel, lat, lon, leden: [m] });
-    }
-    return [...vakken.values()];
-  }, [zichtbaar, regio]);
+    return uit;
+  }, [alleGroepen, meldingen, puntVan, regio, zoom]);
 
   // Android tekent een marker als bitmap en bevriest die daarna. Met een kale
   // stip ging dat goed, maar deze pins bevatten een icoonfont en die is soms
@@ -306,8 +349,10 @@ function KaartMetMeldingen() {
   // wijziging van de pinnenset kort blijven her-tekenen en het dan weer
   // uitzetten (les uit de kaart-overhaul van de grote app). Sleutelen op de
   // ID-set, niet op de meldingenlijst: die krijgt bij elke verversing een
-  // nieuwe identiteit en dan knippert de kaart continu.
-  const pinsSleutel = groepen.map((g) => g.sleutel).join('|');
+  // nieuwe identiteit en dan knippert de kaart continu. Het aantal hoort
+  // erbij: een groep met dezelfde sleutel maar een ander getal moet ook
+  // opnieuw getekend worden.
+  const pinsSleutel = groepen.map((g) => `${g.sleutel}:${g.leden.length}`).join('|');
   const [herteken, setHerteken] = useState(true);
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -352,35 +397,62 @@ function KaartMetMeldingen() {
             hij een grens die nergens meer over gaat (wens Chris). */}
         {groepen.map((g) => {
           const eerste = g.leden[0]!;
-          const v = vertaalMelding(eerste);
+          const v = vertaald.get(eerste.id) ?? vertaalMelding(eerste);
           const aantal = g.leden.length;
+          const vers = isVers(eerste.timestamp);
+          if (aantal === 1) {
+            const plaats = plaatsRegel(eerste.location, eerste.city);
+            return (
+              <Marker
+                key={g.sleutel}
+                coordinate={{ latitude: g.lat, longitude: g.lon }}
+                // De punt van de pin staat op de plek.
+                anchor={{ x: 0.5, y: 1 }}
+                // Vers boven groot boven groepjes boven de rest.
+                zIndex={vers ? 3 : v.groot ? 2 : 0}
+                accessibilityLabel={`${v.titel}${plaats ? ', ' + plaats : ''}`}
+                // Doorlopend her-tekenen kost bij honderden pins de vloeiendheid
+                // van het slepen; alleen de korte puls hieronder staat het toe.
+                tracksViewChanges={Platform.OS === 'android' ? herteken : false}
+                onPress={() => navigation.navigate('Detail', { melding: eerste })}
+              >
+                <Pin kleur={v.kleur} icoon={v.kaartIcoon} groot={v.groot} vers={vers} vlammen={v.kaartVlammen} brandend={v.kaartBrandend} botsing={v.kaartBotsing} />
+              </Marker>
+            );
+          }
+          // Eén dienst in de groep: zijn kleur. Gemengd: een neutrale bol.
+          const kleuren = new Set(g.leden.map((m) => vertaald.get(m.id)?.kleur ?? v.kleur));
+          const vulling = kleuren.size === 1 ? v.kleur : C.groepVlak;
+          const coords = g.leden.map((m) => ({ latitude: m.lat as number, longitude: (m.lon ?? m.lng) as number }));
           return (
             <Marker
               key={g.sleutel}
               coordinate={{ latitude: g.lat, longitude: g.lon }}
-              // Losse pin wijst met zijn punt naar de plek; een groepje is een
-              // bolletje en staat dus gecentreerd.
-              anchor={aantal === 1 ? { x: 0.5, y: 1 } : { x: 0.5, y: 0.5 }}
-              // Doorlopend her-tekenen kost bij honderden pins de vloeiendheid
-              // van het slepen; alleen de korte puls hierboven staat het toe.
+              // Een groepje is een bolletje en staat dus gecentreerd.
+              anchor={{ x: 0.5, y: 0.5 }}
+              zIndex={1}
+              accessibilityLabel={`${aantal} incidents. Double-tap to zoom in`}
               tracksViewChanges={Platform.OS === 'android' ? herteken : false}
               onPress={() => {
-                if (aantal === 1) { navigation.navigate('Detail', { melding: eerste }); return; }
-                // Groepje: inzoomen tot ze uit elkaar vallen.
-                mapRef.current?.animateToRegion({
-                  latitude: g.lat, longitude: g.lon,
-                  latitudeDelta: Math.max((regio?.latitudeDelta ?? 0.3) / 3, 0.01),
-                  longitudeDelta: Math.max((regio?.longitudeDelta ?? 0.3) / 3, 0.01),
-                }, duur(350));
+                if (opEenPlek(coords.map((c) => ({ lat: c.latitude, lon: c.longitude }))) || (zoom ?? 0) >= 16) {
+                  // Inzoomen maakt ze niet los: voorlopig nog het oude
+                  // inzoomen op de groep.
+                  mapRef.current?.animateToRegion({
+                    latitude: g.lat, longitude: g.lon,
+                    latitudeDelta: Math.max((regio?.latitudeDelta ?? 0.3) / 3, 0.01),
+                    longitudeDelta: Math.max((regio?.longitudeDelta ?? 0.3) / 3, 0.01),
+                  }, duur(350));
+                  return;
+                }
+                // Groepje: precies zo ver inzoomen dat alle leden in beeld
+                // staan, met ruimte voor de hint bovenin en 'My area' onderin.
+                mapRef.current?.fitToCoordinates(coords, {
+                  edgePadding: { top: 120, right: 60, bottom: 160, left: 60 },
+                  animated: duur(1) > 0,
+                });
               }}
             >
-              {aantal === 1 ? (
-                <Pin kleur={v.kleur} icoon={v.kaartIcoon} groot={v.groot} vers={isVers(eerste.timestamp)} vlammen={v.kaartVlammen} brandend={v.kaartBrandend} botsing={v.kaartBotsing} />
-              ) : (
-                <View style={styles.groep}>
-                  <Text style={styles.groepTekst}>{aantal}</Text>
-                </View>
-              )}
+              <GroepBol aantal={aantal} vulling={vulling} />
             </Marker>
           );
         })}
@@ -479,8 +551,18 @@ function MijnPlekKnop({ aan, onPress }: { aan: boolean; onPress: () => void }) {
 
 const maak_styles = (C: Palet) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  pinWrap: { alignItems: 'center', justifyContent: 'flex-end' },
-  halo: { position: 'absolute', top: -8, opacity: 0.22 },
+  // Minstens het tikvlak van het platform. Alleen boven en opzij ruimte, zodat
+  // de punt onderaan op de plek blijft (anchor y: 1); flex-end houdt de bol
+  // onderin als de pin kleiner is dan het vak. De bovenruimte van 8 is ook
+  // waar de gloed van een verse pin in valt, zodat Android die niet afknipt
+  // in de bitmap van de marker.
+  pinWrap: {
+    alignItems: 'center', justifyContent: 'flex-end',
+    minWidth: 44, minHeight: GROEP_AFSTAND, paddingHorizontal: 8, paddingTop: 8,
+  },
+  // top 0 valt binnen de bovenruimte: de gloed (bol + 16) staat zo gecentreerd
+  // om de bol, die op 8 begint.
+  halo: { position: 'absolute', top: 0, opacity: 0.22 },
   bol: {
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2.5, borderColor: '#fff',
@@ -491,13 +573,16 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     borderLeftWidth: 5, borderRightWidth: 5, borderTopWidth: 7,
     borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#fff',
   },
+  groepVak: {
+    minWidth: GROEP_AFSTAND, minHeight: GROEP_AFSTAND,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent',
+  },
   groep: {
-    minWidth: 30, height: 30, borderRadius: 15, paddingHorizontal: 5,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: C.accent, borderWidth: 2, borderColor: '#fff',
+    borderWidth: 2, borderColor: '#fff',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3,
   },
-  groepTekst: { color: '#fff', fontWeight: F.weightBold, fontSize: 13 },
+  groepTekst: { fontWeight: F.weightBold, fontSize: 13 },
   // Insets komen als marge op de SafeAreaView (iOS) of als paddingTop (Android);
   // dit is de ruimte daarbinnen. Kinderen staan in de flow, niet absoluut,
   // anders tellen die insets niet mee.
