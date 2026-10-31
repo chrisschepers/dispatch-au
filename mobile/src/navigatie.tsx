@@ -174,6 +174,10 @@ function KaartStapel() {
           headerShown: false,
           sheetAllowedDetents: [0.5, 1],
           sheetGrabberVisible: true,
+          // Android: de M3-bovenhoek van 28 dp; zonder waarde maakt
+          // react-native-screens de hoeken vierkant. iOS houdt die van het
+          // systeem.
+          sheetCornerRadius: isIOS ? undefined : 28,
           contentStyle: { backgroundColor: isIOS26 ? 'transparent' : C.bg },
         }}
       />
@@ -242,16 +246,22 @@ export function TabNavigatie() {
       screenLayout={isIOS ? undefined : androidLaag}
       screenOptions={{
         // iOS 26-glas kan licht of donker worden met wat eronder ligt; dan
-        // moet het accent mee, los van het thema van de app.
+        // moet het accent mee, los van het thema van de app. Het label is
+        // tekst, dus in het licht accentTekst: het gewone accent haalt op de
+        // witte balk maar 4.3:1. In het donker zijn ze gelijk.
         tabBarActiveTintColor: isIOS
-          ? DynamicColorIOS({ light: PALET_LICHT.accent, dark: PALET_DONKER.accent })
-          : C.accent,
+          ? DynamicColorIOS({ light: PALET_LICHT.accentTekst, dark: PALET_DONKER.accentTekst })
+          : C.accentTekst,
         tabBarInactiveTintColor: isIOS ? (isIOS26 ? undefined : PlatformColor('systemGray')) : C.textSecondary,
         tabBarActiveIndicatorColor: C.accentSoft,
         tabBarRippleColor: C.rimpel,
         // Met vier tabbladen verbergt 'auto' de labels van de niet-gekozen
         // tabs; M3 wil ze altijd zien.
         tabBarLabelVisibilityMode: 'labeled',
+        // Android: M3 labelMedium (500). Zonder deze stijl geeft bottom-tabs
+        // het gewone gewicht door en vervangt react-native-screens het
+        // lettertype van de balk door Roboto Regular.
+        tabBarLabelStyle: isIOS ? undefined : { fontWeight: '500' },
         // Onder iOS 26 waarschuwt de native kant bij alles behalve 'automatic'.
         tabBarMinimizeBehavior: isIOS26 ? 'onScrollDown' : undefined,
       }}

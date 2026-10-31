@@ -70,7 +70,9 @@ export default function ZoekScreen() {
         hideWhenScrolling: false,
         tintColor: C.accent,
         textColor: C.textPrimary,
-        hintTextColor: C.textMuted,
+        // Android: de plaatshouder in onSurfaceVariant; textMuted haalde op
+        // de kopbalk maar 2:1.
+        hintTextColor: C.textSecondary,
         headerIconColor: C.textPrimary,
         onChangeText: (e) => setVraag(e.nativeEvent.text),
         onSearchButtonPress: () => zoekVeld.current?.blur(),

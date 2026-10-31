@@ -66,9 +66,12 @@ export const PALET_LICHT: Palet = {
   rimpel: 'rgba(28,28,30,0.10)',    // M3-statelaag: 10% van de tekstkleur
   ingedrukt: '#d1d1d6',             // systemGray4, zoals een ingedrukte iOS-rij
   zwevend: 'rgba(255,255,255,0.92)',
-  schakelBaan: '#e4e4e9',           // gelijk aan de oude vaste waarden in
-  schakelRand: '#b2b2ba',           // Schakelaar.tsx, dus licht verandert niet
-  schakelKnop: '#8e8e96',
+  // Uit-stand zoals M3: lichte baan, rand en knop in outline (#79747e). De
+  // oude grijzen haalden maar 2.1:1 tegen de kaart en 2.6:1 tegen de baan;
+  // bediening vraagt 3:1 (WCAG 1.4.11).
+  schakelBaan: '#e4e4e9',
+  schakelRand: '#79747e',
+  schakelKnop: '#79747e',
   groepVlak: '#3a3a3c',             // donkere bol, valt op tussen gekleurde pins
 };
 

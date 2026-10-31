@@ -101,3 +101,22 @@ test('Detail title tile: the flame cut-out matches the tile on the screen ground
   assert.ok(contrast(donker, '#000000') < 1.5, `dark tile ${donker} is not dark`);
   assert.ok(contrast(licht, '#ffffff') < 1.5, `light tile ${licht} is not light`);
 });
+
+test('the off switch stands out: outline on the card, thumb on the track, 3:1', () => {
+  for (const [naam, C] of Object.entries(PALETTEN)) {
+    const rand = contrast(C.schakelRand, C.card);
+    const knop = contrast(C.schakelKnop, C.schakelBaan);
+    assert.ok(rand >= 3, `${naam}: switch outline on card is ${rand.toFixed(2)}:1`);
+    assert.ok(knop >= 3, `${naam}: switch thumb on track is ${knop.toFixed(2)}:1`);
+  }
+});
+
+test('the selected tab label in the accent reads as text on the light tab bar', () => {
+  // navigatie.tsx kleurt het gekozen label met accentTekst; de Android-balk
+  // is C.card, op iOS wit glas of een witte balk.
+  assert.ok(contrast(PALET_LICHT.accentTekst, PALET_LICHT.card) >= 4.5);
+  assert.ok(contrast(PALET_LICHT.accent, PALET_LICHT.card) < 4.5, 'raw accent alone would fail');
+  for (const C of [PALET_DONKER, DONKER_OP_ANDROID]) {
+    assert.ok(contrast(C.accentTekst, C.card) >= 4.5);
+  }
+});
