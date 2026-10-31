@@ -117,9 +117,17 @@ const groteTitel: NativeStackNavigationOptions = isIOS
  * Detail per melding: een push voor een andere melding opent een nieuw
  * scherm in plaats van het bestaande te hergebruiken met oude gegevens erin
  * (StackRouter zoekt bij NAVIGATE op dit id).
+ *
+ * iOS: een doorzichtige kop, waar de melding onderdoor schuift. Onder iOS 26
+ * vervaagt hij met de blur uit kopOpties, op iOS 26 tekent het systeem zijn
+ * eigen scrollrand. De ScrollView van Detail begint zelf onder de kop
+ * (contentInsetAdjustmentBehavior). Android houdt de effen M3-kopbalk.
  */
 const detailId = ({ params }: { params: StapelParams['Detail'] }) => params?.melding?.id;
-const detailOpties: NativeStackNavigationOptions = { title: 'Incident' };
+const detailOpties: NativeStackNavigationOptions = {
+  title: 'Incident',
+  ...(isIOS ? { headerTransparent: true } : {}),
+};
 
 function useKop(): NativeStackNavigationOptions {
   const C = useThema();

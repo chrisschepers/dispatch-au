@@ -3,13 +3,15 @@
  * voertuig, plus de oorspronkelijke meldtekst voor wie het naadje wil weten.
  * Codes vertalen we; we verbergen ze niet voor wie doorleest.
  */
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Share, Image, Linking, Platform } from 'react-native';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Share, Image, Linking, Platform, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MiniKaart } from '../components/MiniKaart';
 import { BrandendIcoon, BotsingIcoon, VlammenIcoon } from '../components/IncidentIcoon';
-import type { RouteProp } from '@react-navigation/native';
+import type { CompositeNavigationProp, RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeBottomTabNavigationProp } from '@react-navigation/bottom-tabs/unstable';
 import {
   haalMelding, haalVerloop,
   type Melding, type VerloopRegel,
@@ -20,14 +22,21 @@ import { LookAround } from '../../modules/look-around';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlekSnel } from '../locatie';
 import { vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst } from '../vertaal';
-import { T, type Palet } from '../theme';
+import { T, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from '../components/Drukbaar';
 import { Icoon } from '../components/Icoon';
-import type { IcoonNaam } from '../iconen';
+import { ICONEN, type IcoonNaam } from '../iconen';
 import { bronVan, domeinVan } from '../bronnen';
+import type { StapelParams, TabParams } from '../navigatie';
 
 type Rt =RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
+// Detail zit in de stapel van een tabblad, en het kaartje springt naar een
+// ander tabblad: dus beide navigators in één type.
+type Nav = CompositeNavigationProp<
+  NativeStackNavigationProp<StapelParams, 'Detail'>,
+  NativeBottomTabNavigationProp<TabParams>
+>;
 
 /**
  * Staat de pin op de echte plek? De backend zegt zelf hoe nauwkeurig hij de
@@ -79,7 +88,7 @@ export default function DetailScreen() {
   const styles = useStijlen(maak_styles);
   const kaartStijl = useKaartStijl();
   const { melding: begin } = useRoute<Rt>().params;
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<Nav>();
   const [melding, setMelding] = useState<Melding>(begin);
   const v = vertaalMelding(melding);
   const [verloop, setVerloop] = useState<VerloopRegel[]>([]);
@@ -113,16 +122,42 @@ export default function DetailScreen() {
   }, [begin.id]);
 
   // Delen hoort in de kop: het is een bijactie, geen hoofdknop (audit 20-08).
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Drukbaar onPress={deel} label="Share incident" trillen={false} style={{ padding: 4 }}>
-          <MaterialCommunityIcons name="share-variant-outline" size={22} color={C.accent} />
-        </Drukbaar>
-      ),
-    });
+  // iOS: een echte UIBarButtonItem met het deelsymbool van het systeem, in de
+  // tintkleur van de kop (het accent); op iOS 26 krijgt hij vanzelf een
+  // glazen capsule. Met een icoon toont iOS het label niet; VoiceOver leest
+  // 'Share incident'.
+  // Android: een M3-actie in de kopbalk. Raakvlak 48 dp, icoon in
+  // onSurfaceVariant, ronde rimpel van 40 dp zoals een M3-icoonknop. Gewone
+  // Pressable: Drukbaar kent geen randloze rimpel.
+  // Elke optie alleen op haar eigen platform: native-stack verwerkt de
+  // knoppenlijst ook op Android. Opnieuw zetten als de volledige melding
+  // binnen is (met straat en status), anders deelt de knop de korte versie.
+  useLayoutEffect(() => {
+    navigation.setOptions(isIOS
+      ? {
+        unstable_headerRightItems: () => [{
+          type: 'button',
+          label: 'Share',
+          icon: { type: 'sfSymbol', name: ICONEN.delen.ios },
+          onPress: deel,
+          accessibilityLabel: 'Share incident',
+        }],
+      }
+      : {
+        headerRight: () => (
+          <Pressable
+            onPress={deel}
+            accessibilityRole="button"
+            accessibilityLabel="Share incident"
+            android_ripple={{ color: C.rimpel, borderless: true, radius: 20 }}
+            style={styles.deelKnop}
+          >
+            <Icoon naam="delen" grootte={24} kleur={C.textSecondary} />
+          </Pressable>
+        ),
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [melding.id, melding.city]);
+  }, [navigation, melding, C]);
 
   const lat = melding.lat, lon = melding.lon ?? melding.lng;
   const opStraat = lat != null && lon != null && !plaatsOnnauwkeurig(melding);
@@ -361,6 +396,7 @@ export default function DetailScreen() {
 
 const maak_styles = (C: Palet) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
+  deelKnop: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   inhoud: { padding: 16, paddingBottom: 32, gap: 12 },
   titel: { ...T.titel, color: C.textPrimary },
   titelRij: { flexDirection: 'row', alignItems: 'center', gap: 12 },
