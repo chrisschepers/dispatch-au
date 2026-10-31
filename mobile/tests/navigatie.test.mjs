@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { StackRouter, CommonActions } from '@react-navigation/routers';
-import { tabVoorMelding } from '../src/navigatieKeuze.ts';
+import { StackRouter, StackActions, CommonActions } from '@react-navigation/routers';
+import { tabVoorMelding, doelVoorMelding } from '../src/navigatieKeuze.ts';
 
 const tabs = (index) => ({
   index,
@@ -24,8 +24,8 @@ test('a push tap opens Detail in the Map or Search tab you are on, otherwise in 
 // van de melding.
 const melding = (id) => ({ melding: { id } });
 const opties = {
-  routeNames: ['Kaart', 'Detail'],
-  routeParamList: { Kaart: undefined, Detail: undefined },
+  routeNames: ['Kaart', 'Detail', 'Groep'],
+  routeParamList: { Kaart: undefined, Detail: undefined, Groep: undefined },
   routeGetIdList: { Detail: ({ params }) => params?.melding?.id },
 };
 const router = StackRouter({});
@@ -55,4 +55,45 @@ test('Detail with getId: another incident pushes a new Detail, the same one goes
   // Dezelfde melding nog eens: geen derde Detail, wel die melding bovenop.
   staat = doe(staat, CommonActions.navigate('Detail', melding('a')));
   assert.deepEqual(staat.routes.map((r) => r.params?.melding?.id ?? r.name), ['Kaart', 'b', 'a']);
+});
+
+test('a push tap with the group sheet open on the map closes the sheet first', () => {
+  const kaartMetBlad = (boven) => ({
+    index: 1,
+    routes: [
+      { name: 'BuurtTab' },
+      { name: 'KaartTab', state: { key: 'stapel-kaart', index: 1, routes: [{ name: 'Kaart' }, { name: boven }] } },
+      { name: 'ZoekTab' },
+      { name: 'InstellingenTab' },
+    ],
+  });
+  assert.deepEqual(doelVoorMelding(kaartMetBlad('Groep')), { tab: 'KaartTab', sluitBladIn: 'stapel-kaart' });
+  assert.deepEqual(doelVoorMelding(kaartMetBlad('Detail')), { tab: 'KaartTab', sluitBladIn: null });
+  // Gedeeltelijke staat zonder index: het laatste scherm van de stapel telt.
+  assert.deepEqual(
+    doelVoorMelding({ routes: [{ name: 'KaartTab', state: { key: 'k', routes: [{ name: 'Kaart' }, { name: 'Groep' }] } }] }),
+    { tab: 'KaartTab', sluitBladIn: 'k' },
+  );
+  // Alleen het tabblad waar je bent telt: een blad in een ander tabblad niet.
+  const opBuurt = { ...kaartMetBlad('Groep'), index: 0 };
+  assert.deepEqual(doelVoorMelding(opBuurt), { tab: 'BuurtTab', sluitBladIn: null });
+  assert.deepEqual(doelVoorMelding(undefined), { tab: 'BuurtTab', sluitBladIn: null });
+  assert.equal(tabVoorMelding(kaartMetBlad('Groep')), 'KaartTab');
+});
+
+test('closing the group sheet and then opening Detail leaves Map, Detail and the map place', () => {
+  let staat = router.getInitialState(opties);
+  const plek = { lat: -33.9, lon: 151.2, id: 'a', t: 1 };
+  staat = { ...staat, routes: [{ ...staat.routes[0], params: plek }] };
+  staat = doe(staat, CommonActions.navigate('Groep', { leden: [] }));
+  assert.deepEqual(staat.routes.map((r) => r.name), ['Kaart', 'Groep']);
+
+  // Zoals openMelding: een POP gericht aan deze stapel, dan NAVIGATE Detail.
+  // (GroepScreen doet hetzelfde met goBack en navigate.)
+  staat = doe(staat, { ...StackActions.pop(), target: staat.key });
+  staat = doe(staat, CommonActions.navigate('Detail', melding('b')));
+  assert.deepEqual(staat.routes.map((r) => r.name), ['Kaart', 'Detail']);
+  assert.equal(staat.index, 1);
+  // De kaart houdt zijn plek, dus het plek-effect in KaartScreen draait niet opnieuw.
+  assert.deepEqual(staat.routes[0].params, plek);
 });

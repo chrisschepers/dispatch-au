@@ -10,10 +10,10 @@
  *    achteraf vragen wat de laatste tik was.
  */
 import * as Notifications from 'expo-notifications';
-import { CommonActions, createNavigationContainerRef } from '@react-navigation/native';
+import { CommonActions, StackActions, createNavigationContainerRef } from '@react-navigation/native';
 import { haalMelding } from './api';
 import type { TabParams } from './navigatie';
-import { tabVoorMelding } from './navigatieKeuze';
+import { doelVoorMelding } from './navigatieKeuze';
 
 export const navRef = createNavigationContainerRef<TabParams>();
 
@@ -35,7 +35,10 @@ async function openMelding(messageId: string): Promise<void> {
     // bent (Kaart of Zoeken), anders in Buurt; Instellingen heeft geen Detail.
     // Gericht aan het tabblad: v7 geeft een NAVIGATE zonder doel niet meer
     // door aan geneste stapels.
-    const tab = tabVoorMelding(navRef.getRootState());
+    const { tab, sluitBladIn } = doelVoorMelding(navRef.getRootState());
+    // Ligt op de kaart het blad met meldingen op één plek open, dan dat eerst
+    // dicht (gericht aan de stapel van de kaart), anders opent Detail in het blad.
+    if (sluitBladIn) navRef.dispatch({ ...StackActions.pop(), target: sluitBladIn });
     navRef.dispatch(CommonActions.navigate(tab, { screen: 'Detail', params: { melding } }));
   } catch {
     // Melding niet op te halen (offline, of verwijderd): dan blijft de app

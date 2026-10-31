@@ -424,6 +424,7 @@ function KaartMetMeldingen() {
           const kleuren = new Set(g.leden.map((m) => vertaald.get(m.id)?.kleur ?? v.kleur));
           const vulling = kleuren.size === 1 ? v.kleur : C.groepVlak;
           const coords = g.leden.map((m) => ({ latitude: m.lat as number, longitude: (m.lon ?? m.lng) as number }));
+          const eenPlek = (zoom ?? 0) >= 16 || opEenPlek(coords.map((c) => ({ lat: c.latitude, lon: c.longitude })));
           return (
             <Marker
               key={g.sleutel}
@@ -431,17 +432,15 @@ function KaartMetMeldingen() {
               // Een groepje is een bolletje en staat dus gecentreerd.
               anchor={{ x: 0.5, y: 0.5 }}
               zIndex={1}
-              accessibilityLabel={`${aantal} incidents. Double-tap to zoom in`}
+              accessibilityLabel={eenPlek
+                ? `${aantal} incidents here. Double-tap to list them`
+                : `${aantal} incidents. Double-tap to zoom in`}
               tracksViewChanges={Platform.OS === 'android' ? herteken : false}
               onPress={() => {
-                if (opEenPlek(coords.map((c) => ({ lat: c.latitude, lon: c.longitude }))) || (zoom ?? 0) >= 16) {
-                  // Inzoomen maakt ze niet los: voorlopig nog het oude
-                  // inzoomen op de groep.
-                  mapRef.current?.animateToRegion({
-                    latitude: g.lat, longitude: g.lon,
-                    latitudeDelta: Math.max((regio?.latitudeDelta ?? 0.3) / 3, 0.01),
-                    longitudeDelta: Math.max((regio?.longitudeDelta ?? 0.3) / 3, 0.01),
-                  }, duur(350));
+                if (eenPlek) {
+                  // Inzoomen maakt ze niet los (één coördinaat, of al zo
+                  // ver ingezoomd als zinnig is): dan een blad met de lijst.
+                  navigation.navigate('Groep', { leden: g.leden });
                   return;
                 }
                 // Groepje: precies zo ver inzoomen dat alle leden in beeld

@@ -33,11 +33,13 @@ import KaartScreen from './screens/KaartScreen';
 import ZoekScreen from './screens/ZoekScreen';
 import InstellingenScreen from './screens/InstellingenScreen';
 import DetailScreen from './screens/DetailScreen';
+import GroepScreen from './screens/GroepScreen';
 
 /**
  * Alle schermen van de vier stapels. Kaart kan een plek meekrijgen (vanuit
  * het kaartje in Detail); `t` is een volgnummer, zodat de kaart ook opnieuw
- * inzoomt als je twee keer dezelfde plek kiest.
+ * inzoomt als je twee keer dezelfde plek kiest. Groep is het blad met de
+ * meldingen die op de kaart één plek delen (alleen in de kaartstapel).
  */
 export type StapelParams = {
   Buurt: undefined;
@@ -45,6 +47,7 @@ export type StapelParams = {
   Zoeken: undefined;
   Instellingen: undefined;
   Detail: { melding: Melding };
+  Groep: { leden: Melding[] };
 };
 
 export type TabParams = {
@@ -147,13 +150,33 @@ function BuurtStapel() {
   );
 }
 
-// De kaart vult het scherm tot onder de statusbalk, zoals Apple Kaarten.
+/**
+ * De kaart vult het scherm tot onder de statusbalk, zoals Apple Kaarten.
+ *
+ * Groep: een blad van het systeem voor meldingen op één plek, half open en
+ * door te trekken tot vol scherm. iOS: UISheetPresentationController met
+ * greep; op iOS 26 een doorzichtige achtergrond, dan tekent het systeem het
+ * blad in glas. Android: een BottomSheet (react-native-screens); de greep
+ * tekent GroepScreen zelf, want sheetGrabberVisible is alleen voor iOS.
+ */
 function KaartStapel() {
+  const C = useThema();
   const kop = useKop();
   return (
     <Stapel.Navigator screenOptions={kop}>
       <Stapel.Screen name="Kaart" component={KaartScreen} options={{ title: 'Map', headerShown: false }} />
       <Stapel.Screen name="Detail" component={DetailScreen} getId={detailId} options={detailOpties} />
+      <Stapel.Screen
+        name="Groep"
+        component={GroepScreen}
+        options={{
+          presentation: 'formSheet',
+          headerShown: false,
+          sheetAllowedDetents: [0.5, 1],
+          sheetGrabberVisible: true,
+          contentStyle: { backgroundColor: isIOS26 ? 'transparent' : C.bg },
+        }}
+      />
     </Stapel.Navigator>
   );
 }

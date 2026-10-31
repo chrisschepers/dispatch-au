@@ -23,7 +23,9 @@ import { misschienVragen } from '../recensie';
 import { LookAround } from '../../modules/look-around';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlekSnel } from '../locatie';
-import { vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst } from '../vertaal';
+import {
+  vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst, plaatsOnnauwkeurig,
+} from '../vertaal';
 import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from '../components/Drukbaar';
@@ -41,16 +43,6 @@ type Nav = CompositeNavigationProp<
   NativeStackNavigationProp<StapelParams, 'Detail'>,
   NativeBottomTabNavigationProp<TabParams>
 >;
-
-/**
- * Staat de pin op de echte plek? De backend zegt zelf hoe nauwkeurig hij de
- * melding kon plaatsen: 'street' is de straat zelf, 'city' het midden van
- * de plaats, 'region' nog ruwer.
- */
-function plaatsOnnauwkeurig(m: Melding): boolean {
-  const p = m.geoPrecision;
-  return !!p && p !== 'street' && p !== 'hecto' && p !== 'none';
-}
 
 /**
  * Navigeren naar de melding (wens Chris 27-09). iOS: routebeschrijving in

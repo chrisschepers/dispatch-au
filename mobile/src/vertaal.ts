@@ -168,6 +168,17 @@ export function plaatsRegel(
   return `${straat}, ${stad}`;
 }
 
+/**
+ * Staat de pin op de echte plek? De backend zegt zelf hoe nauwkeurig hij de
+ * melding kon plaatsen: 'street' is de straat zelf, 'city' het midden van
+ * de plaats, 'region' nog ruwer. Gedeeld door Detail en het groepsblad van
+ * de kaart.
+ */
+export function plaatsOnnauwkeurig(m: Melding): boolean {
+  const p = m.geoPrecision;
+  return !!p && p !== 'street' && p !== 'hecto' && p !== 'none';
+}
+
 /** Feeds often shout suburbs in capitals ("STRATFORD"); show them in title case. */
 export function nettePlaats(tekst: string | null | undefined): string | null {
   if (!tekst) return null;
