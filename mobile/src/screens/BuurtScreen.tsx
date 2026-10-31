@@ -29,6 +29,7 @@ import { T, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { DIENSTEN, wisselDienst, straalVoor, straalTekst, LANDELIJK_KM } from '../diensten';
 import { Drukbaar } from '../components/Drukbaar';
+import { tikStap } from '../trilling';
 
 type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
 
@@ -212,7 +213,11 @@ export default function BuurtScreen() {
               key={d.key}
               schaal={0.94}
               style={[styles.chip, aan && { backgroundColor: `${d.kleur}14`, borderColor: d.kleur }]}
-              onPress={() => zet('lijstDiensten', wisselDienst(inst.lijstDiensten, d.key))}
+              // Een keuze die verspringt: selectietik, geen druktik.
+              onPress={() => {
+                tikStap();
+                zet('lijstDiensten', wisselDienst(inst.lijstDiensten, d.key));
+              }}
             >
               <View style={styles.chipInhoud}>
                 <MaterialCommunityIcons

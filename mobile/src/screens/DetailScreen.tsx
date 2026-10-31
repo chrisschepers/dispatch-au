@@ -370,7 +370,9 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     borderRadius: 10, overflow: 'hidden', backgroundColor: C.chipBg,
     borderWidth: 2, borderColor: '#fff',
   },
-  verborgen: { opacity: 0 },
+  // Onzichtbaar tot het plaatje er is, en dan ook niet aanraakbaar: een tik
+  // op die plek opent gewoon de kaart.
+  verborgen: { opacity: 0, pointerEvents: 'none' },
   straatbeeldIcoon: {
     position: 'absolute', right: 5, bottom: 5, borderRadius: 999,
     backgroundColor: 'rgba(0,0,0,0.55)', padding: 4,

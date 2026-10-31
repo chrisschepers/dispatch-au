@@ -16,7 +16,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { mindeBeweging } from '../../theme';
+import { mindeBeweging, PALET_DONKER } from '../../theme';
+import { VastThema } from '../../thema';
 import { Drukbaar } from '../Drukbaar';
 import { Icoon } from '../Icoon';
 import { Toestel, toestelBreedte } from './Toestel';
@@ -70,46 +71,53 @@ export function IntroSchil({
     setVak((v) => (v && v.b === width && v.h === height ? v : { b: width, h: height }));
   }
 
+  // Het donkere palet als context: de Drukbaar-knoppen hierin (terug, de
+  // hoofdknop, de links op de betaalmuur) halen hun Android-drukstaat uit
+  // het thema, en op deze zwarte grond moet die licht zijn, ook als de app
+  // op licht staat. Het toestel zet voor zijn voorbeeldscherm zelf weer
+  // het lichte palet.
   return (
-    <SafeAreaView style={styles.root}>
-      {/* Witte klok op de zwarte grond, ook als de app op licht staat. De
-          laatst gemonteerde StatusBar wint, en dat is deze. */}
-      <StatusBar style="light" />
-      <View style={styles.kop}>
-        {onTerug ? (
-          <Drukbaar style={styles.terug} onPress={onTerug} label="Back" trillen={false} disabled={bezig}>
-            {/* iOS een chevron, Android de Material-pijl naar links. */}
-            <Icoon naam="terug" grootte={24} kleur={INTRO.tekst} gewicht="semibold" />
+    <VastThema palet={PALET_DONKER}>
+      <SafeAreaView style={styles.root}>
+        {/* Witte klok op de zwarte grond, ook als de app op licht staat. De
+            laatst gemonteerde StatusBar wint, en dat is deze. */}
+        <StatusBar style="light" />
+        <View style={styles.kop}>
+          {onTerug ? (
+            <Drukbaar style={styles.terug} onPress={onTerug} label="Back" trillen={false} disabled={bezig}>
+              {/* iOS een chevron, Android de Material-pijl naar links. */}
+              <Icoon naam="terug" grootte={24} kleur={INTRO.tekst} gewicht="semibold" />
+            </Drukbaar>
+          ) : null}
+        </View>
+
+        <Animated.View style={[styles.toestelVak, { opacity: zicht }]} onLayout={opMaat}>
+          {vak ? (
+            <Toestel breedte={toestelBreedte(vak.b, vak.h)} donker={schermDonker}>{scherm}</Toestel>
+          ) : null}
+        </Animated.View>
+
+        <Animated.View style={[styles.tekstVak, { opacity: zicht }]}>
+          <Text style={styles.titel} accessibilityRole="header">{titel}</Text>
+          {typeof tekst === 'string' ? <Text style={styles.tekst}>{tekst}</Text> : tekst}
+          {extra}
+        </Animated.View>
+
+        <View style={styles.voet}>
+          {aantal != null && stap != null ? (
+            <View style={styles.stippen} accessibilityLabel={`Step ${stap + 1} of ${aantal}`}>
+              {Array.from({ length: aantal }, (_, i) => (
+                <View key={i} style={[styles.stip, i === stap && styles.stipActief]} />
+              ))}
+            </View>
+          ) : null}
+          <Drukbaar style={[styles.knop, knopUit && styles.knopUit]} onPress={onKnop} disabled={bezig || knopUit} trillen>
+            {bezig ? <ActivityIndicator color="#fff" /> : <Text style={styles.knopTekst}>{knop}</Text>}
           </Drukbaar>
-        ) : null}
-      </View>
-
-      <Animated.View style={[styles.toestelVak, { opacity: zicht }]} onLayout={opMaat}>
-        {vak ? (
-          <Toestel breedte={toestelBreedte(vak.b, vak.h)} donker={schermDonker}>{scherm}</Toestel>
-        ) : null}
-      </Animated.View>
-
-      <Animated.View style={[styles.tekstVak, { opacity: zicht }]}>
-        <Text style={styles.titel} accessibilityRole="header">{titel}</Text>
-        {typeof tekst === 'string' ? <Text style={styles.tekst}>{tekst}</Text> : tekst}
-        {extra}
-      </Animated.View>
-
-      <View style={styles.voet}>
-        {aantal != null && stap != null ? (
-          <View style={styles.stippen} accessibilityLabel={`Step ${stap + 1} of ${aantal}`}>
-            {Array.from({ length: aantal }, (_, i) => (
-              <View key={i} style={[styles.stip, i === stap && styles.stipActief]} />
-            ))}
-          </View>
-        ) : null}
-        <Drukbaar style={[styles.knop, knopUit && styles.knopUit]} onPress={onKnop} disabled={bezig || knopUit} trillen>
-          {bezig ? <ActivityIndicator color="#fff" /> : <Text style={styles.knopTekst}>{knop}</Text>}
-        </Drukbaar>
-        {onder}
-      </View>
-    </SafeAreaView>
+          {onder}
+        </View>
+      </SafeAreaView>
+    </VastThema>
   );
 }
 
