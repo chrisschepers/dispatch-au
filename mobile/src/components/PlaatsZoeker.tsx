@@ -88,8 +88,13 @@ export function PlaatsZoeker({
   return (
     <View>
       {waarde ? (
-        // Gekozen plaats: tik erop om hem te wissen en opnieuw te zoeken.
-        <Drukbaar style={styles.gekozen} onPress={() => { onWis(); setTekst(''); setSuggesties([]); }}>
+        // Gekozen plaats: tik erop om hem te wissen en opnieuw te zoeken. Het
+        // kruisje zegt dat alleen in beeld, dus de schermlezer krijgt het zo.
+        <Drukbaar
+          style={styles.gekozen}
+          label={`${waarde}. Tap to clear and choose another place`}
+          onPress={() => { onWis(); setTekst(''); setSuggesties([]); }}
+        >
           <Icoon naam="plaats" grootte={16} kleur={C.accent} />
           <Text style={styles.gekozenTekst}>{waarde}</Text>
           <Icoon naam="wissen" grootte={17} kleur={C.textMuted} />
@@ -99,6 +104,8 @@ export function PlaatsZoeker({
           <Icoon naam="plaatsZoeken" grootte={18} kleur={C.textMuted} />
           <TextInput
             style={styles.invoer}
+            // Een plaatshouder is geen naam: hij verdwijnt zodra je typt.
+            accessibilityLabel="Search your suburb or town"
             value={tekst}
             onChangeText={typ}
             placeholder="Search your suburb or town"
@@ -124,7 +131,8 @@ export function PlaatsZoeker({
           {suggesties.map((s, i) => (
             <Drukbaar
               key={`${s.naam}-${s.lat}`}
-              schaal={0.99}
+              // Oplichten zoals een rij in een lijst, niet inzakken.
+              markeer
               style={[styles.suggestie, i > 0 && styles.scheiding]}
               onPress={() => {
                 onKies(s);
@@ -152,7 +160,8 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   gekozenTekst: { ...T.body, color: C.textPrimary, fontWeight: F.weightSemibold },
   invoerRij: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   invoer: { flex: 1, ...T.body, fontSize: 16, color: C.textPrimary, paddingVertical: 6 },
-  lijst: { marginTop: 8, borderRadius: 10, backgroundColor: C.chipBg, overflow: 'hidden' },
+  // borderCurve: de vloeiende iOS-hoek; Android negeert hem.
+  lijst: { marginTop: 8, borderRadius: 10, borderCurve: 'continuous', backgroundColor: C.chipBg, overflow: 'hidden' },
   suggestie: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 11 },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border },
   suggestieTekst: { ...T.body, color: C.textPrimary },

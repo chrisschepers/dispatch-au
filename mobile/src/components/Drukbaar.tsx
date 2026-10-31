@@ -77,11 +77,21 @@ interface Props {
   bezig?: boolean;
   /** iOS: oplichten tijdens het indrukken in plaats van krimpen. Voor rijen. */
   markeer?: boolean;
+  /** Bevat selecteerbare tekst (selectable): lang drukken opent dan alleen
+   *  het kopieermenu en activeert het element niet. */
+  kopieerbaar?: boolean;
 }
+
+/**
+ * Lege onLongPress voor `kopieerbaar`. Zonder onLongPress roept Pressability
+ * bij het loslaten na lang drukken tóch onPress aan, en opende een rij naast
+ * het kopieermenu ook zijn link, mail of deelvenster.
+ */
+const geenActie = () => {};
 
 export function Drukbaar({
   children, onPress, onLongPress, disabled, style, schaal = 0.98, trillen = false,
-  label, hint, rol = 'button', aan, geselecteerd, uitgeklapt, bezig, markeer,
+  label, hint, rol = 'button', aan, geselecteerd, uitgeklapt, bezig, markeer, kopieerbaar,
 }: Props) {
   const C = useThema();
   const s = useRef(new Animated.Value(1)).current;
@@ -91,7 +101,7 @@ export function Drukbaar({
   const gedeeld = {
     disabled,
     onPress,
-    onLongPress,
+    onLongPress: onLongPress ?? (kopieerbaar ? geenActie : undefined),
     // Ruime raakzone rond het element: tikken mag onnauwkeurig zijn.
     hitSlop: 8,
     // Een vinger die een paar pixels wegglijdt, annuleert de tik niet.

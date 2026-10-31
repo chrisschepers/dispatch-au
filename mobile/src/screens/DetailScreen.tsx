@@ -4,7 +4,9 @@
  * Codes vertalen we; we verbergen ze niet voor wie doorleest.
  */
 import React, { useEffect, useLayoutEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Share, Image, Linking, Platform, Pressable } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView, Share, Image, Linking, Platform, Pressable, useWindowDimensions,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MiniKaart } from '../components/MiniKaart';
 import { BrandendIcoon, BotsingIcoon, VlammenIcoon } from '../components/IncidentIcoon';
@@ -80,6 +82,8 @@ export default function DetailScreen() {
   const navigation = useNavigation<Nav>();
   // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
   const { marge, kolom } = useInhoudMaat();
+  // Grote tekst (vanaf 150%): de routeregel mag dan over twee regels.
+  const groot = useWindowDimensions().fontScale >= 1.5;
   const [melding, setMelding] = useState<Melding>(begin);
   const v = vertaalMelding(melding);
   // De uitspaartruc in BrandendIcoon schildert de vlamrand in de fondkleur en
@@ -217,9 +221,11 @@ export default function DetailScreen() {
             <MaterialCommunityIcons name={v.kaartIcoon as never} size={26} color={v.kleur} />
           )}
         </View>
-        <Text style={[styles.titel, { flex: 1 }]}>{v.titel}</Text>
+        {/* Kop voor de schermlezer; selecteerbaar, zoals alle gegevens
+            hieronder die je wilt kunnen kopiëren of doorsturen. */}
+        <Text style={[styles.titel, { flex: 1 }]} accessibilityRole="header" selectable>{v.titel}</Text>
       </View>
-      <Text style={styles.sub}>
+      <Text style={styles.sub} selectable>
         {[plaatsRegel(melding.location, melding.city), tijdTekst(melding.timestamp)].filter(Boolean).join(' · ')}
       </Text>
 
@@ -244,6 +250,7 @@ export default function DetailScreen() {
           schaal={0.99}
           trillen={false}
           style={[kaartStijl, styles.kaartWrap]}
+          label="Show this incident on the map"
           // pop: in de kaartstapel terug naar de bestaande kaart in plaats
           // van een tweede kaart erbovenop. t: ook bij dezelfde plek als de
           // vorige keer opnieuw inzoomen.
@@ -300,6 +307,8 @@ export default function DetailScreen() {
       {lat != null && lon != null && (
         <Drukbaar
           style={[kaartStijl, styles.navRij]}
+          // Een rij, geen knop: oplichten in plaats van inzakken (iOS).
+          markeer
           onPress={() => navigeer(lat, lon, plaatsRegel(melding.location, melding.city) || v.titel)}
           label={`Directions to ${plaatsNaam ?? 'the incident'}${afstand ? `, ${afstand}` : ''}`}
         >
@@ -307,7 +316,7 @@ export default function DetailScreen() {
             <Icoon naam="route" grootte={19} kleur="#fff" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.rijTitel} numberOfLines={1}>
+            <Text style={styles.rijTitel} numberOfLines={groot ? 2 : 1}>
               {plaatsRegel(melding.location, melding.city) || 'Incident location'}
             </Text>
             <Text style={styles.rijSub}>
@@ -324,12 +333,12 @@ export default function DetailScreen() {
           Met de bron en het overheidsdomein erbij: Google Play wil dat elke
           melding herleidbaar is tot de officiële site (afwijzing 26-10). */}
       <View style={[kaartStijl, styles.blok]}>
-        <Text style={styles.blokKop}>From the agency</Text>
+        <Text style={styles.blokKop} accessibilityRole="header">From the agency</Text>
         {vanDeDienst.map(({ icoon, titel, sub }, i) => (
           <View key={icoon} style={[styles.rij, i > 0 && styles.scheiding]}>
             <Icoon naam={icoon} grootte={20} kleur={v.kleur} style={styles.rijIcoon} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.rijTitel}>{titel}</Text>
+              <Text style={styles.rijTitel} selectable>{titel}</Text>
               {sub ? <Text style={styles.rijSub}>{sub}</Text> : null}
             </View>
           </View>
@@ -338,12 +347,13 @@ export default function DetailScreen() {
           <Drukbaar
             style={[styles.rij, styles.scheiding]}
             onPress={() => { Linking.openURL(melding.officialUrl!).catch(() => {}); }}
+            kopieerbaar
             label={`Open official advice on ${domeinVan(melding.officialUrl)}`}
           >
             <Icoon naam="extern" grootte={20} kleur={C.accent} style={styles.rijIcoon} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.rijTitel, { color: C.accentTekst }]}>Official advice and warnings</Text>
-              <Text style={styles.rijSub}>{domeinVan(melding.officialUrl)}</Text>
+              <Text style={styles.rijSub} selectable>{domeinVan(melding.officialUrl)}</Text>
             </View>
           </Drukbaar>
         ) : null}
@@ -355,7 +365,7 @@ export default function DetailScreen() {
           precies wat de eenheden-lijst hierboven al zegt. */}
       {verloop.length > 1 && (
         <View style={[kaartStijl, styles.blok]}>
-          <Text style={styles.blokKop}>Timeline</Text>
+          <Text style={styles.blokKop} accessibilityRole="header">Timeline</Text>
           {verloop.map((r, i) => {
             const bol = r.soort === 'alarmering' ? v.kleur : C.accent;
             return (
@@ -376,11 +386,11 @@ export default function DetailScreen() {
                   {i < verloop.length - 1 && <View style={styles.tlLijn} />}
                 </View>
                 <View style={styles.tlInhoud}>
-                  <Text style={styles.tlTijd}>
+                  <Text style={styles.tlTijd} selectable>
                     {new Date(r.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
                     {r.kop ? `  ·  ${r.kop}` : ''}
                   </Text>
-                  <Text style={styles.tlTekst}>{r.tekst}</Text>
+                  <Text style={styles.tlTekst} selectable>{r.tekst}</Text>
                 </View>
               </View>
             );
@@ -389,7 +399,7 @@ export default function DetailScreen() {
       )}
 
       <View style={[kaartStijl, styles.blok]}>
-        <Text style={styles.blokKop}>Good to know</Text>
+        <Text style={styles.blokKop} accessibilityRole="header">Good to know</Text>
         <Text style={styles.blokTekst}>
           This app shows public information published by the emergency services. It is not an
           emergency service and it can be delayed or incomplete. In an emergency, call 000. Always
@@ -407,15 +417,17 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   inhoud: { padding: 16, paddingBottom: 32, gap: 12 },
   titel: { ...T.titel, color: C.textPrimary },
   titelRij: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  // borderCurve 'continuous': de vloeiende iOS-hoek op vlakken met afgeronde
+  // hoeken; Android negeert hem.
   titelIcoon: {
-    width: 46, height: 46, borderRadius: 13,
+    width: 46, height: 46, borderRadius: 13, borderCurve: 'continuous',
     alignItems: 'center', justifyContent: 'center',
   },
   sub: { ...T.body, color: C.textSecondary, marginTop: -6 },
   kaartWrap: { height: 180, overflow: 'hidden' },
   straatbeeld: {
     position: 'absolute', left: 10, top: 10, width: 116, height: 74,
-    borderRadius: 10, overflow: 'hidden', backgroundColor: C.chipBg,
+    borderRadius: 10, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: C.chipBg,
     borderWidth: 2, borderColor: C.card,
   },
   // Onzichtbaar tot het plaatje er is, en dan ook niet aanraakbaar: een tik
@@ -427,7 +439,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   },
   navRij: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
   navIcoon: {
-    width: 32, height: 32, borderRadius: 9, backgroundColor: '#2f6fde',
+    width: 32, height: 32, borderRadius: 9, borderCurve: 'continuous', backgroundColor: '#2f6fde',
     alignItems: 'center', justifyContent: 'center',
   },
   // Dicht vlak, geen glas: de kaart eromheen knipt af (overflow: 'hidden'),
@@ -456,7 +468,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   meldtekst: { ...T.klein, color: C.textSecondary },
   opschaling: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: C.accentSoft, borderRadius: 12,
+    backgroundColor: C.accentSoft, borderRadius: 12, borderCurve: 'continuous',
     paddingHorizontal: 12, paddingVertical: 10, marginTop: 2,
   },
   // accentTekst: het gewone accent haalt op accentSoft geen 4.5:1.

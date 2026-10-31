@@ -93,11 +93,16 @@ const T_ANDROID = {
 
 export const T = Platform.OS === 'android' ? T_ANDROID : T_IOS;
 
-/** Afgeronde kaart zoals in iOS-instellingen, in de kleur van het thema. */
+/**
+ * Afgeronde kaart zoals in iOS-instellingen, in de kleur van het thema.
+ * borderCurve 'continuous': de vloeiende hoek van iOS (een squircle) in
+ * plaats van een cirkelboog; Android negeert hem.
+ */
 export function kaartVoor(palet: Palet) {
   return {
     backgroundColor: palet.card,
     borderRadius: 12,
+    borderCurve: 'continuous' as const,
     overflow: 'hidden' as const,
   };
 }

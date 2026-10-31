@@ -134,7 +134,8 @@ export default function ZoekScreen() {
   const kop = (
     <View style={styles.balk}>
       <View style={styles.aantalRij}>
-        <Text style={styles.aantal}>{aantalTekst}</Text>
+        {/* Bij een fout selecteerbaar: een foutmelding wil je kunnen doorsturen. */}
+        <Text style={styles.aantal} selectable={fout}>{aantalTekst}</Text>
         {bezig ? <ActivityIndicator size="small" color={C.textMuted} /> : null}
         {fout && !bezig ? (
           <Drukbaar style={styles.opnieuw} onPress={() => setPoging((p) => p + 1)} label="Try again">
@@ -142,9 +143,22 @@ export default function ZoekScreen() {
           </Drukbaar>
         ) : null}
       </View>
+      {/* De schakelaar draagt de naam; de tekst ernaast zwijgt voor de
+          schermlezer, anders hoor je hem twee keer. */}
       <View style={styles.filterRij}>
-        <Text style={styles.filterTekst}>Use my radius and services</Text>
-        <Schakelaar value={filters} onValueChange={setFilters} disabled={!plek} />
+        <Text
+          style={styles.filterTekst}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          Use my radius and services
+        </Text>
+        <Schakelaar
+          value={filters}
+          onValueChange={setFilters}
+          disabled={!plek}
+          label="Use my radius and services"
+        />
       </View>
     </View>
   );

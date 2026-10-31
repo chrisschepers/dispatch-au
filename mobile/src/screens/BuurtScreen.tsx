@@ -341,14 +341,19 @@ export default function BuurtScreen() {
           <Text style={styles.eindeTekst}>That's everything we have for this area.</Text>
         ) : null}
         contentContainerStyle={[styles.lijst, kolom, { paddingHorizontal: marge }]}
-        renderSectionHeader={({ section }) => <Text style={styles.sectieKop}>{section.title}</Text>}
+        // Kopjes per periode als kop: de koppenrotor van VoiceOver en de
+        // koppennavigatie van TalkBack springen er dan van dag naar dag.
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectieKop} accessibilityRole="header">{section.title}</Text>
+        )}
         // Drie lege staten, en 'All quiet' alleen als het echt stil is: de
         // eerste keer laden een skelet in de vorm van de lijst, bij een
         // mislukte herlading zonder oude lijst de foutkaart.
         ListEmptyComponent={laden ? <Skelet /> : fout ? (
           <View style={[kaartStijl, styles.leeg]}>
-            <Text style={styles.leegTitel}>Could not load incidents</Text>
-            <Text style={styles.leegTekst}>Check your connection and try again.</Text>
+            {/* Selecteerbaar: een foutmelding wil je kunnen doorsturen. */}
+            <Text style={styles.leegTitel} accessibilityRole="header" selectable>Could not load incidents</Text>
+            <Text style={styles.leegTekst} selectable>Check your connection and try again.</Text>
             <Drukbaar style={styles.opnieuw} onPress={opnieuw}>
               <Text style={styles.opnieuwTekst}>Try again</Text>
             </Drukbaar>

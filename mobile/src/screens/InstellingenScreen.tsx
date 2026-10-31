@@ -299,6 +299,7 @@ export default function InstellingenScreen() {
                 titel={d.label}
                 sub={open && LANDELIJK_MOGELIJK.has(d.key) ? 'All the way right: anywhere in Australia' : undefined}
                 onPress={() => setOpen(open ? null : d.key)}
+                uitgeklapt={open}
                 label={`${d.volleNaam}, ${straalTekst(km)}. Tap to choose the distance`}
                 rechts={(
                   <View style={styles.rechtsWaarde}>
@@ -401,6 +402,7 @@ export default function InstellingenScreen() {
               style={[styles.rij, i > 0 && styles.scheiding]}
               onPress={() => zet('thema', sleutel)}
               geselecteerd={inst.thema === sleutel}
+              markeer
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>{label}</Text>
@@ -510,6 +512,8 @@ export default function InstellingenScreen() {
         <Drukbaar
           style={isIOS ? [styles.rij, styles.scheiding] : [styles.rij, styles.rijLijst, styles.rijLijstTwee]}
           onPress={mailSupport}
+          kopieerbaar
+          markeer
         >
           {isIOS ? (
             <View style={[styles.tegel, { backgroundColor: C.accentSoft }]}>
@@ -522,7 +526,7 @@ export default function InstellingenScreen() {
           )}
           <View style={isIOS ? styles.midden : styles.rijMidden}>
             <Text style={styles.tegelLabel}>Email</Text>
-            <Text style={[styles.tegelWaarde, { color: C.accentTekst }]}>{CONTACT.email}</Text>
+            <Text style={[styles.tegelWaarde, { color: C.accentTekst }]} selectable>{CONTACT.email}</Text>
           </View>
           {isIOS && <Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />}
         </Drukbaar>
@@ -558,14 +562,15 @@ export default function InstellingenScreen() {
       <View style={kaartStijl}>
         <View style={styles.rij}>
           <Text style={styles.label}>Version</Text>
-          <Text style={styles.waarde}>{VERSIE}</Text>
+          <Text style={styles.waarde} selectable>{VERSIE}</Text>
         </View>
         {/* Tik = delen (kopiëren, mailen, WhatsApp); lang drukken selecteert. */}
         <Drukbaar
           style={[styles.rij, styles.scheiding]}
           onPress={() => { if (gebruikerId) Share.share({ message: gebruikerId }).catch(() => {}); }}
+          kopieerbaar
           label={gebruikerId ? `User ID ${gebruikerId}. Tap to share` : 'User ID not known yet'}
-          trillen={false}
+          markeer
         >
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>User ID</Text>
@@ -608,12 +613,14 @@ function GroepKop({ children }: { children: string }) {
  * zwijgt dan voor VoiceOver, anders hoor je alles twee keer.
  */
 function Rij({
-  icoon, tegelKleur, titel, sub, subKleur, rechts, onPress, scheiding, label, rol, schakelaar,
+  icoon, tegelKleur, titel, sub, subKleur, rechts, onPress, scheiding, label, rol, uitgeklapt, schakelaar,
 }: {
   icoon: IcoonNaam | { dienst: Dienst }; tegelKleur: ColorValue; titel: string; sub?: string; subKleur?: string;
   rechts?: React.ReactNode; onPress?: () => void; scheiding?: boolean; label?: string;
   /** 'link' voor rijen die iets buiten de app openen (website, winkel). */
   rol?: 'button' | 'link';
+  /** Rij die iets eronder openklapt: de schermlezer zegt of het open is. */
+  uitgeklapt?: boolean;
   schakelaar?: { aan: boolean; wissel: (v: boolean) => void };
 }) {
   const C = useThema();
@@ -675,8 +682,14 @@ function Rij({
       </Drukbaar>
     );
   }
+  // iOS: de rij licht op bij het indrukken, zoals in iOS-instellingen;
+  // Android houdt zijn rimpel.
   return onPress
-    ? <Drukbaar style={stijl} onPress={onPress} label={label} rol={rol} trillen={false}>{inhoud}</Drukbaar>
+    ? (
+      <Drukbaar style={stijl} onPress={onPress} label={label} rol={rol} uitgeklapt={uitgeklapt} markeer>
+        {inhoud}
+      </Drukbaar>
+    )
     : <View style={stijl}>{inhoud}</View>;
 }
 
@@ -702,12 +715,13 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   },
   vermeldingTekst: { ...T.klein, color: C.textSecondary, textDecorationLine: 'underline' },
   dienstNaam: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  tegel: { width: 34, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  // Tegels met de vloeiende iOS-hoek (borderCurve); Android tekent ze niet.
+  tegel: { width: 34, height: 34, borderRadius: 9, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   midden: { flex: 1, marginLeft: 12 },
   tegelLabel: { ...T.klein, color: C.textSecondary },
   tegelWaarde: { ...T.body, fontWeight: F.weightSemibold, color: C.textPrimary, marginTop: 1 },
   rijTegel: { justifyContent: 'flex-start', gap: 12, paddingVertical: 10 },
-  tegeltje: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  tegeltje: { width: 30, height: 30, borderRadius: 8, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   // Android: M3-lijstitem, één regel 56 dp hoog, twee regels ruimer.
   rijLijst: { justifyContent: 'flex-start', gap: 16, minHeight: 56, paddingVertical: 8 },
   rijLijstTwee: { paddingVertical: 12 },

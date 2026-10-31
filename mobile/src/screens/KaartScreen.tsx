@@ -101,7 +101,7 @@ function KaartNogNiet() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: C.bg, gap: 10 }}>
       <Icoon naam="kaart" grootte={40} kleur={C.textMuted} />
-      <Text style={{ ...T.kop, color: C.textPrimary, textAlign: 'center' }}>
+      <Text style={{ ...T.kop, color: C.textPrimary, textAlign: 'center' }} accessibilityRole="header">
         The map is coming soon on Android
       </Text>
       <Text style={{ ...T.body, color: C.textSecondary, textAlign: 'center' }}>

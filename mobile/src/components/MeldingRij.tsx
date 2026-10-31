@@ -4,7 +4,7 @@
  * door de Buurt-lijst en Zoeken, zodat een melding er overal hetzelfde uitziet.
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { Melding } from '../api';
 import {
@@ -39,6 +39,9 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
   const plek = plaatsRegel(m.location, m.city);
   const urgentie = urgentieTekst(m.priority);
   const tijd = metDatum ? datumTekst(m.timestamp) : klokTekst(m.timestamp);
+  // Grote tekst (vanaf 150%): de titel mag dan doorlopen tot vier regels en
+  // plaats en urgentie tot twee, anders staat er bij AX5 vooral '…'.
+  const groot = useWindowDimensions().fontScale >= 1.5;
   // Zet de PLAATS vooraan zodra de titel een terugval is. Van de 22
   // zichtbare rijen begonnen er zeventien met "Ambulance opgeroepen"
   // (gemeten 31-08); het grootste element op de kaart was precies wat
@@ -52,6 +55,9 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
   return (
     <Drukbaar
       style={[kaartStijl, styles.rij]}
+      // Oplichten in plaats van inzakken, zoals een rij in een iOS-lijst, en
+      // geen tik bij elke rij. Android houdt zijn drukstaat.
+      markeer
       // De rij bestaat uit losse tekstjes; voor VoiceOver/TalkBack is
       // dit pas samen een zin (audit 20-08).
       label={[kopTekst, onderTekst, km, tijd].filter(Boolean).join(', ')}
@@ -67,7 +73,7 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
       </View>
 
       <View style={styles.midden}>
-        <Text style={styles.titel} numberOfLines={2}>{kopTekst}</Text>
+        <Text style={styles.titel} numberOfLines={groot ? 4 : 2}>{kopTekst}</Text>
         {/* Opschaling is het nieuws: een middelbrand die grote brand
             wordt, verandert wat er in de buurt gebeurt (wens Chris
             18-08). Alleen tonen als het speelt, dus geen vast label. */}
@@ -77,11 +83,11 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
             <Text style={styles.opschalingTekst}>{v.opschaling}</Text>
           </View>
         ) : null}
-        {onderTekst ? <Text style={styles.plek} numberOfLines={1}>{onderTekst}</Text> : null}
+        {onderTekst ? <Text style={styles.plek} numberOfLines={groot ? 2 : 1}>{onderTekst}</Text> : null}
         {/* Bij een beschrijvende titel staat de urgentie nog apart;
             bij een omgedraaide rij zit hij al in onderTekst. */}
         {!draaiOm && urgentie ? (
-          <Text style={styles.urgentie} numberOfLines={1}>{urgentie}</Text>
+          <Text style={styles.urgentie} numberOfLines={groot ? 2 : 1}>{urgentie}</Text>
         ) : null}
       </View>
 
