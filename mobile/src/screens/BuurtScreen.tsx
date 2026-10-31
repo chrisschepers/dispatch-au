@@ -31,6 +31,7 @@ import { Drukbaar } from '../components/Drukbaar';
 import { Icoon, DienstIcoon } from '../components/Icoon';
 import { tikStap } from '../trilling';
 import { leesbaar, mengKleur } from '../kleur';
+import { useInhoudMaat } from '../inhoudMaat';
 
 type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
 
@@ -45,6 +46,8 @@ export default function BuurtScreen() {
   const kaartStijl = useKaartStijl();
   const { inst, zet } = useInstellingen();
   const navigation = useNavigation<Nav>();
+  // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
+  const { marge, kolom } = useInhoudMaat();
   const [rijen, setRijen] = useState<Rij[]>([]);
   const [laden, setLaden] = useState(true);
   const [plaatsLabel, setPlaatsLabel] = useState<string | null>(null);
@@ -306,7 +309,7 @@ export default function BuurtScreen() {
         ) : eindeBereikt && rijen.length > 0 ? (
           <Text style={styles.eindeTekst}>That's everything we have for this area.</Text>
         ) : null}
-        contentContainerStyle={styles.lijst}
+        contentContainerStyle={[styles.lijst, kolom, { paddingHorizontal: marge }]}
         renderSectionHeader={({ section }) => <Text style={styles.sectieKop}>{section.title}</Text>}
         ListEmptyComponent={!laden ? (
           <View style={[kaartStijl, styles.leeg]}>

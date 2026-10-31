@@ -37,6 +37,7 @@ import type { IcoonNaam } from '../iconen';
 import { openRecensiePagina } from '../recensie';
 import { BRONNEN } from '../bronnen';
 import { tikSchakel } from '../trilling';
+import { useInhoudMaat } from '../inhoudMaat';
 
 const SITE = 'https://emergenciesnearme.online';
 const CONTACT = {
@@ -74,6 +75,8 @@ export default function InstellingenScreen() {
   const kaartStijl = useKaartStijl();
   const { inst, zet, zetVeel } = useInstellingen();
   const navigation = useNavigation<Nav>();
+  // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
+  const { marge, kolom } = useInhoudMaat();
 
   /**
    * Mail met de supportgegevens er al in. Het gebruikers-id is het enige
@@ -203,7 +206,7 @@ export default function InstellingenScreen() {
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
-      contentContainerStyle={styles.inhoud}
+      contentContainerStyle={[styles.inhoud, kolom, { paddingHorizontal: marge }]}
     >
       {/* Opzet gelijk aan het voorbeeld op het startscherm (wens Chris
           27-09): elke rij een icoon (op iOS in een gekleurd tegeltje), een

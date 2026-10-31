@@ -32,6 +32,7 @@ import { MeldingRij } from '../components/MeldingRij';
 import { Schakelaar } from '../components/Schakelaar';
 import { Drukbaar } from '../components/Drukbaar';
 import type { StapelParams } from '../navigatie';
+import { useInhoudMaat } from '../inhoudMaat';
 
 const WACHT_MS = 350;
 const LIMIET = 60;
@@ -42,6 +43,8 @@ export default function ZoekScreen() {
   const C = useThema();
   const styles = useStijlen(maak_styles);
   const navigation = useNavigation<Nav>();
+  // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
+  const { marge, kolom } = useInhoudMaat();
   const { inst } = useInstellingen();
   const zoekVeld = useRef<SearchBarCommands>(null);
   const [vraag, setVraag] = useState('');
@@ -156,7 +159,10 @@ export default function ZoekScreen() {
       automaticallyAdjustKeyboardInsets
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[styles.lijst, toetsenbord > 0 && { paddingBottom: 24 + toetsenbord }]}
+      contentContainerStyle={[
+        styles.lijst, kolom, { paddingHorizontal: marge },
+        toetsenbord > 0 && { paddingBottom: 24 + toetsenbord },
+      ]}
       renderItem={({ item }) => (
         <MeldingRij
           m={item}

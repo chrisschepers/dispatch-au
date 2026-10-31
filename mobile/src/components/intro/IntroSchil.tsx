@@ -25,6 +25,7 @@ import { Drukbaar } from '../Drukbaar';
 import { Icoon } from '../Icoon';
 import { Navigatiebalk } from '../Navigatiebalk';
 import { Toestel, toestelBreedte } from './Toestel';
+import { MAX_SMAL } from '../../inhoudMaat';
 
 export const INTRO = {
   // Grond en vlakken komen uit het donkere palet: op iOS OLED-zwart met
@@ -197,9 +198,6 @@ export function IntroSchil({
   );
 }
 
-/** Tekst en knoppen niet breder dan dit, op een tablet of opengevouwen toestel. */
-const MAX_BREEDTE = 480;
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: INTRO.grond },
   kop: {
@@ -223,7 +221,7 @@ const styles = StyleSheet.create({
   schuifInhoud: { flexGrow: 1 },
   toestelVak: { flex: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center' },
   tekstVak: {
-    width: '100%', maxWidth: MAX_BREEDTE, alignSelf: 'center',
+    width: '100%', maxWidth: MAX_SMAL, alignSelf: 'center',
     paddingHorizontal: 26, paddingTop: 22,
   },
   titel: {
@@ -233,11 +231,11 @@ const styles = StyleSheet.create({
   tekst: { fontSize: 16.5, lineHeight: 23, color: INTRO.zacht, textAlign: 'center', marginTop: 10 },
   // Zelfde breedte en marge als in de voet, zodat het daar even hoog is.
   onderMee: {
-    width: '100%', maxWidth: MAX_BREEDTE, alignSelf: 'center',
+    width: '100%', maxWidth: MAX_SMAL, alignSelf: 'center',
     paddingHorizontal: 24, paddingTop: 22, paddingBottom: 8,
   },
   voet: {
-    width: '100%', maxWidth: MAX_BREEDTE, alignSelf: 'center',
+    width: '100%', maxWidth: MAX_SMAL, alignSelf: 'center',
     paddingHorizontal: 24, paddingTop: 18, paddingBottom: 10, gap: 16,
   },
   stippen: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 7 },

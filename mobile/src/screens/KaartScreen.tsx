@@ -4,7 +4,7 @@
  * heli's, geen posten: dit is de kaart voor de vraag "waar is dat?".
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, useWindowDimensions } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
@@ -26,6 +26,7 @@ import { useThema, useStijlen } from '../thema';
 import { Icoon } from '../components/Icoon';
 import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
 import type { StapelParams } from '../navigatie';
+import { MAX_SMAL } from '../inhoudMaat';
 
 /**
  * Boven dit aantal in beeld gaan we groeperen; daaronder losse pins. Op Android
@@ -119,6 +120,10 @@ function KaartMetMeldingen() {
   // van react-native-screens: op Android mag die maar één keer per tabblad
   // (zie androidLaag in navigatie.tsx).
   const insets = useSafeAreaInsets();
+  // De zoomhint: 90% van de breedte op een telefoon, nooit breder dan
+  // MAX_SMAL op een tablet of opengevouwen toestel.
+  const { width: schermBreedte } = useWindowDimensions();
+  const hintBreedte = Math.min(schermBreedte * 0.9, MAX_SMAL);
   // Vanuit een melding gekomen? Dan daarop inzoomen in plaats van op de buurt.
   const params = useRoute<RouteProp<StapelParams, 'Kaart'>>().params ?? {};
   const mapRef = useRef<MapView>(null);
@@ -355,7 +360,7 @@ function KaartMetMeldingen() {
         })}
       </MapView>
       {(!ingezoomd || kaartStatus) ? (
-        <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 8, alignSelf: 'center', maxWidth: '90%', backgroundColor: C.card, borderRadius: 16, padding: 12 }}>
+        <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 8, alignSelf: 'center', maxWidth: hintBreedte, backgroundColor: C.card, borderRadius: 16, padding: 12 }}>
           <Text style={{ color: C.textPrimary, textAlign: 'center' }}>{!ingezoomd ? 'Zoom in to see incidents' : kaartStatus}</Text>
         </View>
       ) : null}

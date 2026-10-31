@@ -29,6 +29,7 @@ import { Icoon } from '../components/Icoon';
 import { ICONEN, type IcoonNaam } from '../iconen';
 import { bronVan, domeinVan } from '../bronnen';
 import type { StapelParams, TabParams } from '../navigatie';
+import { useInhoudMaat } from '../inhoudMaat';
 
 type Rt =RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
 // Detail zit in de stapel van een tabblad, en het kaartje springt naar een
@@ -89,6 +90,8 @@ export default function DetailScreen() {
   const kaartStijl = useKaartStijl();
   const { melding: begin } = useRoute<Rt>().params;
   const navigation = useNavigation<Nav>();
+  // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
+  const { marge, kolom } = useInhoudMaat();
   const [melding, setMelding] = useState<Melding>(begin);
   const v = vertaalMelding(melding);
   const [verloop, setVerloop] = useState<VerloopRegel[]>([]);
@@ -201,7 +204,11 @@ export default function DetailScreen() {
   }
 
   return (
-    <ScrollView style={styles.root} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.inhoud}>
+    <ScrollView
+      style={styles.root}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.inhoud, kolom, { paddingHorizontal: marge }]}
+    >
       {/* Icoon in plaats van emoji (audit 20-08): dezelfde reden als in de
           lijst en de tabbalk. Het is meteen het soort-icoon van de kaart. */}
       <View style={styles.titelRij}>
