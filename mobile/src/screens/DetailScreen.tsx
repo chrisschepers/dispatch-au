@@ -166,7 +166,7 @@ export default function DetailScreen() {
   }
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.inhoud}>
+    <ScrollView style={styles.root} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.inhoud}>
       {/* Icoon in plaats van emoji (audit 20-08): dezelfde reden als in de
           lijst en de tabbalk. Het is meteen het soort-icoon van de kaart. */}
       <View style={styles.titelRij}>
@@ -208,7 +208,12 @@ export default function DetailScreen() {
           schaal={0.99}
           trillen={false}
           style={[kaartStijl, styles.kaartWrap]}
-          onPress={() => navigation.navigate('Tabs', { screen: 'Kaart', params: { lat, lon, id: melding.id } })}
+          // pop: in de kaartstapel terug naar de bestaande kaart in plaats
+          // van een tweede kaart erbovenop. t: ook bij dezelfde plek als de
+          // vorige keer opnieuw inzoomen.
+          onPress={() => navigation.navigate('KaartTab', {
+            screen: 'Kaart', params: { lat, lon, id: melding.id, t: Date.now() }, pop: true,
+          })}
         >
           <MiniKaart lat={lat} lon={lon} kleur={v.kleur} />
           {/* Straatbeeld linksboven, zoals in de grote app. Alleen als de pin
@@ -356,7 +361,7 @@ export default function DetailScreen() {
 
 const maak_styles = (C: Palet) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  inhoud: { padding: 16, paddingBottom: 96, gap: 12 },
+  inhoud: { padding: 16, paddingBottom: 32, gap: 12 },
   titel: { ...T.titel, color: C.textPrimary },
   titelRij: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   titelIcoon: {

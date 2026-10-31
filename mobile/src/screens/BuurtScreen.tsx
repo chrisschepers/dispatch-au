@@ -190,7 +190,7 @@ export default function BuurtScreen() {
   const lijstKop = (
     <>
       {/* Verbonden-status, zoals in de grote app (wens Chris 27-09). Zoeken
-          zit sindsdien onderin de tabbalk. */}
+          is sindsdien een eigen tabblad in de systeemtabbalk. */}
       <View style={styles.bovenRij}>
         <StatusPil status={liveStatus} />
       </View>
@@ -248,6 +248,9 @@ export default function BuurtScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <SectionList
+        // iOS: de lijst loopt onder de tabbalk door en houdt er zelf ruimte
+        // voor vrij. Android: de tabcontainer houdt de balk al vrij.
+        contentInsetAdjustmentBehavior="automatic"
         ListHeaderComponent={lijstKop}
         sections={secties}
         keyExtractor={(r) => r.m.id}
@@ -326,7 +329,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   chipInhoud: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   chipTekst: { ...T.klein, color: C.textSecondary },
 
-  lijst: { paddingHorizontal: 16, paddingBottom: 96 },
+  lijst: { paddingHorizontal: 16, paddingBottom: 24 },
   sectieKop: {
     ...T.sectie, color: C.textSecondary, textTransform: 'uppercase',
     marginTop: 18, marginBottom: 8, marginLeft: 4,

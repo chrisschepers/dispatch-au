@@ -7,7 +7,6 @@ import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Linking, Platform, Alert, Share,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
@@ -177,313 +176,318 @@ export default function InstellingenScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.inhoud}>
-        <Text style={styles.kop}>Settings</Text>
-
-        {/* Opzet gelijk aan het voorbeeld op het startscherm (wens Chris
-            27-09): elke rij een gekleurd tegeltje, een naam en eronder in één
-            regel wat hij doet. Hoofdschakelaar bovenaan (17-08): uit = de
-            meldingen-laag klapt in; de lijst en de kaart blijven gewoon werken. */}
-        <Text style={styles.groepKop}>Alerts</Text>
-        <View style={kaartStijl}>
-          <Rij
-            icoon="meldingen" tegelKleur={C.accent}
-            titel="Receive alerts"
-            sub={inst.notificaties
-              ? 'An alert when something happens near you'
-              : 'The app keeps working, you just get no alerts'}
-            rechts={<Schakelaar value={inst.notificaties} onValueChange={toggleNotificaties} />}
-          />
-          {inst.notificaties && (
-            <>
-              {/* Heette "Alleen grote incidenten", maar filtert op spoed:
-                  Chris miste een ambulance op 4 km omdat die als A2 binnenkwam
-                  (15-08). Zelfde woorden als in de lijst. */}
-              <Rij
-                icoon="alleenWaarschuwingen" tegelKleur="#ff9500" scheiding
-                titel="Warnings only"
-                sub="Only Advice, Watch and Act or Emergency Warning"
-                rechts={<Schakelaar value={inst.alleenGroot} onValueChange={(v) => zet('alleenGroot', v)} />}
-              />
-            </>
-          )}
-          {/* GRIP landelijk, zoals de "GRIP-opschaling alert" van de grote app
-              (wens Chris 27-09). Staat los van straal en diensten, en werkt
-              ook als de gewone meldingen uit staan (backend gripOnly is een
-              override), dus altijd zichtbaar. */}
-          <Rij
-            icoon="noodwaarschuwing" tegelKleur="#f59e0b" scheiding
-            titel="Emergency Warnings anywhere"
-            sub="An alert for every Emergency Warning in Australia"
-            rechts={<Schakelaar value={inst.gripAlarm} onValueChange={toggleGrip} />}
-          />
-        </View>
-
-        {/* Afstand: eerst één hoofdschuif die ook "In de buurt" bepaalt, en
-            pas als je wilt per dienst verfijnen (wens Chris 27-09). Staat altijd
-            in beeld: de straal geldt ook voor de lijst, niet alleen voor pushes. */}
-        <Text style={styles.groepKop}>Distance</Text>
-        <View style={kaartStijl}>
-          <Rij
-            icoon="buurt" tegelKleur={C.accent}
-            titel="Radius"
-            sub={perDienstAan ? 'Set per service' : 'Applies to your alerts and to Nearby'}
-            rechts={perDienstAan ? null : <Text style={[styles.waarde, { color: C.accent, fontWeight: '600' }]}>{straalTekst(live.__ ?? inst.straalKm)}</Text>}
-          />
-          {!perDienstAan && (
-            <View style={styles.schuifVak}>
-              <StraalSchuif
-                zonderKop
-                waarde={inst.straalKm}
-                max={MAX_STRAAL_KM}
-                onLive={(v) => setLive((l) => ({ ...l, __: v }))}
-                onKlaar={(v) => {
-                  setLive((l) => { const n = { ...l }; delete n.__; return n; });
-                  zet('straalKm', v);
-                }}
-              />
-            </View>
-          )}
-          <Rij
-            icoon="perDienst" tegelKleur="#5856d6" scheiding
-            titel="Set per service"
-            sub="For example bushfires 100 km and road crashes 10 km"
-            rechts={<Schakelaar value={perDienstAan} onValueChange={zetPerDienst} />}
-          />
-          {perDienstAan && DIENSTEN.map((d) => {
-            const km = live[d.key] ?? straalVoor(d.key, inst.straalKm, inst.straalPerDienst);
-            const open = open_ === d.key;
-            return (
-              <View key={d.key}>
-                <Rij
-                  icoon={{ dienst: d }} tegelKleur={d.kleur} scheiding
-                  titel={d.label}
-                  sub={open && LANDELIJK_MOGELIJK.has(d.key) ? 'All the way right: anywhere in Australia' : undefined}
-                  onPress={() => setOpen(open ? null : d.key)}
-                  label={`${d.volleNaam}, ${straalTekst(km)}. Tap to choose the distance`}
-                  rechts={(
-                    <View style={styles.rechtsWaarde}>
-                      <Text style={[styles.waarde, { color: d.kleur, fontWeight: '600' }]}>{straalTekst(km)}</Text>
-                      <Icoon naam={open ? 'inklappen' : 'uitklappen'} grootte={20} kleur={C.textMuted} gewicht="semibold" />
-                    </View>
-                  )}
-                />
-                {open && (
-                  <View style={styles.schuifVak}>
-                    <StraalSchuif
-                      zonderKop
-                      waarde={straalVoor(d.key, inst.straalKm, inst.straalPerDienst)}
-                      max={MAX_STRAAL_KM}
-                      kleur={d.kleur}
-                      landelijk={LANDELIJK_MOGELIJK.has(d.key)}
-                      onLive={(v) => setLive((l) => ({ ...l, [d.key]: v }))}
-                      onKlaar={(v) => {
-                        setLive((l) => { const n = { ...l }; delete n[d.key]; return n; });
-                        zetDienstStraal(d.key, v);
-                      }}
-                    />
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-
-        {/* Welke diensten je gepusht krijgt. Over meldingen, niet over de
-            lijst: de chips boven de lijst zijn een ander filter (16-08). */}
+    // De titel staat in de kop van de stapel (op iOS groot). Tikken blijven
+    // werken met het toetsenbord open, zodat een plaats uit PlaatsZoeker met
+    // één tik gekozen is; iOS schuift de inhoud boven het toetsenbord uit.
+    <ScrollView
+      style={styles.root}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
+      contentContainerStyle={styles.inhoud}
+    >
+      {/* Opzet gelijk aan het voorbeeld op het startscherm (wens Chris
+          27-09): elke rij een gekleurd tegeltje, een naam en eronder in één
+          regel wat hij doet. Hoofdschakelaar bovenaan (17-08): uit = de
+          meldingen-laag klapt in; de lijst en de kaart blijven gewoon werken. */}
+      <Text style={styles.groepKop}>Alerts</Text>
+      <View style={kaartStijl}>
+        <Rij
+          icoon="meldingen" tegelKleur={C.accent}
+          titel="Receive alerts"
+          sub={inst.notificaties
+            ? 'An alert when something happens near you'
+            : 'The app keeps working, you just get no alerts'}
+          rechts={<Schakelaar value={inst.notificaties} onValueChange={toggleNotificaties} />}
+        />
         {inst.notificaties && (
           <>
-            <Text style={styles.groepKop}>Alerts for</Text>
-            <View style={kaartStijl}>
-              {DIENSTEN.map((d, i) => {
-                const aan = inst.disciplines.includes(d.key);
-                const km = straalVoor(d.key, inst.straalKm, inst.straalPerDienst);
-                return (
-                  <Rij
-                    key={d.key}
-                    icoon={{ dienst: d }} tegelKleur={d.kleur} scheiding={i > 0}
-                    titel={d.label}
-                    sub={aan ? (km >= LANDELIJK_KM ? 'Anywhere in Australia' : `Within ${km} km`) : 'Off'}
-                    rechts={<Schakelaar value={aan} onValueChange={() => toggleDienst(d.key)} />}
-                  />
-                );
-              })}
-            </View>
-            <Text style={styles.voetnoot}>
-              Coverage depends on what each state publishes. Victoria publishes the most;
-              ambulance calls are only public in the ACT, and police incidents are not published.
-            </Text>
+            {/* Heette "Alleen grote incidenten", maar filtert op spoed:
+                Chris miste een ambulance op 4 km omdat die als A2 binnenkwam
+                (15-08). Zelfde woorden als in de lijst. */}
+            <Rij
+              icoon="alleenWaarschuwingen" tegelKleur="#ff9500" scheiding
+              titel="Warnings only"
+              sub="Only Advice, Watch and Act or Emergency Warning"
+              rechts={<Schakelaar value={inst.alleenGroot} onValueChange={(v) => zet('alleenGroot', v)} />}
+            />
           </>
         )}
+        {/* GRIP landelijk, zoals de "GRIP-opschaling alert" van de grote app
+            (wens Chris 27-09). Staat los van straal en diensten, en werkt
+            ook als de gewone meldingen uit staan (backend gripOnly is een
+            override), dus altijd zichtbaar. */}
+        <Rij
+          icoon="noodwaarschuwing" tegelKleur="#f59e0b" scheiding
+          titel="Emergency Warnings anywhere"
+          sub="An alert for every Emergency Warning in Australia"
+          rechts={<Schakelaar value={inst.gripAlarm} onValueChange={toggleGrip} />}
+        />
+      </View>
 
-        <Text style={styles.groepKop}>Location</Text>
-        <View style={kaartStijl}>
-          <Rij
-            icoon="mijnPlek" tegelKleur="#007aff"
-            titel="Current location"
-            sub={inst.volgLocatie
-              ? 'Incidents around where you are'
-              : inst.handPlaats ? `Fixed place: ${inst.handPlaats}` : 'Choose a fixed place below'}
-            rechts={<Schakelaar value={inst.volgLocatie} onValueChange={toggleVolgLocatie} />}
-          />
-          {!inst.volgLocatie && (
-            <View style={[styles.rij, styles.scheiding, { flexDirection: 'column', alignItems: 'stretch' }]}>
-              <PlaatsZoeker
-                waarde={inst.handPlaats}
-                onKies={(k) => {
-                  // Naam én coördinaat in één keer: anders bestaat er kort
-                  // een halve plaats en synchroniseert de app die.
-                  zetVeel({ handPlaats: k.naam, handLat: k.lat, handLon: k.lon });
-                }}
-                onWis={() => {
-                  zetVeel({ handPlaats: null, handLat: null, handLon: null });
-                }}
-              />
-            </View>
-          )}
-        </View>
-
-        {/* Uiterlijk. "Automatisch" staat voorop en is de standaard: wie zijn
-            telefoon 's avonds op donker zet, wil dat hier ook. De twee andere
-            keuzes zijn voor wie het juist vast wil hebben. */}
-        <Text style={styles.groepKop}>Appearance</Text>
-        <View style={kaartStijl}>
-          {([
-            ['automatisch', 'Automatic', 'Follows your phone'],
-            ['licht', 'Light', null],
-            ['donker', 'Dark', null],
-          ] as const).map(([sleutel, label, hint], i) => (
-            <Drukbaar
-              key={sleutel}
-              style={[styles.rij, i > 0 && styles.scheiding]}
-              onPress={() => zet('thema', sleutel)}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>{label}</Text>
-                {hint && <Text style={styles.hint}>{hint}</Text>}
-              </View>
-              {inst.thema === sleutel && (
-                <Icoon naam="gekozen" grootte={20} kleur={C.accent} gewicht="semibold" />
-              )}
-            </Drukbaar>
-          ))}
-        </View>
-
-        {/* Bronnen. Google Play keurde de app op 26-10 af ("Missing Source
-            Link for Government Information"): bij overheidsinformatie hoort
-            de officiële site met link, en in gewone woorden dat de app geen
-            overheid is. De vermeldingen eronder vragen de CC BY-licenties. */}
-        <Text style={styles.groepKop}>Sources</Text>
-        <View style={kaartStijl}>
-          {BRONNEN.map((b, i) => (
-            <Rij
-              key={b.regio}
-              icoon="bron" tegelKleur="#34c759" scheiding={i > 0}
-              titel={b.naam}
-              sub={`${b.staat} · ${b.domein}`}
-              onPress={() => { Linking.openURL(b.url).catch(() => {}); }}
-              label={`${b.naam}, ${b.domein}. Opens the official website`}
-              rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
+      {/* Afstand: eerst één hoofdschuif die ook "In de buurt" bepaalt, en
+          pas als je wilt per dienst verfijnen (wens Chris 27-09). Staat altijd
+          in beeld: de straal geldt ook voor de lijst, niet alleen voor pushes. */}
+      <Text style={styles.groepKop}>Distance</Text>
+      <View style={kaartStijl}>
+        <Rij
+          icoon="buurt" tegelKleur={C.accent}
+          titel="Radius"
+          sub={perDienstAan ? 'Set per service' : 'Applies to your alerts and to Nearby'}
+          rechts={perDienstAan ? null : <Text style={[styles.waarde, { color: C.accent, fontWeight: '600' }]}>{straalTekst(live.__ ?? inst.straalKm)}</Text>}
+        />
+        {!perDienstAan && (
+          <View style={styles.schuifVak}>
+            <StraalSchuif
+              zonderKop
+              waarde={inst.straalKm}
+              max={MAX_STRAAL_KM}
+              onLive={(v) => setLive((l) => ({ ...l, __: v }))}
+              onKlaar={(v) => {
+                setLive((l) => { const n = { ...l }; delete n.__; return n; });
+                zet('straalKm', v);
+              }}
             />
-          ))}
-        </View>
-        <Text style={styles.voetnoot}>
-          Emergencies Near Me is an independent app and does not represent any government or
-          emergency service. Incidents come from the public feeds of the services above and can be
-          delayed or incomplete. In an emergency, call 000.
-        </Text>
-        {/* Elke vermelding opent de licentiepagina van die bron: Victoria
-            eist bij herpublicatie een link naar die pagina. */}
-        <Text style={styles.voetnoot}>
-          {BRONNEN.map((b, i) => (
-            <Text
-              key={b.regio}
-              style={styles.voetnootLink}
-              accessibilityRole="link"
-              onPress={() => { Linking.openURL(b.licentieUrl).catch(() => {}); }}
-            >
-              {i > 0 ? '\n' : ''}{b.vermelding}
-            </Text>
-          ))}
-        </Text>
-
-        <View style={kaartStijl}>
-          <View style={styles.rij}>
-            <View style={[styles.tegel, { backgroundColor: C.chipBg }]}>
-              <Icoon naam="ontwikkelaar" grootte={19} kleur={C.textSecondary} />
-            </View>
-            <View style={styles.midden}>
-              <Text style={styles.tegelLabel}>Developer</Text>
-              <Text style={styles.tegelWaarde}>{CONTACT.ontwikkelaar}</Text>
-            </View>
           </View>
-
-          {/* De mail wordt voorgeschreven mét het gebruikers-id: zonder dat
-              nummer kan Chris een melding niet terugvinden in de database en
-              begint elk supportgesprek met heen-en-weer (wens Chris 16-08). */}
-          <Drukbaar style={[styles.rij, styles.scheiding]} onPress={mailSupport}>
-            <View style={[styles.tegel, { backgroundColor: C.accentSoft }]}>
-              <Icoon naam="email" grootte={19} kleur={C.accent} />
+        )}
+        <Rij
+          icoon="perDienst" tegelKleur="#5856d6" scheiding
+          titel="Set per service"
+          sub="For example bushfires 100 km and road crashes 10 km"
+          rechts={<Schakelaar value={perDienstAan} onValueChange={zetPerDienst} />}
+        />
+        {perDienstAan && DIENSTEN.map((d) => {
+          const km = live[d.key] ?? straalVoor(d.key, inst.straalKm, inst.straalPerDienst);
+          const open = open_ === d.key;
+          return (
+            <View key={d.key}>
+              <Rij
+                icoon={{ dienst: d }} tegelKleur={d.kleur} scheiding
+                titel={d.label}
+                sub={open && LANDELIJK_MOGELIJK.has(d.key) ? 'All the way right: anywhere in Australia' : undefined}
+                onPress={() => setOpen(open ? null : d.key)}
+                label={`${d.volleNaam}, ${straalTekst(km)}. Tap to choose the distance`}
+                rechts={(
+                  <View style={styles.rechtsWaarde}>
+                    <Text style={[styles.waarde, { color: d.kleur, fontWeight: '600' }]}>{straalTekst(km)}</Text>
+                    <Icoon naam={open ? 'inklappen' : 'uitklappen'} grootte={20} kleur={C.textMuted} gewicht="semibold" />
+                  </View>
+                )}
+              />
+              {open && (
+                <View style={styles.schuifVak}>
+                  <StraalSchuif
+                    zonderKop
+                    waarde={straalVoor(d.key, inst.straalKm, inst.straalPerDienst)}
+                    max={MAX_STRAAL_KM}
+                    kleur={d.kleur}
+                    landelijk={LANDELIJK_MOGELIJK.has(d.key)}
+                    onLive={(v) => setLive((l) => ({ ...l, [d.key]: v }))}
+                    onKlaar={(v) => {
+                      setLive((l) => { const n = { ...l }; delete n[d.key]; return n; });
+                      zetDienstStraal(d.key, v);
+                    }}
+                  />
+                </View>
+              )}
             </View>
-            <View style={styles.midden}>
-              <Text style={styles.tegelLabel}>Email</Text>
-              <Text style={[styles.tegelWaarde, { color: C.accent }]}>{CONTACT.email}</Text>
-            </View>
-            <Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />
-          </Drukbaar>
-        </View>
+          );
+        })}
+      </View>
 
-        <View style={kaartStijl}>
-          <Rij
-            icoon="beoordelen" tegelKleur="#ffcc00"
-            titel="Rate Emergencies Near Me"
-            sub="A review helps others find the app"
-            onPress={openRecensiePagina}
-            rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
-          />
-          {/* Het privacybeleid moet ook in de app makkelijk te vinden zijn,
-              niet alleen achter de betaalmuur (eis Google Play). */}
-          <Rij
-            icoon="privacy" tegelKleur="#8e8e93" scheiding
-            titel="Privacy Policy"
-            onPress={() => { Linking.openURL(`${SITE}/privacy`).catch(() => {}); }}
-            rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
-          />
-          <Rij
-            icoon="voorwaarden" tegelKleur="#8e8e93" scheiding
-            titel="Terms of Use"
-            onPress={() => { Linking.openURL(`${SITE}/terms`).catch(() => {}); }}
-            rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
-          />
-        </View>
-
-        <View style={kaartStijl}>
-          <View style={styles.rij}>
-            <Text style={styles.label}>Version</Text>
-            <Text style={styles.waarde}>{VERSIE}</Text>
+      {/* Welke diensten je gepusht krijgt. Over meldingen, niet over de
+          lijst: de chips boven de lijst zijn een ander filter (16-08). */}
+      {inst.notificaties && (
+        <>
+          <Text style={styles.groepKop}>Alerts for</Text>
+          <View style={kaartStijl}>
+            {DIENSTEN.map((d, i) => {
+              const aan = inst.disciplines.includes(d.key);
+              const km = straalVoor(d.key, inst.straalKm, inst.straalPerDienst);
+              return (
+                <Rij
+                  key={d.key}
+                  icoon={{ dienst: d }} tegelKleur={d.kleur} scheiding={i > 0}
+                  titel={d.label}
+                  sub={aan ? (km >= LANDELIJK_KM ? 'Anywhere in Australia' : `Within ${km} km`) : 'Off'}
+                  rechts={<Schakelaar value={aan} onValueChange={() => toggleDienst(d.key)} />}
+                />
+              );
+            })}
           </View>
-          {/* Tik = delen (kopiëren, mailen, WhatsApp); lang drukken selecteert. */}
+          <Text style={styles.voetnoot}>
+            Coverage depends on what each state publishes. Victoria publishes the most;
+            ambulance calls are only public in the ACT, and police incidents are not published.
+          </Text>
+        </>
+      )}
+
+      <Text style={styles.groepKop}>Location</Text>
+      <View style={kaartStijl}>
+        <Rij
+          icoon="mijnPlek" tegelKleur="#007aff"
+          titel="Current location"
+          sub={inst.volgLocatie
+            ? 'Incidents around where you are'
+            : inst.handPlaats ? `Fixed place: ${inst.handPlaats}` : 'Choose a fixed place below'}
+          rechts={<Schakelaar value={inst.volgLocatie} onValueChange={toggleVolgLocatie} />}
+        />
+        {!inst.volgLocatie && (
+          <View style={[styles.rij, styles.scheiding, { flexDirection: 'column', alignItems: 'stretch' }]}>
+            <PlaatsZoeker
+              waarde={inst.handPlaats}
+              onKies={(k) => {
+                // Naam én coördinaat in één keer: anders bestaat er kort
+                // een halve plaats en synchroniseert de app die.
+                zetVeel({ handPlaats: k.naam, handLat: k.lat, handLon: k.lon });
+              }}
+              onWis={() => {
+                zetVeel({ handPlaats: null, handLat: null, handLon: null });
+              }}
+            />
+          </View>
+        )}
+      </View>
+
+      {/* Uiterlijk. "Automatisch" staat voorop en is de standaard: wie zijn
+          telefoon 's avonds op donker zet, wil dat hier ook. De twee andere
+          keuzes zijn voor wie het juist vast wil hebben. */}
+      <Text style={styles.groepKop}>Appearance</Text>
+      <View style={kaartStijl}>
+        {([
+          ['automatisch', 'Automatic', 'Follows your phone'],
+          ['licht', 'Light', null],
+          ['donker', 'Dark', null],
+        ] as const).map(([sleutel, label, hint], i) => (
           <Drukbaar
-            style={[styles.rij, styles.scheiding]}
-            onPress={() => { if (gebruikerId) Share.share({ message: gebruikerId }).catch(() => {}); }}
-            label={gebruikerId ? `User ID ${gebruikerId}. Tap to share` : 'User ID not known yet'}
-            trillen={false}
+            key={sleutel}
+            style={[styles.rij, i > 0 && styles.scheiding]}
+            onPress={() => zet('thema', sleutel)}
           >
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>User ID</Text>
-              <Text style={styles.idTekst} selectable numberOfLines={1}>
-                {gebruikerId ?? 'Not known yet'}
-              </Text>
+              <Text style={styles.label}>{label}</Text>
+              {hint && <Text style={styles.hint}>{hint}</Text>}
             </View>
-            {gebruikerId ? <Icoon naam="delen" grootte={18} kleur={C.textMuted} /> : null}
+            {inst.thema === sleutel && (
+              <Icoon naam="gekozen" grootte={20} kleur={C.accent} gewicht="semibold" />
+            )}
           </Drukbaar>
+        ))}
+      </View>
+
+      {/* Bronnen. Google Play keurde de app op 26-10 af ("Missing Source
+          Link for Government Information"): bij overheidsinformatie hoort
+          de officiële site met link, en in gewone woorden dat de app geen
+          overheid is. De vermeldingen eronder vragen de CC BY-licenties. */}
+      <Text style={styles.groepKop}>Sources</Text>
+      <View style={kaartStijl}>
+        {BRONNEN.map((b, i) => (
+          <Rij
+            key={b.regio}
+            icoon="bron" tegelKleur="#34c759" scheiding={i > 0}
+            titel={b.naam}
+            sub={`${b.staat} · ${b.domein}`}
+            onPress={() => { Linking.openURL(b.url).catch(() => {}); }}
+            label={`${b.naam}, ${b.domein}. Opens the official website`}
+            rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
+          />
+        ))}
+      </View>
+      <Text style={styles.voetnoot}>
+        Emergencies Near Me is an independent app and does not represent any government or
+        emergency service. Incidents come from the public feeds of the services above and can be
+        delayed or incomplete. In an emergency, call 000.
+      </Text>
+      {/* Elke vermelding opent de licentiepagina van die bron: Victoria
+          eist bij herpublicatie een link naar die pagina. */}
+      <Text style={styles.voetnoot}>
+        {BRONNEN.map((b, i) => (
+          <Text
+            key={b.regio}
+            style={styles.voetnootLink}
+            accessibilityRole="link"
+            onPress={() => { Linking.openURL(b.licentieUrl).catch(() => {}); }}
+          >
+            {i > 0 ? '\n' : ''}{b.vermelding}
+          </Text>
+        ))}
+      </Text>
+
+      <View style={kaartStijl}>
+        <View style={styles.rij}>
+          <View style={[styles.tegel, { backgroundColor: C.chipBg }]}>
+            <Icoon naam="ontwikkelaar" grootte={19} kleur={C.textSecondary} />
+          </View>
+          <View style={styles.midden}>
+            <Text style={styles.tegelLabel}>Developer</Text>
+            <Text style={styles.tegelWaarde}>{CONTACT.ontwikkelaar}</Text>
+          </View>
         </View>
-        <Text style={styles.voetnoot}>
-          Mention your user ID when you contact us, so we can help you faster.
-        </Text>
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* De mail wordt voorgeschreven mét het gebruikers-id: zonder dat
+            nummer kan Chris een melding niet terugvinden in de database en
+            begint elk supportgesprek met heen-en-weer (wens Chris 16-08). */}
+        <Drukbaar style={[styles.rij, styles.scheiding]} onPress={mailSupport}>
+          <View style={[styles.tegel, { backgroundColor: C.accentSoft }]}>
+            <Icoon naam="email" grootte={19} kleur={C.accent} />
+          </View>
+          <View style={styles.midden}>
+            <Text style={styles.tegelLabel}>Email</Text>
+            <Text style={[styles.tegelWaarde, { color: C.accent }]}>{CONTACT.email}</Text>
+          </View>
+          <Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />
+        </Drukbaar>
+      </View>
+
+      <View style={kaartStijl}>
+        <Rij
+          icoon="beoordelen" tegelKleur="#ffcc00"
+          titel="Rate Emergencies Near Me"
+          sub="A review helps others find the app"
+          onPress={openRecensiePagina}
+          rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
+        />
+        {/* Het privacybeleid moet ook in de app makkelijk te vinden zijn,
+            niet alleen achter de betaalmuur (eis Google Play). */}
+        <Rij
+          icoon="privacy" tegelKleur="#8e8e93" scheiding
+          titel="Privacy Policy"
+          onPress={() => { Linking.openURL(`${SITE}/privacy`).catch(() => {}); }}
+          rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
+        />
+        <Rij
+          icoon="voorwaarden" tegelKleur="#8e8e93" scheiding
+          titel="Terms of Use"
+          onPress={() => { Linking.openURL(`${SITE}/terms`).catch(() => {}); }}
+          rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
+        />
+      </View>
+
+      <View style={kaartStijl}>
+        <View style={styles.rij}>
+          <Text style={styles.label}>Version</Text>
+          <Text style={styles.waarde}>{VERSIE}</Text>
+        </View>
+        {/* Tik = delen (kopiëren, mailen, WhatsApp); lang drukken selecteert. */}
+        <Drukbaar
+          style={[styles.rij, styles.scheiding]}
+          onPress={() => { if (gebruikerId) Share.share({ message: gebruikerId }).catch(() => {}); }}
+          label={gebruikerId ? `User ID ${gebruikerId}. Tap to share` : 'User ID not known yet'}
+          trillen={false}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>User ID</Text>
+            <Text style={styles.idTekst} selectable numberOfLines={1}>
+              {gebruikerId ?? 'Not known yet'}
+            </Text>
+          </View>
+          {gebruikerId ? <Icoon naam="delen" grootte={18} kleur={C.textMuted} /> : null}
+        </Drukbaar>
+      </View>
+      <Text style={styles.voetnoot}>
+        Mention your user ID when you contact us, so we can help you faster.
+      </Text>
+    </ScrollView>
   );
 }
 
@@ -521,8 +525,7 @@ function Rij({
 
 const maak_styles = (C: Palet) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  inhoud: { padding: 16, paddingBottom: 120 },
-  kop: { ...T.display, color: C.textPrimary, marginBottom: 8 },
+  inhoud: { padding: 16, paddingBottom: 32 },
   groepKop: {
     ...T.sectie, color: C.textSecondary, textTransform: 'uppercase',
     marginTop: 20, marginBottom: 8, marginLeft: 4,

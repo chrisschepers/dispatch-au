@@ -7,8 +7,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-screens/experimental';
 import { haalMeldingenPerVenster, type Melding } from '../api';
 import { kaartVenster } from '../kaartVenster';
 import { vertaalMelding } from '../vertaal';
@@ -19,10 +21,11 @@ import { kaartTerugblikUren } from '../appConfig';
 import { kaartStijlVoor, appleKaartVoor } from '../kaartstijl';
 import { BrandendIcoon, BotsingIcoon, VlammenIcoon, type BrandendObject } from '../components/IncidentIcoon';
 
-import { type Palet } from '../theme';
+import { isIOS, type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
 import { Icoon } from '../components/Icoon';
 import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
+import type { StapelParams } from '../navigatie';
 
 /**
  * Boven dit aantal in beeld gaan we groeperen; daaronder losse pins. Op Android
@@ -37,7 +40,7 @@ const NL_REGIO = { latitude: -28, longitude: 140, latitudeDelta: 32, longitudeDe
 /** Aantal rastervakken over de breedte van het beeld bij het groeperen. */
 const RASTER = Platform.OS === 'android' ? 6 : 8;
 
-type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
+type Nav = NativeStackNavigationProp<StapelParams, 'Kaart'>;
 
 /** Tot hoelang na binnenkomst een melding "vers" is en dus opvalt. */
 const VERS_MINUTEN = 30;
@@ -112,8 +115,12 @@ function KaartMetMeldingen() {
   const styles = useStijlen(maak_styles);
   const { inst } = useInstellingen();
   const navigation = useNavigation<Nav>();
+  // Bovenrand voor de zoomhint. Uit safe-area-context en niet de SafeAreaView
+  // van react-native-screens: op Android mag die maar één keer per tabblad
+  // (zie androidLaag in navigatie.tsx).
+  const insets = useSafeAreaInsets();
   // Vanuit een melding gekomen? Dan daarop inzoomen in plaats van op de buurt.
-  const params = (useRoute().params ?? {}) as { lat?: number; lon?: number; id?: string };
+  const params = useRoute<RouteProp<StapelParams, 'Kaart'>>().params ?? {};
   const mapRef = useRef<MapView>(null);
   const [meldingen, setMeldingen] = useState<Melding[]>([]);
   const [start, setStart] = useState<{ lat: number; lon: number } | null>(null);
@@ -215,7 +222,9 @@ function KaartMetMeldingen() {
       }
     })();
     return () => { levend = false; };
-  }, [inst.handLat, inst.handLon, inst.volgLocatie, params.lat, params.lon]);
+    // params.t: ook opnieuw inzoomen als je vanuit Detail twee keer dezelfde
+    // plek opent (de kaart kan intussen verschoven zijn).
+  }, [inst.handLat, inst.handLon, inst.volgLocatie, params.lat, params.lon, params.t]);
 
   function naarMij() {
     if (!mijnPlek) return;
@@ -346,14 +355,40 @@ function KaartMetMeldingen() {
         })}
       </MapView>
       {(!ingezoomd || kaartStatus) ? (
-        <View pointerEvents="none" style={{ position: 'absolute', top: 16, alignSelf: 'center', maxWidth: '90%', backgroundColor: C.card, borderRadius: 16, padding: 12 }}>
+        <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 8, alignSelf: 'center', maxWidth: '90%', backgroundColor: C.card, borderRadius: 16, padding: 12 }}>
           <Text style={{ color: C.textPrimary, textAlign: 'center' }}>{!ingezoomd ? 'Zoom in to see incidents' : kaartStatus}</Text>
         </View>
       ) : null}
-      <Pressable style={({ pressed }) => [styles.mijnKnop, pressed && { transform: [{ scale: 0.95 }] }]} onPress={naarMij}>
-        <Text style={styles.mijnKnopTekst}>◉ My area</Text>
-      </Pressable>
+      <MijnPlekVak>
+        <Pressable style={({ pressed }) => [styles.mijnKnop, pressed && { transform: [{ scale: 0.95 }] }]} onPress={naarMij}>
+          <Text style={styles.mijnKnopTekst}>◉ My area</Text>
+        </Pressable>
+      </MijnPlekVak>
     </View>
+  );
+}
+
+/**
+ * Onderrand voor de knop 'My area', boven de tabbalk. iOS: de SafeAreaView
+ * van react-native-screens; het scherm van de stapel rekent de tabbalk en de
+ * thuisbalk mee. Android: een gewone View, want androidLaag houdt de balk al
+ * vrij (en een tweede SafeAreaView van screens in dit tabblad zou zijn
+ * inzetten overnemen).
+ */
+function MijnPlekVak({ children }: { children: React.ReactNode }) {
+  const binnen = (
+    <View pointerEvents="box-none" style={{ alignItems: 'flex-end', padding: 16 }}>
+      {children}
+    </View>
+  );
+  const plek = { position: 'absolute', left: 0, right: 0, bottom: 0 } as const;
+  return isIOS ? (
+    // flex 0: deze SafeAreaView staat standaard op flex 1.
+    <SafeAreaView edges={{ bottom: true }} pointerEvents="box-none" style={[plek, { flex: 0 }]}>
+      {binnen}
+    </SafeAreaView>
+  ) : (
+    <View pointerEvents="box-none" style={plek}>{binnen}</View>
   );
 }
 
@@ -379,7 +414,6 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   },
   groepTekst: { color: '#fff', fontWeight: '700', fontSize: 13 },
   mijnKnop: {
-    position: 'absolute', bottom: 110, right: 16,
     backgroundColor: C.card, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
   },

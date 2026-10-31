@@ -1,7 +1,8 @@
 /**
  * Op een melding tikken moet die melding openen (wens Chris 16-08). De push
  * draagt het id in zijn data mee; hier halen we de volledige melding op en
- * sturen we de navigatie naar het detailscherm.
+ * sturen we de navigatie naar het detailscherm, in de stapel van het tabblad
+ * waar je bent (zie navigatieKeuze.ts).
  *
  * Twee ingangen, want een tik komt op twee manieren binnen:
  *  - de app draaide al (of stond in de achtergrond): de listener vuurt;
@@ -9,13 +10,12 @@
  *    achteraf vragen wat de laatste tik was.
  */
 import * as Notifications from 'expo-notifications';
-import { createNavigationContainerRef } from '@react-navigation/native';
-import { haalMelding, type Melding } from './api';
+import { CommonActions, createNavigationContainerRef } from '@react-navigation/native';
+import { haalMelding } from './api';
+import type { TabParams } from './navigatie';
+import { tabVoorMelding } from './navigatieKeuze';
 
-export const navRef = createNavigationContainerRef<{
-  Tabs: undefined;
-  Detail: { melding: Melding };
-}>();
+export const navRef = createNavigationContainerRef<TabParams>();
 
 /** Tikken kan binnenkomen vóórdat de navigatie klaar is; dan even wachten. */
 async function wachtOpNavigatie(maxMs = 5000): Promise<boolean> {
@@ -31,7 +31,12 @@ async function openMelding(messageId: string): Promise<void> {
   if (!(await wachtOpNavigatie())) return;
   try {
     const melding = await haalMelding(messageId);
-    navRef.navigate('Detail', { melding });
+    // Elk tabblad heeft zijn eigen stapel. Detail opent in het tabblad waar je
+    // bent (Kaart of Zoeken), anders in Buurt; Instellingen heeft geen Detail.
+    // Gericht aan het tabblad: v7 geeft een NAVIGATE zonder doel niet meer
+    // door aan geneste stapels.
+    const tab = tabVoorMelding(navRef.getRootState());
+    navRef.dispatch(CommonActions.navigate(tab, { screen: 'Detail', params: { melding } }));
   } catch {
     // Melding niet op te halen (offline, of verwijderd): dan blijft de app
     // gewoon op het overzicht staan in plaats van een leeg scherm te tonen.
