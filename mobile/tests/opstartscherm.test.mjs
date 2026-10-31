@@ -28,8 +28,27 @@ test('iOS launch screen is the plain background of the first screen, without a l
   // flitst. palet.ts PALET_DONKER is de iOS-basis (zwart).
   assert.equal(ios.backgroundColor, PALET_LICHT.bg);
   assert.equal(ios.dark.backgroundColor, PALET_DONKER.bg);
-  assert.equal(ios.image, undefined);
+  // Het beeld is er alleen voor de kleur (zie hieronder): 1 punt en geheel
+  // doorzichtig, dus geen logo.
+  assert.equal(ios.imageWidth, 1);
   assert.equal(ios.dark.image, undefined);
+  const { pixels } = leesPng(join(MOBIEL, ios.image));
+  for (let i = 3; i < pixels.length; i += 4) assert.equal(pixels[i], 0, 'fully transparent');
+});
+
+test('the iOS storyboard takes its background from the SplashScreenBackground colour set', async () => {
+  // Wat prebuild met het storyboard doet: zonder beeld bleef de achtergrond
+  // systemBackgroundColor (wit), met beeld wordt het de kleurset die de
+  // plugin per thema schrijft. Uitgaan van het storyboard van de sjabloon,
+  // dat systemBackgroundColor heeft.
+  const { getTemplateAsync } = require(join(PLUGIN, 'withIosSplashScreenStoryboard.js'));
+  const { applySplashScreenStoryboard } = require(join(PLUGIN, 'withIosSplashScreenStoryboardImage.js'));
+  const xml = await getTemplateAsync();
+  const hoofd = () => xml.document.scenes[0].scene[0].objects[0].viewController[0].view[0];
+  hoofd().color = [{ $: { key: 'backgroundColor', systemColor: 'systemBackgroundColor' } }];
+  const uit = applySplashScreenStoryboard(xml, getIosSplashConfig(opstartOpties()));
+  const view = uit.document.scenes[0].scene[0].objects[0].viewController[0].view[0];
+  assert.deepEqual(view.color, [{ $: { key: 'backgroundColor', name: 'SplashScreenBackground' } }]);
 });
 
 test('Android splash is the launcher glyph on the launcher red, in light and dark', () => {

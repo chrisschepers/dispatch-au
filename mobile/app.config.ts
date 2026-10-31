@@ -72,11 +72,16 @@ const config: ExpoConfig = {
     // through the compat splash). The in-app Light/Dark choice cannot reach
     // these native screens: they follow the phone. App.tsx keeps the splash
     // up until the first screen is ready.
+    // iOS gets a 1x1 transparent image: only with an image does the plugin
+    // point the storyboard at the SplashScreenBackground colour set (light
+    // and dark). Without one the view kept systemBackgroundColor, so light
+    // mode launched white and then turned #f2f2f7 grey.
     [
       'expo-splash-screen',
       {
         backgroundColor: '#f2f2f7',
         dark: { backgroundColor: '#000000' },
+        ios: { image: './assets/opstart-leeg.png', imageWidth: 1 },
         android: {
           image: './assets/adaptive-icon.png',
           imageWidth: 200,

@@ -13,6 +13,11 @@
  *
  * De kleur in het bestand doet er niet toe: react-native-screens kleurt het
  * icoon zelf met de tint van de tabbalk (gekozen of niet).
+ *
+ * De app noemt de drawables alleen bij naam, als tekst in de JS-bundel. De
+ * resource shrinker ziet die verwijzing niet en zou ze weggooien zodra
+ * shrinkResources aangaat (nu uit); dan stond de tabbalk zonder iconen.
+ * Daarom ook een keep-bestand in res/raw (wordt niet meegebundeld).
  */
 const fs = require('fs');
 const path = require('path');
@@ -30,6 +35,14 @@ const TAB_ICONEN = {
   tab_instellingen_actief: 'mdiCog',
   tab_zoeken: 'mdiMagnify',
 };
+
+/** Houdt alle tab_*-drawables vast bij resource shrinking. */
+const KEEP_XML = [
+  '<?xml version="1.0" encoding="utf-8"?>',
+  '<resources xmlns:tools="http://schemas.android.com/tools"',
+  '    tools:keep="@drawable/tab_*" />',
+  '',
+].join('\n');
 
 /** Eén pad van 24x24 als Android-vector-drawable. */
 function vectorXml(pad) {
@@ -62,6 +75,9 @@ function withTabIconen(config) {
         if (typeof pad !== 'string' || !pad) throw new Error(`with-tab-iconen: ${mdiNaam} is missing from @mdi/js`);
         fs.writeFileSync(path.join(map, `${naam}.xml`), vectorXml(pad));
       }
+      const raw = path.join(cfg.modRequest.platformProjectRoot, 'app/src/main/res/raw');
+      fs.mkdirSync(raw, { recursive: true });
+      fs.writeFileSync(path.join(raw, 'keep_tab_iconen.xml'), KEEP_XML);
       return cfg;
     },
   ]);
@@ -70,3 +86,4 @@ function withTabIconen(config) {
 module.exports = withTabIconen;
 module.exports.vectorXml = vectorXml;
 module.exports.TAB_ICONEN = TAB_ICONEN;
+module.exports.KEEP_XML = KEEP_XML;

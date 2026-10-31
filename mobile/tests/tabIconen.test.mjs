@@ -56,6 +56,12 @@ test('the plugin writes every drawable into res/drawable at prebuild', async () 
     const buurt = readFileSync(join(drawable, 'tab_buurt.xml'), 'utf8');
     assert.ok(buurt.startsWith('<?xml version="1.0" encoding="utf-8"?>'));
     assert.ok(buurt.includes(mdi.mdiMapMarkerRadiusOutline));
+    // Keep-bestand, zodat resource shrinking de drawables laat staan: de app
+    // noemt ze alleen bij naam vanuit JS.
+    const keep = readFileSync(join(map, 'app/src/main/res/raw/keep_tab_iconen.xml'), 'utf8');
+    assert.ok(keep.includes('xmlns:tools="http://schemas.android.com/tools"'));
+    assert.ok(keep.includes('tools:keep="@drawable/tab_*"'));
+    for (const naam of Object.keys(TAB_ICONEN)) assert.ok(naam.startsWith('tab_'), `${naam} is not covered by tab_*`);
   } finally {
     rmSync(map, { recursive: true, force: true });
   }
