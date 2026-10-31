@@ -57,16 +57,23 @@ export function Toestel({ breedte, children, donker = false }: {
   );
 }
 
-/** Tijd, eiland en de drie icoontjes rechts, zoals op elke iPhone. */
+/**
+ * De statusbalk van het platform. iOS: de tijd vet, het eiland in het midden
+ * en rechts bereik, wifi en batterij, zoals op elke iPhone. Android: de tijd
+ * in gewoon gewicht, een cameragaatje van 12 in het midden en rechts wifi,
+ * bereik en batterij, zoals op een Pixel.
+ */
 function StatusBalk({ wit }: { wit: boolean }) {
   const kleur = wit ? '#fff' : '#000';
+  const bereik = <Icoon naam="signaal" grootte={14} kleur={kleur} />;
+  const wifi = <Icoon naam="wifi" grootte={14} kleur={kleur} />;
   return (
-    <View style={styles.statusBalk} pointerEvents="none">
-      <Text style={[styles.klok, { color: kleur }]}>9:41</Text>
-      <View style={styles.eiland} />
+    <View style={[styles.statusBalk, !isIOS && styles.statusBalkAndroid]} pointerEvents="none">
+      <Text style={[styles.klok, !isIOS && styles.klokAndroid, { color: kleur }]}>9:41</Text>
+      <View style={isIOS ? styles.eiland : styles.gaatje} />
       <View style={styles.icoontjes}>
-        <Icoon naam="signaal" grootte={14} kleur={kleur} />
-        <Icoon naam="wifi" grootte={14} kleur={kleur} />
+        {isIOS ? bereik : wifi}
+        {isIOS ? wifi : bereik}
         {/* De MDI-batterij staat rechtop; SF battery.100 ligt al. */}
         <Icoon naam="batterij" grootte={17} kleur={kleur} style={isIOS ? undefined : { transform: [{ rotate: '90deg' }] }} />
       </View>
@@ -91,10 +98,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 26, paddingTop: 6,
   },
+  statusBalkAndroid: { paddingHorizontal: 22 },
   klok: { fontSize: 14, fontWeight: '600', width: 60 },
+  klokAndroid: { fontWeight: '400' },
   eiland: {
     position: 'absolute', top: 11, left: SCHERM_B / 2 - 44,
     width: 88, height: 25, borderRadius: 13, backgroundColor: '#000',
+  },
+  // Op de hoogte van de klok: de balk is 46 hoog met 6 bovenin, dus het
+  // midden ligt op 26.
+  gaatje: {
+    position: 'absolute', top: 20, left: SCHERM_B / 2 - 6,
+    width: 12, height: 12, borderRadius: 6, backgroundColor: '#000',
   },
   icoontjes: { flexDirection: 'row', alignItems: 'center', gap: 4, width: 60, justifyContent: 'flex-end' },
 });
