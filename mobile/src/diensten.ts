@@ -4,6 +4,7 @@
  * (ACT only, the other states publish none), rescue → Rescue, storm/flood/SES
  * → Storm, hazmat → Hazmat, the rest → Other.
  */
+import type { SFSymbol } from 'expo-symbols';
 import { C } from './theme';
 
 export interface Dienst {
@@ -12,17 +13,31 @@ export interface Dienst {
   label: string;
   /** Voluit, voor de instellingen. */
   volleNaam: string;
+  /** MaterialCommunityIcons-naam: het vakicoon, op beide platforms. */
   icoon: string;
+  /** SF Symbol, alleen voor iOS-chrome (zie hieronder). */
+  sf?: SFSymbol;
   kleur: string;
 }
 
+/**
+ * `icoon` is bewust MaterialCommunityIcons op beide platforms: het is een
+ * gedeelde vakset met de kaartpins, het icoon in de meldingenrij en de tegel
+ * naast de titel van een melding, en SF Symbols heeft tot iOS 16.4 geen
+ * brandweerwagen, ambulance, biohazard of botsing. Die plekken blijven dus MDI.
+ *
+ * `sf` is alleen voor iOS-chrome: de dienst-tegeltjes in Instellingen en de
+ * chips boven de lijst op iOS (DienstIcoon in components/Icoon). Allemaal uit
+ * SF Symbols 4.0 of eerder; Android gebruikt daar gewoon `icoon`. Hazmat
+ * krijgt een reageerbuis: het gevarensymbool (hazardsign) kwam pas in 4.1.
+ */
 export const DIENSTEN: Dienst[] = [
-  { key: 'Fire', label: 'Fire', volleNaam: 'Fire and bushfire', icoon: 'fire-truck', kleur: C.brandweer },
-  { key: 'Ambulance', label: 'Ambulance', volleNaam: 'Ambulance (ACT)', icoon: 'ambulance', kleur: C.ambulance },
-  { key: 'Rescue', label: 'Rescue', volleNaam: 'Rescue and road crash', icoon: 'car-emergency', kleur: C.politie },
-  { key: 'Storm', label: 'Storm & flood', volleNaam: 'Storm, flood and SES', icoon: 'weather-pouring', kleur: C.knrm },
-  { key: 'Hazmat', label: 'Hazmat', volleNaam: 'Hazardous materials', icoon: 'biohazard', kleur: C.mmt },
-  { key: 'Other', label: 'Other', volleNaam: 'Other incidents', icoon: 'alert-circle-outline', kleur: C.dienstOnbekend },
+  { key: 'Fire', label: 'Fire', volleNaam: 'Fire and bushfire', icoon: 'fire-truck', sf: 'flame.fill', kleur: C.brandweer },
+  { key: 'Ambulance', label: 'Ambulance', volleNaam: 'Ambulance (ACT)', icoon: 'ambulance', sf: 'cross.case.fill', kleur: C.ambulance },
+  { key: 'Rescue', label: 'Rescue', volleNaam: 'Rescue and road crash', icoon: 'car-emergency', sf: 'car.fill', kleur: C.politie },
+  { key: 'Storm', label: 'Storm & flood', volleNaam: 'Storm, flood and SES', icoon: 'weather-pouring', sf: 'cloud.heavyrain.fill', kleur: C.knrm },
+  { key: 'Hazmat', label: 'Hazmat', volleNaam: 'Hazardous materials', icoon: 'biohazard', sf: 'testtube.2', kleur: C.mmt },
+  { key: 'Other', label: 'Other', volleNaam: 'Other incidents', icoon: 'alert-circle-outline', sf: 'exclamationmark.circle.fill', kleur: C.dienstOnbekend },
 ];
 
 export const ALLE_DIENSTEN = DIENSTEN.length;
