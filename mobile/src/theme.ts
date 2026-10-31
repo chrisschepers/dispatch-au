@@ -12,79 +12,20 @@
  * ondergrond, in het donker omgekeerd (zwarte grond, iets lichtere kaarten).
  */
 import { AccessibilityInfo, Platform } from 'react-native';
+import { PALET_LICHT, PALET_DONKER, type Palet } from './palet';
+
+// De paletten zelf staan in palet.ts (zonder react-native, voor de tests);
+// hier ongewijzigd doorgegeven zodat elke bestaande import blijft werken.
+export { PALET_LICHT, PALET_DONKER };
+export type { Palet };
+
+export const isIOS = Platform.OS === 'ios';
 
 /**
- * Kleuren die in BEIDE thema's gelijk blijven: de disciplines. Dat zijn
- * herkenningskleuren, geen decoratie — brandweerrood hoort brandweerrood te
- * blijven, ook 's nachts. Ze zijn verzadigd genoeg om op wit én op zwart te
- * lezen. Hierdoor kunnen diensten.ts en vertaal.ts hun kleuren gewoon op
- * moduleniveau blijven gebruiken.
+ * iOS 26 of nieuwer: Liquid Glass, en het gedrag van kopbalk en tabbalk dat
+ * daarbij hoort. Platform.Version is op iOS een tekst als '26.0'.
  */
-const VAST = {
-  brandweer: '#e5372c',
-  ambulance: '#f4a814',
-  politie: '#2f6fde',
-  knrm: '#0d9488',          // waterhulp: KNRM en reddingsbrigades
-  mmt: '#7c4dbe',           // traumahelikopter, apart van de gele ambulance
-  success: '#34c759',
-  /** Neutrale stip voor een onbekende dienst; leesbaar op beide gronden. */
-  dienstOnbekend: '#8e8e93',
-} as const;
-
-export interface Palet {
-  donker: boolean;
-  bg: string; card: string; border: string; separator: string;
-  textPrimary: string; textSecondary: string; textMuted: string;
-  accent: string; accentSoft: string; chipBg: string; schaduw: string;
-  brandweer: string; ambulance: string; politie: string; knrm: string; mmt: string;
-  success: string; dienstOnbekend: string;
-}
-
-export const PALET_LICHT: Palet = {
-  ...VAST,
-  donker: false,
-  bg: '#f2f2f7',            // systeemgrijs van iOS-instellingen
-  card: '#ffffff',
-  border: '#e5e5ea',
-  separator: '#e5e5ea',
-
-  textPrimary: '#1c1c1e',
-  textSecondary: '#6e6e73',
-  textMuted: '#aeaeb2',
-
-  accent: '#e5372c',        // zelfde rood-familie als het grote merk, iets warmer
-  accentSoft: '#fdeceb',
-
-  chipBg: '#eeeef2',
-  /** Schaduw onder kaarten: in het licht subtiel, in het donker niets. */
-  schaduw: 'rgba(0,0,0,0.06)',
-};
-
-/**
- * Donker volgt de systeemkleuren van iOS: zwarte grond met iets lichtere
- * kaarten erop, precies andersom dan licht. Puur zwart (#000) is bewust: op
- * OLED-schermen scheelt dat stroom én het geeft de kaarten hun eigen vlak.
- * Het accentrood is een tint lichter, want #e5372c is op zwart te donker om
- * als knopkleur te lezen.
- */
-export const PALET_DONKER: Palet = {
-  ...VAST,
-  donker: true,
-  bg: '#000000',
-  card: '#1c1c1e',
-  border: '#38383a',
-  separator: '#38383a',
-
-  textPrimary: '#ffffff',
-  textSecondary: '#98989f',
-  textMuted: '#6c6c70',
-
-  accent: '#ff5247',
-  accentSoft: '#3a1512',
-
-  chipBg: '#2c2c2e',
-  schaduw: 'transparent',
-};
+export const isIOS26 = isIOS && parseInt(String(Platform.Version), 10) >= 26;
 
 /**
  * Het lichte palet blijft de standaard-export, zodat modules die géén
@@ -134,6 +75,16 @@ export function kaartVoor(palet: Palet) {
 export const kaartStijl = kaartVoor(PALET_LICHT);
 
 /**
+ * Schaduwen voor nieuwe code, als boxShadow-tekst (niet de oude shadow*- en
+ * elevation-props). zwevend: kaartknoppen boven de kaart. fab: M3-niveau 3
+ * voor de zwevende actieknop op Android.
+ */
+export const SCHADUW = {
+  zwevend: '0px 2px 8px rgba(0, 0, 0, 0.16)',
+  fab: '0px 1px 3px 0px rgba(0, 0, 0, 0.30), 0px 4px 8px 3px rgba(0, 0, 0, 0.15)',
+} as const;
+
+/**
  * Veerwaarden uit de Apple-ontwerprichtlijnen: standaard kritisch gedempt
  * (geen doorschot), en alleen veren wanneer de beweging zelf momentum had.
  * Doorschot bij een menu dat alleen verschijnt voelt verkeerd; bij iets dat
@@ -144,11 +95,13 @@ export const VEER = {
   momentum:  { damping: 18, stiffness: 300, mass: 0.9 },   // lichte bounce
 };
 
-/** Respecteert "verminder beweging" uit de systeeminstellingen. */
+/**
+ * Respecteert "verminder beweging" uit de systeeminstellingen. Dit is een
+ * momentopname voor code buiten React; een component gebruikt
+ * useMinderBeweging() uit thema.tsx, die opnieuw rendert bij een wissel.
+ */
 export let mindeBeweging = false;
 AccessibilityInfo.isReduceMotionEnabled?.()
   .then((aan) => { mindeBeweging = !!aan; })
   .catch(() => {});
 AccessibilityInfo.addEventListener?.('reduceMotionChanged', (aan) => { mindeBeweging = !!aan; });
-
-export const isIOS = Platform.OS === 'ios';
