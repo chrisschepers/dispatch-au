@@ -159,10 +159,15 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   },
   gekozenTekst: { ...T.body, color: C.textPrimary, fontWeight: F.weightSemibold },
   invoerRij: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  invoer: { flex: 1, ...T.body, fontSize: 16, color: C.textPrimary, paddingVertical: 6 },
+  // Raakvlak van het platform: 44 pt (iOS) of 48 dp (Android), ook voor de
+  // suggesties. hitSlop helpt daar niet: de lijst knipt af (overflow).
+  invoer: { flex: 1, ...T.body, fontSize: 16, color: C.textPrimary, paddingVertical: 6, minHeight: isIOS ? 44 : 48 },
   // borderCurve: de vloeiende iOS-hoek; Android negeert hem.
   lijst: { marginTop: 8, borderRadius: 10, borderCurve: 'continuous', backgroundColor: C.chipBg, overflow: 'hidden' },
-  suggestie: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 11 },
+  suggestie: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 11,
+    minHeight: isIOS ? 44 : 48,
+  },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border },
   suggestieTekst: { ...T.body, color: C.textPrimary },
 });

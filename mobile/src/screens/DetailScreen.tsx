@@ -243,6 +243,12 @@ export default function DetailScreen() {
           trillen={false}
           style={[kaartStijl, styles.kaartWrap]}
           label="Show this incident on the map"
+          // Het straatbeeld is een knop binnen deze knop; de schermlezer ziet
+          // alleen de buitenste. Daarom zit hij er ook als actie op, zodra
+          // het plaatje er echt staat.
+          acties={opStraat && beeldBron && straatbeeld === 'ok'
+            ? [{ naam: 'lookAround', label: 'Look around this place', doe: openBeeld }]
+            : undefined}
           // pop: in de kaartstapel terug naar de bestaande kaart in plaats
           // van een tweede kaart erbovenop. t: ook bij dezelfde plek als de
           // vorige keer opnieuw inzoomen.

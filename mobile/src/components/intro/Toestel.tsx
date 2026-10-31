@@ -46,7 +46,15 @@ export function Toestel({ breedte, children, donker = false }: {
       accessibilityLabel="Preview of the app"
     >
       <View style={[styles.scherm, { borderRadius: 42 * schaal, backgroundColor: donker ? '#000' : PALET_LICHT.bg }]}>
-        <View style={[styles.vast, { transform: [{ scale: schaal }] }]} pointerEvents="none">
+        {/* De nepschermen bevatten echte Pressables (MeldingRij). Een
+            accessible ouder verbergt die niet voor TalkBack; zo blijft alleen
+            het plaatje hierboven over. */}
+        <View
+          style={[styles.vast, { transform: [{ scale: schaal }] }]}
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
           <VastThema palet={PALET_LICHT}>
             {children}
             <StatusBalk wit={donker} />

@@ -14,6 +14,7 @@ import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from './Drukbaar';
 import { Icoon } from './Icoon';
+import { rijLabel } from '../rijLabel';
 
 interface Props {
   m: Melding;
@@ -59,8 +60,12 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
       // geen tik bij elke rij. Android houdt zijn drukstaat.
       markeer
       // De rij bestaat uit losse tekstjes; voor VoiceOver/TalkBack is
-      // dit pas samen een zin (audit 20-08).
-      label={[kopTekst, onderTekst, km, tijd].filter(Boolean).join(', ')}
+      // dit pas samen een zin (audit 20-08). Met het waarschuwingsniveau en
+      // de urgentie erin, zoals in beeld (zie rijLabel.ts).
+      label={rijLabel({
+        kop: kopTekst, opschaling: v.opschaling, onder: onderTekst || null,
+        urgentie, urgentieInOnder: draaiOm, km, tijd,
+      })}
       onPress={onPress}
     >
       {/* Gekleurde balk per dienst: kleur alleen als accent, niet als

@@ -18,7 +18,7 @@
  * dan typen (TestFlight-ronde 27-09).
  */
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Keyboard, AccessibilityInfo } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { SearchBarCommands } from 'react-native-screens';
@@ -131,11 +131,25 @@ export default function ZoekScreen() {
         ? 'Nothing found'
         : `${aantal >= LIMIET ? `${LIMIET}+` : aantal} ${aantal === 1 ? 'incident' : 'incidents'} found`;
 
+  // Schermlezer: de uitkomst voorlezen zodra een zoekvraag klaar is, anders
+  // typt een VoiceOver-gebruiker in het niets (WCAG 4.1.3). Android doet dat
+  // via de live region op de tekst hieronder; iOS kent die niet en krijgt een
+  // aankondiging. De eerste lijst bij het openen niet: daar is niet naar
+  // gevraagd.
+  const voorgelezen = useRef<string | null>(null);
+  useEffect(() => {
+    if (bezig || (uitslag === null && !fout)) return;
+    if (voorgelezen.current === null) { voorgelezen.current = aantalTekst; return; }
+    if (voorgelezen.current === aantalTekst) return;
+    voorgelezen.current = aantalTekst;
+    if (isIOS) AccessibilityInfo.announceForAccessibility(aantalTekst);
+  }, [bezig, aantalTekst, uitslag, fout]);
+
   const kop = (
     <View style={styles.balk}>
       <View style={styles.aantalRij}>
         {/* Bij een fout selecteerbaar: een foutmelding wil je kunnen doorsturen. */}
-        <Text style={styles.aantal} selectable={fout}>{aantalTekst}</Text>
+        <Text style={styles.aantal} selectable={fout} accessibilityLiveRegion="polite">{aantalTekst}</Text>
         {bezig ? <ActivityIndicator size="small" color={C.textMuted} /> : null}
         {fout && !bezig ? (
           <Drukbaar style={styles.opnieuw} onPress={() => setPoging((p) => p + 1)} label="Try again">

@@ -39,7 +39,9 @@
  * af (overflow: 'hidden').
  */
 import React, { useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View, type ViewStyle, type StyleProp } from 'react-native';
+import {
+  Animated, Pressable, StyleSheet, View, type ViewStyle, type StyleProp, type AccessibilityActionEvent,
+} from 'react-native';
 import { VEER, mindeBeweging, isIOS } from '../theme';
 import { useThema } from '../thema';
 import { tikDruk } from '../trilling';
@@ -80,6 +82,9 @@ interface Props {
   /** Bevat selecteerbare tekst (selectable): lang drukken opent dan alleen
    *  het kopieermenu en activeert het element niet. */
   kopieerbaar?: boolean;
+  /** Extra acties voor de schermlezer (VoiceOver-rotor, TalkBack-menu), voor
+   *  een knop binnen dit element die de schermlezer anders niet bereikt. */
+  acties?: Array<{ naam: string; label: string; doe: () => void }>;
 }
 
 /**
@@ -91,7 +96,7 @@ const geenActie = () => {};
 
 export function Drukbaar({
   children, onPress, onLongPress, disabled, style, schaal = 0.98, trillen = false,
-  label, hint, rol = 'button', aan, geselecteerd, uitgeklapt, bezig, markeer, kopieerbaar,
+  label, hint, rol = 'button', aan, geselecteerd, uitgeklapt, bezig, markeer, kopieerbaar, acties,
 }: Props) {
   const C = useThema();
   const s = useRef(new Animated.Value(1)).current;
@@ -118,6 +123,10 @@ export function Drukbaar({
       expanded: uitgeklapt,
       busy: bezig,
     },
+    accessibilityActions: acties?.map((a) => ({ name: a.naam, label: a.label })),
+    onAccessibilityAction: acties
+      ? (e: AccessibilityActionEvent) => { acties.find((a) => a.naam === e.nativeEvent.actionName)?.doe(); }
+      : undefined,
   };
 
   if (isIOS) {

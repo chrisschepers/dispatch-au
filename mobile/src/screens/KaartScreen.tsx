@@ -410,7 +410,11 @@ function KaartMetMeldingen() {
                 anchor={{ x: 0.5, y: 1 }}
                 // Vers boven groot boven groepjes boven de rest.
                 zIndex={vers ? 3 : v.groot ? 2 : 0}
+                // VoiceOver: een knop, met wat hij doet als hint en alleen de
+                // inhoud in het label.
+                accessibilityRole="button"
                 accessibilityLabel={`${v.titel}${plaats ? ', ' + plaats : ''}`}
+                accessibilityHint="Opens the incident"
                 // Doorlopend her-tekenen kost bij honderden pins de vloeiendheid
                 // van het slepen; alleen de korte puls hieronder staat het toe.
                 tracksViewChanges={Platform.OS === 'android' ? herteken : false}
@@ -432,9 +436,9 @@ function KaartMetMeldingen() {
               // Een groepje is een bolletje en staat dus gecentreerd.
               anchor={{ x: 0.5, y: 0.5 }}
               zIndex={1}
-              accessibilityLabel={eenPlek
-                ? `${aantal} incidents here. Double-tap to list them`
-                : `${aantal} incidents. Double-tap to zoom in`}
+              accessibilityRole="button"
+              accessibilityLabel={eenPlek ? `${aantal} incidents here` : `${aantal} incidents`}
+              accessibilityHint={eenPlek ? 'Lists the incidents here' : 'Zooms in'}
               tracksViewChanges={Platform.OS === 'android' ? herteken : false}
               onPress={() => {
                 if (eenPlek) {
