@@ -17,6 +17,10 @@ const config: ExpoConfig = {
   platforms: ['ios', 'android'],
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
+  // Android only: the brand red as the theme's colorPrimary (the app in the
+  // recents screen) instead of Expo's default blue. colorAccent comes from
+  // plugins/with-android-accent.cjs.
+  primaryColor: '#e5372c',
   icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
@@ -58,7 +62,11 @@ const config: ExpoConfig = {
     './plugins/with-release-signing.cjs',
     './plugins/with-android-label.cjs',
     './plugins/with-tab-iconen.cjs',
+    './plugins/with-android-accent.cjs',
     'expo-font',
+    // No system scrim over 3-button navigation: the M3 tab bar shows through
+    // and src/components/Navigatiebalk sets the button colour per theme.
+    ['expo-navigation-bar', { enforceContrast: false }],
     [
       'expo-notifications',
       {
