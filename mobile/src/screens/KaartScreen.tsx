@@ -4,7 +4,7 @@
  * heli's, geen posten: dit is de kaart voor de vraag "waar is dat?".
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, AccessibilityInfo } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
@@ -21,9 +21,11 @@ import { kaartTerugblikUren } from '../appConfig';
 import { kaartStijlVoor, appleKaartVoor } from '../kaartstijl';
 import { BrandendIcoon, BotsingIcoon, VlammenIcoon, type BrandendObject } from '../components/IncidentIcoon';
 
-import { T, F, isIOS, type Palet } from '../theme';
-import { useThema, useStijlen } from '../thema';
+import { T, F, SCHADUW, isIOS, type Palet } from '../theme';
+import { useThema, useStijlen, useMinderBeweging } from '../thema';
 import { Icoon } from '../components/Icoon';
+import { Drukbaar } from '../components/Drukbaar';
+import { ZwevendVlak, useGlas } from '../components/ZwevendVlak';
 import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
 import type { StapelParams } from '../navigatie';
 import { MAX_SMAL } from '../inhoudMaat';
@@ -116,14 +118,25 @@ function KaartMetMeldingen() {
   const styles = useStijlen(maak_styles);
   const { inst } = useInstellingen();
   const navigation = useNavigation<Nav>();
-  // Bovenrand voor de zoomhint. Uit safe-area-context en niet de SafeAreaView
-  // van react-native-screens: op Android mag die maar één keer per tabblad
-  // (zie androidLaag in navigatie.tsx).
+  // Bovenrand op Android, voor de knoppenlaag en de kaartpadding. Uit
+  // safe-area-context en niet de SafeAreaView van react-native-screens: op
+  // Android mag die maar één keer per tabblad (zie androidLaag in
+  // navigatie.tsx).
   const insets = useSafeAreaInsets();
-  // De zoomhint: 90% van de breedte op een telefoon, nooit breder dan
-  // MAX_SMAL op een tablet of opengevouwen toestel.
-  const { width: schermBreedte } = useWindowDimensions();
-  const hintBreedte = Math.min(schermBreedte * 0.9, MAX_SMAL);
+  // Camerabewegingen volgen "Verminder beweging": dan springt de kaart
+  // meteen naar het nieuwe beeld (duur 0) in plaats van te vliegen. Via een
+  // ref, zodat het plek-effect hieronder niet opnieuw hoeft te draaien.
+  const minderBeweging = useMinderBeweging();
+  const minderBewegingRef = useRef(minderBeweging);
+  minderBewegingRef.current = minderBeweging;
+  const duur = (ms: number) => (minderBewegingRef.current ? 0 : ms);
+  // Android: het kompas onder de statusbalk in plaats van erachter. iOS houdt
+  // het kompas zelf binnen zijn veilige zone. Vast object per inset, zodat de
+  // kaart niet bij elke render een nieuwe padding krijgt.
+  const kaartPadding = React.useMemo(
+    () => (isIOS ? undefined : { top: insets.top, right: 0, bottom: 0, left: 0 }),
+    [insets.top],
+  );
   // Vanuit een melding gekomen? Dan daarop inzoomen in plaats van op de buurt.
   const params = useRoute<RouteProp<StapelParams, 'Kaart'>>().params ?? {};
   const mapRef = useRef<MapView>(null);
@@ -139,6 +152,14 @@ function KaartMetMeldingen() {
   const ingezoomd = regio ? kaartVenster(regio).laden : false;
   const [kaartStatus, setKaartStatus] = useState('');
   const geladenGebied = useRef<{ lat: number; lon: number; radiusKm: number; tijd: number } | null>(null);
+
+  // Mislukt het laden, dan hoort VoiceOver dat ook. Android leest de hint
+  // zelf voor (accessibilityLiveRegion); iOS kent geen live regions.
+  useEffect(() => {
+    if (isIOS && kaartStatus.startsWith('Could not load')) {
+      AccessibilityInfo.announceForAccessibility(kaartStatus);
+    }
+  }, [kaartStatus]);
 
   // Alleen het huidige kaartbeeld laden. Cleanup voorkomt dat een oud antwoord
   // een nieuw kaartbeeld overschrijft, ook wanneer de gebruiker snel uitzoomt.
@@ -198,7 +219,7 @@ function KaartMetMeldingen() {
         const beeld = { latitude: eersteBeeld.lat, longitude: eersteBeeld.lon,
           latitudeDelta: params.id ? 0.03 : beeldDelta, longitudeDelta: params.id ? 0.03 : beeldDelta };
         setRegio(beeld);
-        mapRef.current?.animateToRegion(beeld, 350);
+        mapRef.current?.animateToRegion(beeld, duur(350));
       }
 
       // En dan pas de verse fix. Alleen bijstellen als het echt iets uitmaakt:
@@ -216,13 +237,13 @@ function KaartMetMeldingen() {
         mapRef.current?.animateToRegion({
           latitude: eigen.lat, longitude: eigen.lon,
           latitudeDelta: beeldDelta, longitudeDelta: beeldDelta,
-        }, 450);
+        }, duur(450));
 
       } else if (!vanMelding && verschoven) {
         mapRef.current?.animateToRegion({
           latitude: eigen.lat, longitude: eigen.lon,
           latitudeDelta: beeldDelta, longitudeDelta: beeldDelta,
-        }, 350);
+        }, duur(350));
 
       }
     })();
@@ -234,7 +255,7 @@ function KaartMetMeldingen() {
   function naarMij() {
     if (!mijnPlek) return;
     mapRef.current?.animateToRegion(
-      { latitude: mijnPlek.lat, longitude: mijnPlek.lon, latitudeDelta: beeldDelta, longitudeDelta: beeldDelta }, 350,
+      { latitude: mijnPlek.lat, longitude: mijnPlek.lon, latitudeDelta: beeldDelta, longitudeDelta: beeldDelta }, duur(350),
     );
     // Kwam je van een melding ver weg, dan staan er pins uit die omgeving.
     // Terug naar huis hoort ook de meldingen van thuis te tonen.
@@ -315,6 +336,11 @@ function KaartMetMeldingen() {
         initialRegion={beginRegio}
         onRegionChangeComplete={setRegio}
         showsUserLocation={inst.volgLocatie}
+        // Android: geen eigen mijn-plekknop van Google. Die verschijnt alleen
+        // als showsUserLocation aan staat, en precies dan brengt 'My area' je
+        // al naar je GPS-plek: twee knoppen voor hetzelfde.
+        showsMyLocationButton={false}
+        mapPadding={kaartPadding}
         toolbarEnabled={false}
         // Rustige, getekende ondergrond zonder winkels en wijknamen. Alleen
         // Android tekent hiermee; iOS houdt Apple Maps (zie kaartstijl.ts).
@@ -345,7 +371,7 @@ function KaartMetMeldingen() {
                   latitude: g.lat, longitude: g.lon,
                   latitudeDelta: Math.max((regio?.latitudeDelta ?? 0.3) / 3, 0.01),
                   longitudeDelta: Math.max((regio?.longitudeDelta ?? 0.3) / 3, 0.01),
-                }, 350);
+                }, duur(350));
               }}
             >
               {aantal === 1 ? (
@@ -359,41 +385,95 @@ function KaartMetMeldingen() {
           );
         })}
       </MapView>
-      {(!ingezoomd || kaartStatus) ? (
-        <View pointerEvents="none" style={{ position: 'absolute', top: insets.top + 8, alignSelf: 'center', maxWidth: hintBreedte, backgroundColor: C.card, borderRadius: 16, padding: 12 }}>
-          <Text style={{ color: C.textPrimary, textAlign: 'center' }}>{!ingezoomd ? 'Zoom in to see incidents' : kaartStatus}</Text>
-        </View>
-      ) : null}
-      <MijnPlekVak>
-        <Pressable style={({ pressed }) => [styles.mijnKnop, pressed && { transform: [{ scale: 0.95 }] }]} onPress={naarMij}>
-          <Text style={styles.mijnKnopTekst}>◉ My area</Text>
-        </Pressable>
-      </MijnPlekVak>
+      <KnoppenLaag>
+        {(!ingezoomd || kaartStatus) ? (
+          <ZwevendVlak
+            rond={20}
+            pointerEvents="none"
+            accessibilityLiveRegion="polite"
+            style={styles.hint}
+          >
+            <Text style={styles.hintTekst}>{!ingezoomd ? 'Zoom in to see incidents' : kaartStatus}</Text>
+          </ZwevendVlak>
+        ) : null}
+        <MijnPlekKnop aan={!!mijnPlek} onPress={naarMij} />
+      </KnoppenLaag>
     </View>
   );
 }
 
 /**
- * Onderrand voor de knop 'My area', boven de tabbalk. iOS: de SafeAreaView
- * van react-native-screens; het scherm van de stapel rekent de tabbalk en de
- * thuisbalk mee. Android: een gewone View, want androidLaag houdt de balk al
- * vrij (en een tweede SafeAreaView van screens in dit tabblad zou zijn
- * inzetten overnemen).
+ * De laag met de zwevende bediening boven de kaart: de zoomhint bovenaan,
+ * 'My area' rechtsonder. iOS: de SafeAreaView van react-native-screens, die
+ * de statusbalk (of het Dynamic Island) en de tabbalk met de thuisbalk als
+ * marge meerekent. Android: een gewone View met de bovenrand uit
+ * safe-area-context, want androidLaag houdt de navigatiebalk onderin al vrij
+ * (en een tweede SafeAreaView van screens in dit tabblad zou zijn inzetten
+ * overnemen).
  */
-function MijnPlekVak({ children }: { children: React.ReactNode }) {
-  const binnen = (
-    <View pointerEvents="box-none" style={{ alignItems: 'flex-end', padding: 16 }}>
+function KnoppenLaag({ children }: { children: React.ReactNode }) {
+  const styles = useStijlen(maak_styles);
+  const insets = useSafeAreaInsets();
+  return isIOS ? (
+    <SafeAreaView
+      edges={{ top: true, bottom: true }}
+      pointerEvents="box-none"
+      style={[StyleSheet.absoluteFill, styles.laag]}
+    >
+      {children}
+    </SafeAreaView>
+  ) : (
+    <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, styles.laag, { paddingTop: insets.top + 8 }]}>
       {children}
     </View>
   );
-  const plek = { position: 'absolute', left: 0, right: 0, bottom: 0 } as const;
-  return isIOS ? (
-    // flex 0: deze SafeAreaView staat standaard op flex 1.
-    <SafeAreaView edges={{ bottom: true }} pointerEvents="box-none" style={[plek, { flex: 0 }]}>
-      {binnen}
-    </SafeAreaView>
-  ) : (
-    <View pointerEvents="box-none" style={plek}>{binnen}</View>
+}
+
+/**
+ * 'My area' brengt de kaart terug naar je eigen buurt. Uitgeschakeld zolang
+ * we die plek nog niet weten (of als je buiten Australië bent).
+ *
+ * iOS: een knop van glas, zoals de knoppen in Apple Kaarten. Interactief
+ * glas reageert zelf op de vinger; alleen op blur of het dichte vlak dimt de
+ * inhoud tijdens het indrukken.
+ *
+ * Android: een uitgebreide M3-FAB in de oppervlakvariant (surface FAB): het
+ * kaartvlak met het accent voor icoon en label, in plaats van de standaard
+ * primaryContainer. Zo staat er geen tweede gekleurde vlek naast de pins.
+ */
+function MijnPlekKnop({ aan, onPress }: { aan: boolean; onPress: () => void }) {
+  const C = useThema();
+  const styles = useStijlen(maak_styles);
+  const glas = useGlas();
+
+  if (isIOS) {
+    return (
+      <ZwevendVlak interactief={aan} rond={22} style={styles.mijnVlak}>
+        <Pressable
+          onPress={onPress}
+          disabled={!aan}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Show my area"
+          accessibilityState={{ disabled: !aan }}
+          style={({ pressed }) => [
+            styles.mijnKnopIOS,
+            // Vaste dekking op de inhoud, niet op het glas (dat mag nooit).
+            !aan ? { opacity: 0.4 } : pressed && !glas ? { opacity: 0.6 } : null,
+          ]}
+        >
+          <Icoon naam="mijnPlek" grootte={17} kleur={C.accentTekst} />
+          <Text style={styles.mijnTekstIOS} maxFontSizeMultiplier={1.5}>My area</Text>
+        </Pressable>
+      </ZwevendVlak>
+    );
+  }
+
+  return (
+    <Drukbaar onPress={onPress} disabled={!aan} label="Show my area" style={styles.mijnFab}>
+      <Icoon naam="mijnPlek" grootte={24} kleur={C.accentTekst} />
+      <Text style={styles.mijnTekstFab}>My area</Text>
+    </Drukbaar>
   );
 }
 
@@ -418,9 +498,26 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3,
   },
   groepTekst: { color: '#fff', fontWeight: F.weightBold, fontSize: 13 },
-  mijnKnop: {
-    backgroundColor: C.card, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
+  // Insets komen als marge op de SafeAreaView (iOS) of als paddingTop (Android);
+  // dit is de ruimte daarbinnen. Kinderen staan in de flow, niet absoluut,
+  // anders tellen die insets niet mee.
+  laag: { padding: 16, paddingTop: 8 },
+  hint: { alignSelf: 'center', maxWidth: MAX_SMAL, paddingHorizontal: 14, paddingVertical: 10 },
+  hintTekst: { ...T.body, color: C.textPrimary, textAlign: 'center' },
+  // marginTop auto: de knop blijft onderin, ook als de hint erboven weg is.
+  mijnVlak: { alignSelf: 'flex-end', marginTop: 'auto' },
+  mijnKnopIOS: {
+    minHeight: 44, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
   },
-  mijnKnopTekst: { color: C.textPrimary, fontWeight: F.weightSemibold, fontSize: 14 },
+  mijnTekstIOS: { color: C.accentTekst, fontSize: 15, fontWeight: F.weightSemibold },
+  // M3 extended FAB: 56 hoog, hoek 16, icoon 24, 12 tussen icoon en label.
+  mijnFab: {
+    alignSelf: 'flex-end', marginTop: 'auto',
+    minHeight: 56, borderRadius: 16, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: C.card, boxShadow: SCHADUW.fab,
+  },
+  // M3 labelLarge.
+  mijnTekstFab: { color: C.accentTekst, fontSize: 14, fontWeight: F.weightMedium, letterSpacing: 0.1, lineHeight: 20 },
 });
