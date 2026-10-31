@@ -12,7 +12,7 @@ import React, { useRef, useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ActivityIndicator, Keyboard,
 } from 'react-native';
-import { T, F, type Palet } from '../theme';
+import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
 import { Drukbaar } from './Drukbaar';
 import { Icoon } from './Icoon';
@@ -106,6 +106,14 @@ export function PlaatsZoeker({
             autoCapitalize="words"
             autoCorrect={false}
             returnKeyType="search"
+            // Android: geen streep onder het veld (het staat al als rij in
+            // een kaart) en cursor, grepen en selectie in het accent van het
+            // palet. iOS houdt de standaard: daar kleurt selectionColor ook
+            // de cursor, en met deze doorzichtigheid zie je die nauwelijks.
+            underlineColorAndroid="transparent"
+            cursorColor={C.accent}
+            selectionHandleColor={C.accent}
+            selectionColor={isIOS ? undefined : `${C.accent}55`}
           />
           {zoekt ? <ActivityIndicator size="small" color={C.textMuted} /> : null}
         </View>

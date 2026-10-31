@@ -24,11 +24,16 @@ import { AbonnementProvider, useAbonnement } from './src/abonnement';
 import { navRef, luisterNaarMeldingTikken } from './src/meldingOpenen';
 import { telOpening } from './src/recensie';
 import { TabNavigatie } from './src/navigatie';
+import { Navigatiebalk } from './src/components/Navigatiebalk';
 
 /**
  * Vangnet: een JS-fout bij het opstarten gaf een stil wit scherm (melding
  * Chris, build 6). Met deze boundary staat de fout leesbaar op het scherm,
  * zodat een tester hem kan doorsturen in plaats van 'er gebeurt niks'.
+ *
+ * Bij een fout verdwijnt de Systeembalk mee met de rest van de app; daarom
+ * zet de foutpagina zelf de Android-navigatiebalk: donkere knoppen, want de
+ * pagina is altijd licht.
  */
 class FoutVanger extends React.Component<{ children: React.ReactNode }, { fout: Error | null }> {
   state = { fout: null as Error | null };
@@ -37,6 +42,7 @@ class FoutVanger extends React.Component<{ children: React.ReactNode }, { fout: 
     if (this.state.fout) {
       return (
         <View style={{ flex: 1, backgroundColor: '#f2f2f7', justifyContent: 'center', padding: 24 }}>
+          <Navigatiebalk stijl="dark" />
           <Text style={{ fontSize: 20, fontWeight: '700', color: '#1c1c1e' }}>Something went wrong</Text>
           <Text style={{ marginTop: 10, color: '#6e6e73', fontSize: 13 }} selectable>
             {String(this.state.fout)}
@@ -157,10 +163,20 @@ function Binnenkant() {
   );
 }
 
-/** Los component: de statusbalk moet binnen de ThemaProvider hangen. */
+/**
+ * Los component: de systeembalken moeten binnen de ThemaProvider hangen.
+ * Lichte tekens op donker, donkere op licht; op Android ook de knoppen van de
+ * navigatiebalk, die over de tabbalk liggen.
+ */
 function Systeembalk() {
   const C = useThema();
-  return <StatusBar style={C.donker ? 'light' : 'dark'} />;
+  const stijl = C.donker ? 'light' : 'dark';
+  return (
+    <>
+      <StatusBar style={stijl} />
+      <Navigatiebalk stijl={stijl} />
+    </>
+  );
 }
 
 export default function App() {

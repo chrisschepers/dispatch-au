@@ -20,6 +20,7 @@ import { F, mindeBeweging, PALET_DONKER } from '../../theme';
 import { VastThema } from '../../thema';
 import { Drukbaar } from '../Drukbaar';
 import { Icoon } from '../Icoon';
+import { Navigatiebalk } from '../Navigatiebalk';
 import { Toestel, toestelBreedte } from './Toestel';
 
 export const INTRO = {
@@ -80,8 +81,10 @@ export function IntroSchil({
     <VastThema palet={PALET_DONKER}>
       <SafeAreaView style={styles.root}>
         {/* Witte klok op de zwarte grond, ook als de app op licht staat. De
-            laatst gemonteerde StatusBar wint, en dat is deze. */}
+            laatst gemonteerde StatusBar wint, en dat is deze. Op Android
+            hetzelfde voor de knoppen van de navigatiebalk. */}
         <StatusBar style="light" />
+        <Navigatiebalk stijl="light" />
         <View style={styles.kop}>
           {onTerug ? (
             <Drukbaar style={styles.terug} onPress={onTerug} label="Back" trillen={false} disabled={bezig}>
