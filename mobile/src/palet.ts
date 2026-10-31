@@ -76,6 +76,8 @@ export const PALET_LICHT: Palet = {
  * Donker volgt de systeemkleuren van iOS: zwarte grond met iets lichtere
  * kaarten erop, precies andersom dan licht. Puur zwart (#000) is bewust: op
  * OLED-schermen scheelt dat stroom én het geeft de kaarten hun eigen vlak.
+ * Dat OLED-zwart blijft iOS (systemBackground); Android legt hier
+ * DONKER_ANDROID overheen (zie theme.ts).
  * Het accentrood is een tint lichter, want #e5372c is op zwart te donker om
  * als knopkleur te lezen.
  */
@@ -105,4 +107,23 @@ export const PALET_DONKER: Palet = {
   schakelRand: '#938f99',           // M3-donker: outline
   schakelKnop: '#938f99',
   groepVlak: '#d1d1d6',             // lichte bol op de donkere kaart
+};
+
+/**
+ * Donker op Android: Material 3 kent geen puur zwart. De grond is een heel
+ * donker grijs en elk vlak dat erboven ligt een tint lichter, zodat kaarten
+ * zich zonder schaduw van de grond losmaken. Dit zijn de neutrale M3-tonen
+ * 6, 12, 17, 30, 90, 80 en 60. Accent, de disciplines en de overige tokens
+ * blijven gelijk, en alles blijft hex: Schakelaar interpoleert ermee en
+ * schermen plakken er `${kleur}14` achter. Daarom ook geen Material You.
+ */
+export const DONKER_ANDROID: Partial<Palet> = {
+  bg: '#131313',            // N6: surface
+  card: '#1f1f1f',          // N12: surfaceContainer
+  chipBg: '#2a2a2a',        // N17: surfaceContainerHigh
+  border: '#474747',        // N30: outlineVariant
+  separator: '#474747',
+  textPrimary: '#e2e2e2',   // N90: onSurface
+  textSecondary: '#c6c6c6', // N80: onSurfaceVariant
+  textMuted: '#919191',     // N60: outline
 };

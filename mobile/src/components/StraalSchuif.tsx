@@ -13,7 +13,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { T, type Palet } from '../theme';
+import { T, F, type Palet } from '../theme';
 import { LANDELIJK_KM, straalTekst } from '../diensten';
 import { useThema, useStijlen } from '../thema';
 
@@ -87,5 +87,5 @@ export function StraalSchuif({ waarde, max, label, kleur, landelijk, zonderKop, 
 const maak_styles = (C: Palet) => StyleSheet.create({
   kop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
   label: { ...T.body, fontSize: 16, color: C.textPrimary },
-  waarde: { ...T.body, fontSize: 16, fontWeight: '600' },
+  waarde: { ...T.body, fontSize: 16, fontWeight: F.weightSemibold },
 });

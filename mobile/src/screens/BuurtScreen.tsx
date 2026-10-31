@@ -25,7 +25,7 @@ import { MeldingRij } from '../components/MeldingRij';
 import { useLive, type LiveStatus } from '../live';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlek, bepaalPlekSnel } from '../locatie';
-import { T, type Palet } from '../theme';
+import { T, F, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { DIENSTEN, wisselDienst, straalVoor, straalTekst, LANDELIJK_KM } from '../diensten';
 import { Drukbaar } from '../components/Drukbaar';
@@ -225,7 +225,7 @@ export default function BuurtScreen() {
                   size={15}
                   color={aan ? d.kleur : C.textMuted}
                 />
-                <Text style={[styles.chipTekst, aan && { color: d.kleur, fontWeight: '600' }]}>
+                <Text style={[styles.chipTekst, aan && { color: d.kleur, fontWeight: F.weightSemibold }]}>
                   {d.label}
                 </Text>
               </View>
@@ -312,7 +312,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     paddingHorizontal: 11, paddingVertical: 6,
   },
   pilStip: { width: 8, height: 8, borderRadius: 4 },
-  pilTekst: { ...T.klein, fontWeight: '600', color: C.textPrimary },
+  pilTekst: { ...T.klein, fontWeight: F.weightSemibold, color: C.textPrimary },
   kop: { ...T.display, color: C.textPrimary, paddingHorizontal: 20, paddingTop: 8 },
   subkop: { ...T.klein, color: C.textSecondary, paddingHorizontal: 20, marginTop: 10, marginBottom: 10 },
 
@@ -331,7 +331,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
 
   lijst: { paddingHorizontal: 16, paddingBottom: 24 },
   sectieKop: {
-    ...T.sectie, color: C.textSecondary, textTransform: 'uppercase',
+    ...T.sectie, color: C.textSecondary,
     marginTop: 18, marginBottom: 8, marginLeft: 4,
   },
 

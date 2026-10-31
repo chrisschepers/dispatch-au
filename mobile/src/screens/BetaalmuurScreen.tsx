@@ -18,6 +18,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, Linking, Platform } from 'react-native';
 import { useAbonnement } from '../abonnement';
+import { F } from '../theme';
 import { periodeTekst, perPeriode } from '../abonnementRegels';
 import { Drukbaar } from '../components/Drukbaar';
 import { Icoon } from '../components/Icoon';
@@ -139,7 +140,7 @@ function Regel({ icoon, tekst }: { icoon: IcoonNaam; tekst: string }) {
 }
 
 const styles = StyleSheet.create({
-  prijs: { fontSize: 21, fontWeight: '700', color: INTRO.tekst, textAlign: 'center', marginTop: 8 },
+  prijs: { fontSize: 21, fontWeight: F.weightBold, color: INTRO.tekst, textAlign: 'center', marginTop: 8 },
   abo: { fontSize: 13.5, color: INTRO.zacht, textAlign: 'center', marginTop: 2 },
   tekst: { fontSize: 15.5, lineHeight: 22, color: INTRO.zacht, textAlign: 'center', marginTop: 6 },
   regel: {

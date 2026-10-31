@@ -21,7 +21,7 @@ import { kaartTerugblikUren } from '../appConfig';
 import { kaartStijlVoor, appleKaartVoor } from '../kaartstijl';
 import { BrandendIcoon, BotsingIcoon, VlammenIcoon, type BrandendObject } from '../components/IncidentIcoon';
 
-import { isIOS, type Palet } from '../theme';
+import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
 import { Icoon } from '../components/Icoon';
 import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
@@ -100,10 +100,10 @@ function KaartNogNiet() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: C.bg, gap: 10 }}>
       <Icoon naam="kaart" grootte={40} kleur={C.textMuted} />
-      <Text style={{ fontSize: 17, fontWeight: '600', color: C.textPrimary, textAlign: 'center' }}>
+      <Text style={{ ...T.kop, color: C.textPrimary, textAlign: 'center' }}>
         The map is coming soon on Android
       </Text>
-      <Text style={{ fontSize: 15, color: C.textSecondary, textAlign: 'center' }}>
+      <Text style={{ ...T.body, color: C.textSecondary, textAlign: 'center' }}>
         You can already see every incident near you in the Nearby list.
       </Text>
     </View>
@@ -412,10 +412,10 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     backgroundColor: C.accent, borderWidth: 2, borderColor: '#fff',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3,
   },
-  groepTekst: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  groepTekst: { color: '#fff', fontWeight: F.weightBold, fontSize: 13 },
   mijnKnop: {
     backgroundColor: C.card, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
   },
-  mijnKnopTekst: { color: C.textPrimary, fontWeight: '600', fontSize: 14 },
+  mijnKnopTekst: { color: C.textPrimary, fontWeight: F.weightSemibold, fontSize: 14 },
 });

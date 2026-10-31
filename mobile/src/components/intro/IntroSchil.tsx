@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { mindeBeweging, PALET_DONKER } from '../../theme';
+import { F, mindeBeweging, PALET_DONKER } from '../../theme';
 import { VastThema } from '../../thema';
 import { Drukbaar } from '../Drukbaar';
 import { Icoon } from '../Icoon';
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   toestelVak: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 160 },
   tekstVak: { paddingHorizontal: 26, paddingTop: 22 },
   titel: {
-    fontSize: 28, lineHeight: 34, fontWeight: '700', letterSpacing: -0.5,
+    fontSize: 28, lineHeight: 34, fontWeight: F.weightBold, letterSpacing: -0.5,
     color: INTRO.tekst, textAlign: 'center',
   },
   tekst: { fontSize: 16.5, lineHeight: 23, color: INTRO.zacht, textAlign: 'center', marginTop: 10 },
@@ -144,5 +144,5 @@ const styles = StyleSheet.create({
     paddingVertical: 17, alignItems: 'center',
   },
   knopUit: { opacity: 0.5 },
-  knopTekst: { fontSize: 18, fontWeight: '600', color: '#fff' },
+  knopTekst: { fontSize: 18, fontWeight: F.weightSemibold, color: '#fff' },
 });

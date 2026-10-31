@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { opKleur, mengKleur, contrast, leesbaar } from '../src/kleur.ts';
-import { PALET_LICHT, PALET_DONKER } from '../src/palet.ts';
+import { PALET_LICHT, PALET_DONKER, DONKER_ANDROID } from '../src/palet.ts';
 
-const PALETTEN = { licht: PALET_LICHT, donker: PALET_DONKER };
+// Zelfde samenstelling als theme.ts op Android: M3-donkervlakken over het
+// donkere basispalet.
+const DONKER_OP_ANDROID = { ...PALET_DONKER, ...DONKER_ANDROID };
+const PALETTEN = { licht: PALET_LICHT, donker: PALET_DONKER, donkerAndroid: DONKER_OP_ANDROID };
 const DIENSTKLEUREN = ['brandweer', 'ambulance', 'politie', 'knrm', 'mmt', 'dienstOnbekend'];
 
 test('text on a coloured surface: dark on amber, white on red and blue', () => {
@@ -28,7 +31,7 @@ test('contrast follows WCAG and fails closed on bad input', () => {
   assert.equal(contrast('x', '#000000'), 1);
 });
 
-test('body text reaches 4.5:1 on every ground in both palettes', () => {
+test('body text reaches 4.5:1 on every ground in every palette', () => {
   for (const [naam, C] of Object.entries(PALETTEN)) {
     const paren = [
       ['textPrimary', 'bg'], ['textPrimary', 'card'],
@@ -42,7 +45,7 @@ test('body text reaches 4.5:1 on every ground in both palettes', () => {
   }
 });
 
-test('leesbaar makes every service colour readable as text on both cards', () => {
+test('leesbaar makes every service colour readable as text on every card', () => {
   for (const [naam, C] of Object.entries(PALETTEN)) {
     for (const dienst of DIENSTKLEUREN) {
       const uit = leesbaar(C[dienst], C.card);
@@ -57,4 +60,24 @@ test('leesbaar makes every service colour readable as text on both cards', () =>
   assert.ok(contrast(leesbaar('#f4a814', '#ffffff'), '#000000') < contrast('#f4a814', '#000000'));
   assert.ok(contrast(leesbaar('#7c4dbe', '#1c1c1e'), '#ffffff') < contrast('#7c4dbe', '#ffffff'));
   assert.equal(leesbaar('x', '#ffffff'), 'x');
+});
+
+test('Android dark: M3 grey surfaces instead of black, all hex, same accent', () => {
+  const C = DONKER_OP_ANDROID;
+  assert.notEqual(C.bg, '#000000');
+  assert.equal(C.bg, '#131313');
+  // Elk vlak boven de grond is lichter dan de grond zelf.
+  for (const vlak of ['card', 'chipBg']) {
+    assert.ok(contrast(C[vlak], '#000000') > contrast(C.bg, '#000000'), `${vlak} is not lighter than bg`);
+  }
+  // Schakelaar interpoleert en schermen plakken `${kleur}14` achter: hex.
+  for (const [sleutel, waarde] of Object.entries(DONKER_ANDROID)) {
+    assert.match(waarde, /^#[0-9a-f]{6}$/, sleutel);
+  }
+  // Alleen vlakken en tekst wisselen; accent, rimpel en disciplines blijven.
+  for (const sleutel of ['donker', 'accent', 'accentSoft', 'accentTekst', 'rimpel', ...DIENSTKLEUREN]) {
+    assert.equal(C[sleutel], PALET_DONKER[sleutel], sleutel);
+  }
+  // Ook de stillere tekst blijft leesbaar op de Android-kaart.
+  assert.ok(contrast(C.textMuted, C.card) >= 4.5);
 });

@@ -15,7 +15,7 @@ import { vraagLocatiePermissie } from '../locatie';
 import {
   registreerVoorPushMetInstellingen, huidigeGebruiker, werkPushFilterBij, zorgVoorGebruiker,
 } from '../push';
-import { T, type Palet } from '../theme';
+import { T, F, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import {
   DIENSTEN, wisselDienst, straalVoor, straalTekst, MAX_STRAAL_KM, LANDELIJK_KM, LANDELIJK_MOGELIJK,
@@ -234,7 +234,7 @@ export default function InstellingenScreen() {
           icoon="buurt" tegelKleur={C.accent}
           titel="Radius"
           sub={perDienstAan ? 'Set per service' : 'Applies to your alerts and to Nearby'}
-          rechts={perDienstAan ? null : <Text style={[styles.waarde, { color: C.accent, fontWeight: '600' }]}>{straalTekst(live.__ ?? inst.straalKm)}</Text>}
+          rechts={perDienstAan ? null : <Text style={[styles.waarde, { color: C.accent, fontWeight: F.weightSemibold }]}>{straalTekst(live.__ ?? inst.straalKm)}</Text>}
         />
         {!perDienstAan && (
           <View style={styles.schuifVak}>
@@ -269,7 +269,7 @@ export default function InstellingenScreen() {
                 label={`${d.volleNaam}, ${straalTekst(km)}. Tap to choose the distance`}
                 rechts={(
                   <View style={styles.rechtsWaarde}>
-                    <Text style={[styles.waarde, { color: d.kleur, fontWeight: '600' }]}>{straalTekst(km)}</Text>
+                    <Text style={[styles.waarde, { color: d.kleur, fontWeight: F.weightSemibold }]}>{straalTekst(km)}</Text>
                     <Icoon naam={open ? 'inklappen' : 'uitklappen'} grootte={20} kleur={C.textMuted} gewicht="semibold" />
                   </View>
                 )}
@@ -512,7 +512,7 @@ function Rij({
       </View>
       <View style={styles.rijMidden}>
         <Text style={styles.label}>{titel}</Text>
-        {sub ? <Text style={[styles.hint, subKleur ? { color: subKleur, fontWeight: '600' } : null]}>{sub}</Text> : null}
+        {sub ? <Text style={[styles.hint, subKleur ? { color: subKleur, fontWeight: F.weightSemibold } : null]}>{sub}</Text> : null}
       </View>
       {rechts}
     </>
@@ -527,7 +527,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   inhoud: { padding: 16, paddingBottom: 32 },
   groepKop: {
-    ...T.sectie, color: C.textSecondary, textTransform: 'uppercase',
+    ...T.sectie, color: C.textSecondary,
     marginTop: 20, marginBottom: 8, marginLeft: 4,
   },
   rij: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, minHeight: 48 },
@@ -541,7 +541,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   tegel: { width: 34, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   midden: { flex: 1, marginLeft: 12 },
   tegelLabel: { ...T.klein, color: C.textSecondary },
-  tegelWaarde: { ...T.body, fontSize: 15, fontWeight: '600', color: C.textPrimary, marginTop: 1 },
+  tegelWaarde: { ...T.body, fontWeight: F.weightSemibold, color: C.textPrimary, marginTop: 1 },
   rijTegel: { justifyContent: 'flex-start', gap: 12, paddingVertical: 10 },
   tegeltje: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   rijMidden: { flex: 1 },

@@ -10,7 +10,7 @@ import type { Melding } from '../api';
 import {
   vertaalMelding, afstandTekst, klokTekst, plaatsRegel, urgentieTekst,
 } from '../vertaal';
-import { T, type Palet } from '../theme';
+import { T, F, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from './Drukbaar';
 import { Icoon } from './Icoon';
@@ -106,7 +106,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     backgroundColor: C.accentSoft, borderRadius: 999,
     paddingLeft: 5, paddingRight: 8, paddingVertical: 2,
   },
-  opschalingTekst: { fontSize: 11.5, fontWeight: '600', color: C.accent },
+  opschalingTekst: { fontSize: 11.5, fontWeight: F.weightSemibold, color: C.accent },
   plek: { ...T.klein, color: C.textSecondary, marginTop: 3 },
   urgentie: { ...T.klein, color: C.textMuted, marginTop: 1 },
   rechts: { alignItems: 'flex-end', gap: 1 },

@@ -22,7 +22,7 @@ import { LookAround } from '../../modules/look-around';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlekSnel } from '../locatie';
 import { vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst } from '../vertaal';
-import { T, isIOS, type Palet } from '../theme';
+import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from '../components/Drukbaar';
 import { Icoon } from '../components/Icoon';
@@ -428,8 +428,8 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999,
     paddingHorizontal: 10, paddingVertical: 5,
   },
-  pinHint: { ...T.klein, color: C.textMuted, marginTop: 6, marginHorizontal: 4, lineHeight: 18 },
-  kaartHintTekst: { fontSize: 12, fontWeight: '600', color: C.textPrimary },
+  pinHint: { ...T.klein, color: C.textMuted, marginTop: 6, marginHorizontal: 4 },
+  kaartHintTekst: { fontSize: 12, fontWeight: F.weightSemibold, color: C.textPrimary },
   blok: { padding: 16 },
   tlRij: { flexDirection: 'row', gap: 12 },
   tlKolom: { alignItems: 'center', width: 24 },
@@ -440,8 +440,8 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   tlLijn: { flex: 1, width: 2, backgroundColor: C.separator, marginVertical: 2 },
   tlInhoud: { flex: 1, paddingBottom: 14 },
   tlTijd: { ...T.klein, color: C.textMuted, marginBottom: 2 },
-  tlTekst: { ...T.body, color: C.textPrimary, lineHeight: 21 },
-  blokKop: { ...T.sectie, color: C.textSecondary, textTransform: 'uppercase', marginBottom: 8 },
+  tlTekst: { ...T.body, color: C.textPrimary },
+  blokKop: { ...T.sectie, color: C.textSecondary, marginBottom: 8 },
   blokTekst: { ...T.body, color: C.textPrimary },
   meldtekst: { ...T.klein, color: C.textSecondary },
   opschaling: {
@@ -455,5 +455,5 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.separator },
   rijTitel: { ...T.body, color: C.textPrimary },
   rijSub: { ...T.klein, color: C.textMuted, marginTop: 2 },
-  nummer: { fontSize: 13, color: C.textMuted, fontVariant: ['tabular-nums'] },
+  nummer: { fontSize: T.klein.fontSize, color: C.textMuted, fontVariant: ['tabular-nums'] },
 });

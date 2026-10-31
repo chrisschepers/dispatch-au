@@ -7,7 +7,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { kaartStijlVoor, appleKaartVoor } from '../kaartstijl';
-import { type Palet } from '../theme';
+import { T, type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
 import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
 
@@ -42,6 +42,6 @@ export function MiniKaart({ lat, lon, kleur }: { lat: number; lon: number; kleur
 const maak_styles = (C: Palet) => StyleSheet.create({
   kaart: { flex: 1 },
   leeg: { alignItems: 'center', justifyContent: 'center', backgroundColor: C.chipBg },
-  leegTekst: { fontSize: 13, color: C.textSecondary },
+  leegTekst: { ...T.klein, color: C.textSecondary },
   pin: { width: 18, height: 18, borderRadius: 9, borderWidth: 3, borderColor: '#fff' },
 });

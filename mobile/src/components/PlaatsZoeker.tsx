@@ -12,7 +12,7 @@ import React, { useRef, useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ActivityIndicator, Keyboard,
 } from 'react-native';
-import { T, type Palet } from '../theme';
+import { T, F, type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
 import { Drukbaar } from './Drukbaar';
 import { Icoon } from './Icoon';
@@ -141,7 +141,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999,
     backgroundColor: C.accentSoft, alignSelf: 'flex-start',
   },
-  gekozenTekst: { ...T.body, color: C.textPrimary, fontWeight: '600' },
+  gekozenTekst: { ...T.body, color: C.textPrimary, fontWeight: F.weightSemibold },
   invoerRij: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   invoer: { flex: 1, ...T.body, fontSize: 16, color: C.textPrimary, paddingVertical: 6 },
   lijst: { marginTop: 8, borderRadius: 10, backgroundColor: C.chipBg, overflow: 'hidden' },

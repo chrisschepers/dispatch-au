@@ -10,16 +10,26 @@
  *
  * Opzet blijft Apples eigen Instellingen-app: gegroepeerde kaarten op een
  * ondergrond, in het donker omgekeerd (zwarte grond, iets lichtere kaarten).
+ * Op Android is die grond in het donker geen zwart maar M3-donkergrijs, en
+ * de tekst volgt de M3-typeschaal (zie DONKER_ANDROID en T hieronder).
  */
 import { AccessibilityInfo, Platform } from 'react-native';
-import { PALET_LICHT, PALET_DONKER, type Palet } from './palet';
+import { PALET_LICHT, PALET_DONKER as DONKER_BASIS, DONKER_ANDROID, type Palet } from './palet';
 
 // De paletten zelf staan in palet.ts (zonder react-native, voor de tests);
-// hier ongewijzigd doorgegeven zodat elke bestaande import blijft werken.
-export { PALET_LICHT, PALET_DONKER };
+// hier doorgegeven zodat elke bestaande import blijft werken.
+export { PALET_LICHT };
 export type { Palet };
 
 export const isIOS = Platform.OS === 'ios';
+
+/**
+ * Het donkere palet van dit platform. iOS houdt zijn OLED-zwart
+ * (systemBackground); Android krijgt de M3-donkervlakken eroverheen.
+ */
+export const PALET_DONKER: Palet = Platform.OS === 'android'
+  ? { ...DONKER_BASIS, ...DONKER_ANDROID }
+  : DONKER_BASIS;
 
 /**
  * iOS 26 of nieuwer: Liquid Glass, en het gedrag van kopbalk en tabbalk dat
@@ -40,7 +50,9 @@ export const F = {
   // en letterafstandtabellen mee.
   weightRegular: '400' as const,
   weightMedium: '500' as const,
-  weightSemibold: '600' as const,
+  // Roboto heeft op Android meestal geen 600: dat valt terug op vet (700).
+  // M3 benadrukt met 500, dus daar is "halfvet" medium.
+  weightSemibold: (Platform.OS === 'android' ? '500' : '600') as '500' | '600',
   weightBold: '700' as const,
 };
 
@@ -51,16 +63,35 @@ export const F = {
  * Regelhoogte gaat de andere kant op: strak bij koppen, ruimer bij lopende
  * tekst.
  */
-export const T = {
-  display: { fontSize: 32, fontWeight: F.weightBold, letterSpacing: -0.6, lineHeight: 38 },
-  titel:   { fontSize: 26, fontWeight: F.weightBold, letterSpacing: -0.4, lineHeight: 32 },
-  kop:     { fontSize: 17, fontWeight: F.weightSemibold, letterSpacing: -0.2, lineHeight: 22 },
-  rij:     { fontSize: 16, fontWeight: F.weightSemibold, letterSpacing: -0.1, lineHeight: 21 },
-  body:    { fontSize: 15, fontWeight: F.weightRegular, letterSpacing: 0, lineHeight: 21 },
-  klein:   { fontSize: 13, fontWeight: F.weightRegular, letterSpacing: 0.1, lineHeight: 18 },
-  // Kapitalen hebben altijd extra ruimte nodig, ongeacht de maat.
-  sectie:  { fontSize: 13, fontWeight: F.weightSemibold, letterSpacing: 0.5, lineHeight: 18 },
-};
+const T_IOS = {
+  display: { fontSize: 32, fontWeight: '700', letterSpacing: -0.6, lineHeight: 38 },
+  titel:   { fontSize: 26, fontWeight: '700', letterSpacing: -0.4, lineHeight: 32 },
+  kop:     { fontSize: 17, fontWeight: '600', letterSpacing: -0.2, lineHeight: 22 },
+  rij:     { fontSize: 16, fontWeight: '600', letterSpacing: -0.1, lineHeight: 21 },
+  body:    { fontSize: 15, fontWeight: '400', letterSpacing: 0, lineHeight: 21 },
+  klein:   { fontSize: 13, fontWeight: '400', letterSpacing: 0.1, lineHeight: 18 },
+  // Sectiekoppen in kapitalen, zoals iOS-instellingen. Kapitalen hebben
+  // altijd extra ruimte nodig, ongeacht de maat.
+  sectie:  { fontSize: 13, fontWeight: '600', letterSpacing: 0.5, lineHeight: 18, textTransform: 'uppercase' },
+} as const;
+
+/**
+ * Android volgt de M3-typeschaal: display = headlineMedium, titel =
+ * headlineSmall (iets zwaarder), kop en rij = titleMedium, body = bodyLarge,
+ * klein = bodyMedium, sectie = titleSmall. Sectiekoppen in zinsvorm, zonder
+ * kapitalen: zo doet Material dat.
+ */
+const T_ANDROID = {
+  display: { fontSize: 28, fontWeight: '400', letterSpacing: 0, lineHeight: 36 },
+  titel:   { fontSize: 24, fontWeight: '500', letterSpacing: 0, lineHeight: 32 },
+  kop:     { fontSize: 16, fontWeight: '500', letterSpacing: 0.15, lineHeight: 24 },
+  rij:     { fontSize: 16, fontWeight: '500', letterSpacing: 0.15, lineHeight: 24 },
+  body:    { fontSize: 16, fontWeight: '400', letterSpacing: 0.5, lineHeight: 24 },
+  klein:   { fontSize: 14, fontWeight: '400', letterSpacing: 0.25, lineHeight: 20 },
+  sectie:  { fontSize: 14, fontWeight: '500', letterSpacing: 0.1, lineHeight: 20 },
+} as const;
+
+export const T = Platform.OS === 'android' ? T_ANDROID : T_IOS;
 
 /** Afgeronde kaart zoals in iOS-instellingen, in de kleur van het thema. */
 export function kaartVoor(palet: Palet) {
