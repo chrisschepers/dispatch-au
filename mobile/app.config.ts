@@ -64,6 +64,27 @@ const config: ExpoConfig = {
     './plugins/with-tab-iconen.cjs',
     './plugins/with-android-accent.cjs',
     'expo-font',
+    // Launch screen, so there is no white template flash before the first
+    // screen. iOS: a plain background in the colour of the first screen
+    // (PALET_LICHT/PALET_DONKER bg), no logo, as the HIG asks of a launch
+    // screen. Android 12+ always shows an icon, so it gets the launcher glyph
+    // on the launcher red in light and dark (older Android shows the same
+    // through the compat splash). The in-app Light/Dark choice cannot reach
+    // these native screens: they follow the phone. App.tsx keeps the splash
+    // up until the first screen is ready.
+    [
+      'expo-splash-screen',
+      {
+        backgroundColor: '#f2f2f7',
+        dark: { backgroundColor: '#000000' },
+        android: {
+          image: './assets/adaptive-icon.png',
+          imageWidth: 200,
+          backgroundColor: '#d83329',
+          dark: { backgroundColor: '#d83329' },
+        },
+      },
+    ],
     // No system scrim over 3-button navigation: the M3 tab bar shows through
     // and src/components/Navigatiebalk sets the button colour per theme.
     ['expo-navigation-bar', { enforceContrast: false }],
