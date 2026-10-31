@@ -10,7 +10,7 @@ import type { Melding } from '../api';
 import {
   vertaalMelding, afstandTekst, klokTekst, plaatsRegel, urgentieTekst,
 } from '../vertaal';
-import { T, F, type Palet } from '../theme';
+import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from './Drukbaar';
 import { Icoon } from './Icoon';
@@ -88,7 +88,9 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
       <View style={styles.rechts}>
         <Text style={styles.tijd}>{tijd}</Text>
         {km ? <Text style={styles.afstand}>{km}</Text> : null}
-        <Icoon naam="chevron" grootte={18} kleur={C.textMuted} gewicht="semibold" />
+        {/* De chevron is een iOS-gewoonte; op Android laat de drukstaat al
+            zien dat de rij te tikken is. */}
+        {isIOS && <Icoon naam="chevron" grootte={18} kleur={C.textMuted} gewicht="semibold" />}
       </View>
     </Drukbaar>
   );

@@ -314,7 +314,8 @@ export default function DetailScreen() {
             </Text>
           </View>
           {afstand ? <Text style={styles.nummer}>{afstand}</Text> : null}
-          <Icoon naam="chevron" grootte={18} kleur={C.textMuted} gewicht="semibold" />
+          {/* Alleen iOS: Android kent geen chevron, daar zegt de drukstaat het. */}
+          {isIOS && <Icoon naam="chevron" grootte={18} kleur={C.textMuted} gewicht="semibold" />}
         </Drukbaar>
       )}
 

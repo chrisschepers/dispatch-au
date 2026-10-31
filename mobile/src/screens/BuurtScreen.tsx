@@ -15,7 +15,6 @@ import {
   View, Text, StyleSheet, SectionList, RefreshControl, AppState, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { haalMeldingenPerVenster, type Melding } from '../api';
@@ -25,15 +24,20 @@ import { MeldingRij } from '../components/MeldingRij';
 import { useLive, type LiveStatus } from '../live';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlek, bepaalPlekSnel } from '../locatie';
-import { T, F, type Palet } from '../theme';
+import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { DIENSTEN, wisselDienst, straalVoor, straalTekst, LANDELIJK_KM } from '../diensten';
 import { Drukbaar } from '../components/Drukbaar';
+import { Icoon, DienstIcoon } from '../components/Icoon';
 import { tikStap } from '../trilling';
+import { leesbaar, mengKleur } from '../kleur';
 
 type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
 
 interface Rij { m: Melding; km: number | null }
+
+/** iOS: het vlak van een gekozen chip is de dienstkleur op 0x14 (8%). */
+const TINT_IOS = '14';
 
 export default function BuurtScreen() {
   const C = useThema();
@@ -144,6 +148,16 @@ export default function BuurtScreen() {
   }, [inst.lijstDiensten, inst.straalKm, inst.straalPerDienst]);
 
   /**
+   * iOS: de tekst van een gekozen chip blijft in de dienstkleur, maar zo
+   * donker (in het donker: zo licht) dat hij 4.5:1 haalt op het getinte vlak
+   * eronder. Puur amber op lichtgrijs was zo'n 2:1. Icoon en rand houden de
+   * echte kleur.
+   */
+  const chipTekstIOS = useMemo(() => Object.fromEntries(DIENSTEN.map((d) => [
+    d.key, leesbaar(d.kleur, mengKleur(d.kleur, C.bg, parseInt(TINT_IOS, 16) / 255)),
+  ])) as Record<string, string>, [C.bg]);
+
+  /**
    * De lijst volgt de schakelaars METEEN, zonder op het netwerk te wachten.
    *
    * Melding Wilbert 24-08: ambulance uitzetten en dan blijven de ambulance-
@@ -208,26 +222,45 @@ export default function BuurtScreen() {
       >
         {DIENSTEN.map((d) => {
           const aan = inst.lijstDiensten.includes(d.key);
+          // Een keuze die verspringt: selectietik, geen druktik.
+          const wissel = () => {
+            tikStap();
+            zet('lijstDiensten', wisselDienst(inst.lijstDiensten, d.key));
+          };
+          if (isIOS) {
+            return (
+              <Drukbaar
+                key={d.key}
+                schaal={0.94}
+                geselecteerd={aan}
+                style={[styles.chip, aan && { backgroundColor: `${d.kleur}${TINT_IOS}`, borderColor: d.kleur }]}
+                onPress={wissel}
+              >
+                <View style={styles.chipInhoud}>
+                  <DienstIcoon dienst={d} grootte={15} kleur={aan ? d.kleur : C.textMuted} />
+                  <Text style={[styles.chipTekst, aan && { color: chipTekstIOS[d.key], fontWeight: F.weightSemibold }]}>
+                    {d.label}
+                  </Text>
+                </View>
+              </Drukbaar>
+            );
+          }
+          // Android: M3-filterchip. Gekozen is een getint vlak met een vinkje
+          // vooraan, niet gekozen alleen een rand met het vakicoon. TalkBack
+          // leest hem als aangevinkt of niet.
           return (
             <Drukbaar
               key={d.key}
-              schaal={0.94}
-              style={[styles.chip, aan && { backgroundColor: `${d.kleur}14`, borderColor: d.kleur }]}
-              // Een keuze die verspringt: selectietik, geen druktik.
-              onPress={() => {
-                tikStap();
-                zet('lijstDiensten', wisselDienst(inst.lijstDiensten, d.key));
-              }}
+              rol="checkbox"
+              aan={aan}
+              style={[styles.chip, aan && { backgroundColor: `${d.kleur}29`, borderColor: 'transparent' }]}
+              onPress={wissel}
             >
               <View style={styles.chipInhoud}>
-                <MaterialCommunityIcons
-                  name={d.icoon as never}
-                  size={15}
-                  color={aan ? d.kleur : C.textMuted}
-                />
-                <Text style={[styles.chipTekst, aan && { color: d.kleur, fontWeight: F.weightSemibold }]}>
-                  {d.label}
-                </Text>
+                {aan
+                  ? <Icoon naam="gekozen" grootte={18} kleur={C.textPrimary} />
+                  : <DienstIcoon dienst={d} grootte={18} kleur={d.kleur} />}
+                <Text style={[styles.chipTekst, aan && { color: C.textPrimary }]}>{d.label}</Text>
               </View>
             </Drukbaar>
           );
@@ -255,7 +288,17 @@ export default function BuurtScreen() {
         sections={secties}
         keyExtractor={(r) => r.m.id}
         stickySectionHeadersEnabled={false}
-        refreshControl={<RefreshControl refreshing={laden} onRefresh={laad} tintColor={C.textMuted} />}
+        refreshControl={(
+          <RefreshControl
+            refreshing={laden}
+            onRefresh={laad}
+            tintColor={C.textMuted}
+            // Android: rood draaiend op een schijf in de kaartkleur. Zonder
+            // deze twee is de schijf in het donker wit.
+            colors={[C.accent]}
+            progressBackgroundColor={C.card}
+          />
+        )}
         onEndReached={laadMeer}
         onEndReachedThreshold={0.6}
         ListFooterComponent={meerBezig ? (
@@ -314,20 +357,37 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   pilStip: { width: 8, height: 8, borderRadius: 4 },
   pilTekst: { ...T.klein, fontWeight: F.weightSemibold, color: C.textPrimary },
   kop: { ...T.display, color: C.textPrimary, paddingHorizontal: 20, paddingTop: 8 },
-  subkop: { ...T.klein, color: C.textSecondary, paddingHorizontal: 20, marginTop: 10, marginBottom: 10 },
+  // marginBottom 2 + de 8 bovenin de chiprij = dezelfde 10 als voorheen.
+  subkop: { ...T.klein, color: C.textSecondary, paddingHorizontal: 20, marginTop: 10, marginBottom: 2 },
 
   // flexGrow: 0, anders eist de schuifrij alle resterende hoogte op en blijft
   // er niets over voor de lijst eronder.
   chipsRij: { flexGrow: 0, flexShrink: 0 },
   filterHint: { ...T.klein, color: C.textMuted, paddingHorizontal: 20, marginTop: -4, marginBottom: 10 },
   eindeTekst: { ...T.klein, color: C.textMuted, textAlign: 'center', marginVertical: 18 },
-  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
-  chip: {
+  // paddingTop 8: een ScrollView neemt geen aanrakingen buiten zijn eigen
+  // rand aan, dus zonder die ruimte viel de bovenste 8 van de hitSlop weg.
+  // Zo is elke chip minstens 48 hoog te raken.
+  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
+  chip: isIOS ? {
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
     backgroundColor: C.card, borderWidth: 1, borderColor: C.border,
+  } : {
+    // M3-filterchip: 32 hoog (48 met de hitSlop), hoek 8, vooraan 8 voor
+    // het icoon en achteraan 16. De rand is M3's outlineVariant: 25% van de
+    // tekstkleur over de grond. In Android-donker is dat precies C.border
+    // (#474747); in licht haalt C.border op de grijze grond maar 1.1:1 en
+    // viel de chip weg.
+    minHeight: 32, paddingVertical: 0, justifyContent: 'center',
+    borderRadius: 8, paddingLeft: 8, paddingRight: 16,
+    backgroundColor: 'transparent', borderWidth: 1,
+    borderColor: mengKleur(C.textPrimary, C.bg, 0.25),
   },
-  chipInhoud: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  chipTekst: { ...T.klein, color: C.textSecondary },
+  chipInhoud: { flexDirection: 'row', alignItems: 'center', gap: isIOS ? 5 : 8 },
+  chipTekst: isIOS
+    ? { ...T.klein, color: C.textSecondary }
+    // M3 labelLarge: 14/500 met letterafstand 0.1.
+    : { fontSize: 14, fontWeight: F.weightMedium, letterSpacing: 0.1, lineHeight: 20, color: C.textSecondary },
 
   lijst: { paddingHorizontal: 16, paddingBottom: 24 },
   sectieKop: {
