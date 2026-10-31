@@ -81,3 +81,23 @@ test('Android dark: M3 grey surfaces instead of black, all hex, same accent', ()
   // Ook de stillere tekst blijft leesbaar op de Android-kaart.
   assert.ok(contrast(C.textMuted, C.card) >= 4.5);
 });
+
+test('Detail timeline glyph: opKleur stands out on every dot colour', () => {
+  // De bolletjes zijn de dienstkleur of het accent; het icoon erin is een
+  // grafisch element, dus 3:1. Vast wit haalde op amber maar 2:1.
+  for (const [naam, C] of Object.entries(PALETTEN)) {
+    for (const bol of [...DIENSTKLEUREN, 'accent']) {
+      const r = contrast(opKleur(C[bol]), C[bol]);
+      assert.ok(r >= 3, `${naam}: glyph on ${bol} is ${r.toFixed(2)}:1`);
+    }
+  }
+});
+
+test('Detail title tile: the flame cut-out matches the tile on the screen ground', () => {
+  // DetailScreen mengt naar C.bg, niet naar wit: in het donker is de tegel
+  // dan donker en valt de uitspaarrand weg in plaats van licht op te lichten.
+  const licht = mengKleur(PALET_LICHT.brandweer, PALET_LICHT.bg, 0x18 / 255);
+  const donker = mengKleur(PALET_DONKER.brandweer, PALET_DONKER.bg, 0x18 / 255);
+  assert.ok(contrast(donker, '#000000') < 1.5, `dark tile ${donker} is not dark`);
+  assert.ok(contrast(licht, '#ffffff') < 1.5, `light tile ${licht} is not light`);
+});

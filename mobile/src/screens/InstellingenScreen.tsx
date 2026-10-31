@@ -8,7 +8,7 @@
  * omzetten, "Theme" als keuzerondjes en kopjes in de accentkleur. iOS houdt
  * de tegeltjes van iOS-instellingen.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Linking, Platform, Alert, Share, ToastAndroid, PlatformColor,
   type ColorValue,
@@ -38,6 +38,7 @@ import { openRecensiePagina } from '../recensie';
 import { BRONNEN } from '../bronnen';
 import { tikSchakel } from '../trilling';
 import { useInhoudMaat } from '../inhoudMaat';
+import { leesbaar } from '../kleur';
 
 const SITE = 'https://emergenciesnearme.online';
 const CONTACT = {
@@ -187,6 +188,14 @@ export default function InstellingenScreen() {
   const [open_, setOpen] = useState<string | null>(null);
   const [live, setLive] = useState<Record<string, number>>({});
 
+  // Straal per dienst als tekst in de dienstkleur, maar zo donker (in het
+  // donker: zo licht) dat hij 4.5:1 haalt op de kaart. Puur amber op wit was
+  // 2:1. Iconen en schuifbalken houden de echte kleur.
+  const dienstTekst = useMemo(
+    () => Object.fromEntries(DIENSTEN.map((d) => [d.key, leesbaar(d.kleur, C.card)])) as Record<string, string>,
+    [C.card],
+  );
+
   /**
    * GRIP landelijk aan: er moet een gebruiker met pushtoestemming zijn, ook
    * als de gewone meldingen uit staan. Zelfde regel als bij capcodes volgen
@@ -258,7 +267,7 @@ export default function InstellingenScreen() {
           icoon="buurt" tegelKleur={C.accent}
           titel="Radius"
           sub={perDienstAan ? 'Set per service' : 'Applies to your alerts and to Nearby'}
-          rechts={perDienstAan ? null : <Text style={[styles.waarde, { color: C.accent, fontWeight: F.weightSemibold }]}>{straalTekst(live.__ ?? inst.straalKm)}</Text>}
+          rechts={perDienstAan ? null : <Text style={[styles.waarde, { color: C.accentTekst, fontWeight: F.weightSemibold }]}>{straalTekst(live.__ ?? inst.straalKm)}</Text>}
         />
         {!perDienstAan && (
           <View style={styles.schuifVak}>
@@ -293,7 +302,7 @@ export default function InstellingenScreen() {
                 label={`${d.volleNaam}, ${straalTekst(km)}. Tap to choose the distance`}
                 rechts={(
                   <View style={styles.rechtsWaarde}>
-                    <Text style={[styles.waarde, { color: d.kleur, fontWeight: F.weightSemibold }]}>{straalTekst(km)}</Text>
+                    <Text style={[styles.waarde, { color: dienstTekst[d.key], fontWeight: F.weightSemibold }]}>{straalTekst(km)}</Text>
                     <Icoon naam={open ? 'inklappen' : 'uitklappen'} grootte={20} kleur={C.textMuted} gewicht="semibold" />
                   </View>
                 )}
@@ -513,7 +522,7 @@ export default function InstellingenScreen() {
           )}
           <View style={isIOS ? styles.midden : styles.rijMidden}>
             <Text style={styles.tegelLabel}>Email</Text>
-            <Text style={[styles.tegelWaarde, { color: C.accent }]}>{CONTACT.email}</Text>
+            <Text style={[styles.tegelWaarde, { color: C.accentTekst }]}>{CONTACT.email}</Text>
           </View>
           {isIOS && <Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />}
         </Drukbaar>

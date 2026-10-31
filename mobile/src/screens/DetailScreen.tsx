@@ -30,6 +30,7 @@ import { ICONEN, type IcoonNaam } from '../iconen';
 import { bronVan, domeinVan } from '../bronnen';
 import type { StapelParams, TabParams } from '../navigatie';
 import { useInhoudMaat } from '../inhoudMaat';
+import { mengKleur, opKleur } from '../kleur';
 
 type Rt =RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
 // Detail zit in de stapel van een tabblad, en het kaartje springt naar een
@@ -47,19 +48,6 @@ type Nav = CompositeNavigationProp<
 function plaatsOnnauwkeurig(m: Melding): boolean {
   const p = m.geoPrecision;
   return !!p && p !== 'street' && p !== 'hecto' && p !== 'none';
-}
-
-/**
- * De uitspaartruc in BrandendIcoon schildert de vlamrand in de fondkleur en
- * heeft dus een dékkende kleur nodig. De tegel achter het titel-icoon is de
- * dienstkleur op 9% over een witte kaart; dit mengt die tint naar één vaste
- * kleur zodat de rand naadloos wegvalt.
- */
-function tegelFond(kleur: string): string {
-  const n = parseInt(kleur.slice(1), 16);
-  const meng = (kanaal: number) => Math.round(kanaal + (255 - kanaal) * (1 - 0x18 / 255));
-  const r = meng((n >> 16) & 255), g = meng((n >> 8) & 255), b = meng(n & 255);
-  return `rgb(${r}, ${g}, ${b})`;
 }
 
 /**
@@ -94,6 +82,12 @@ export default function DetailScreen() {
   const { marge, kolom } = useInhoudMaat();
   const [melding, setMelding] = useState<Melding>(begin);
   const v = vertaalMelding(melding);
+  // De uitspaartruc in BrandendIcoon schildert de vlamrand in de fondkleur en
+  // heeft dus een dékkende kleur nodig. De tegel achter het titel-icoon is de
+  // dienstkleur op 0x18 over de grond van het scherm; dit is diezelfde tint
+  // als één vaste kleur, zodat de rand naadloos wegvalt. Eerst mengde dit
+  // altijd naar wit, wat in het donker een lichte rand om de vlam gaf.
+  const tegelFond = mengKleur(v.kleur, C.bg, 0x18 / 255);
   const [verloop, setVerloop] = useState<VerloopRegel[]>([]);
   const { inst } = useInstellingen();
   const [mijnPlek, setMijnPlek] = useState<{ lat: number; lon: number } | null>(null);
@@ -214,9 +208,9 @@ export default function DetailScreen() {
       <View style={styles.titelRij}>
         <View style={[styles.titelIcoon, { backgroundColor: `${v.kleur}18` }]}>
           {v.kaartBrandend ? (
-            <BrandendIcoon object={v.kaartBrandend} maat={30} kleur={v.kleur} fond={tegelFond(v.kleur)} />
+            <BrandendIcoon object={v.kaartBrandend} maat={30} kleur={v.kleur} fond={tegelFond} />
           ) : v.kaartBotsing ? (
-            <BotsingIcoon maat={30} kleur={v.kleur} fond={tegelFond(v.kleur)} />
+            <BotsingIcoon maat={30} kleur={v.kleur} fond={tegelFond} />
           ) : v.kaartVlammen ? (
             <VlammenIcoon vlammen={v.kaartVlammen} maat={28} kleur={v.kleur} />
           ) : (
@@ -348,7 +342,7 @@ export default function DetailScreen() {
           >
             <Icoon naam="extern" grootte={20} kleur={C.accent} style={styles.rijIcoon} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.rijTitel, { color: C.accent }]}>Official advice and warnings</Text>
+              <Text style={[styles.rijTitel, { color: C.accentTekst }]}>Official advice and warnings</Text>
               <Text style={styles.rijSub}>{domeinVan(melding.officialUrl)}</Text>
             </View>
           </Drukbaar>
@@ -362,30 +356,35 @@ export default function DetailScreen() {
       {verloop.length > 1 && (
         <View style={[kaartStijl, styles.blok]}>
           <Text style={styles.blokKop}>Timeline</Text>
-          {verloop.map((r, i) => (
-            <View key={`${r.at}-${i}`} style={styles.tlRij}>
-              {/* De lijn loopt door tussen de bolletjes, maar niet ná de
-                  laatste: anders lijkt het alsof er nog iets komt. */}
-              <View style={styles.tlKolom}>
-                <View style={[styles.tlBol, { backgroundColor: r.soort === 'alarmering' ? v.kleur : C.accent }]}>
-                  <Icoon
-                    naam={r.soort === 'alarmering' ? 'alarmering' : r.soort === 'opschaling' ? 'opschaling' : 'afgerond'}
-                    grootte={13}
-                    kleur="#fff"
-                    gewicht={r.soort === 'opschaling' ? 'bold' : 'regular'}
-                  />
+          {verloop.map((r, i) => {
+            const bol = r.soort === 'alarmering' ? v.kleur : C.accent;
+            return (
+              <View key={`${r.at}-${i}`} style={styles.tlRij}>
+                {/* De lijn loopt door tussen de bolletjes, maar niet ná de
+                    laatste: anders lijkt het alsof er nog iets komt. */}
+                <View style={styles.tlKolom}>
+                  {/* Wit of bijna-zwart, wat het meest afsteekt: wit op het
+                      amber van de ambulance was 2:1. */}
+                  <View style={[styles.tlBol, { backgroundColor: bol }]}>
+                    <Icoon
+                      naam={r.soort === 'alarmering' ? 'alarmering' : r.soort === 'opschaling' ? 'opschaling' : 'afgerond'}
+                      grootte={13}
+                      kleur={opKleur(bol)}
+                      gewicht={r.soort === 'opschaling' ? 'bold' : 'regular'}
+                    />
+                  </View>
+                  {i < verloop.length - 1 && <View style={styles.tlLijn} />}
                 </View>
-                {i < verloop.length - 1 && <View style={styles.tlLijn} />}
+                <View style={styles.tlInhoud}>
+                  <Text style={styles.tlTijd}>
+                    {new Date(r.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
+                    {r.kop ? `  ·  ${r.kop}` : ''}
+                  </Text>
+                  <Text style={styles.tlTekst}>{r.tekst}</Text>
+                </View>
               </View>
-              <View style={styles.tlInhoud}>
-                <Text style={styles.tlTijd}>
-                  {new Date(r.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
-                  {r.kop ? `  ·  ${r.kop}` : ''}
-                </Text>
-                <Text style={styles.tlTekst}>{r.tekst}</Text>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
       )}
 
@@ -417,7 +416,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   straatbeeld: {
     position: 'absolute', left: 10, top: 10, width: 116, height: 74,
     borderRadius: 10, overflow: 'hidden', backgroundColor: C.chipBg,
-    borderWidth: 2, borderColor: '#fff',
+    borderWidth: 2, borderColor: C.card,
   },
   // Onzichtbaar tot het plaatje er is, en dan ook niet aanraakbaar: een tik
   // op die plek opent gewoon de kaart.
@@ -431,12 +430,15 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     width: 32, height: 32, borderRadius: 9, backgroundColor: '#2f6fde',
     alignItems: 'center', justifyContent: 'center',
   },
+  // Dicht vlak, geen glas: de kaart eromheen knipt af (overflow: 'hidden'),
+  // en glas mag geen knippende ouder hebben. Vast wit was in het donker wit
+  // op wit.
   kaartHint: {
     position: 'absolute', right: 10, bottom: 10,
-    backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999,
+    backgroundColor: C.zwevend, borderRadius: 999,
     paddingHorizontal: 10, paddingVertical: 5,
   },
-  pinHint: { ...T.klein, color: C.textMuted, marginTop: 6, marginHorizontal: 4 },
+  pinHint: { ...T.klein, color: C.textSecondary, marginTop: 6, marginHorizontal: 4 },
   kaartHintTekst: { fontSize: 12, fontWeight: F.weightSemibold, color: C.textPrimary },
   blok: { padding: 16 },
   tlRij: { flexDirection: 'row', gap: 12 },
@@ -447,7 +449,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   },
   tlLijn: { flex: 1, width: 2, backgroundColor: C.separator, marginVertical: 2 },
   tlInhoud: { flex: 1, paddingBottom: 14 },
-  tlTijd: { ...T.klein, color: C.textMuted, marginBottom: 2 },
+  tlTijd: { ...T.klein, color: C.textSecondary, marginBottom: 2 },
   tlTekst: { ...T.body, color: C.textPrimary },
   blokKop: { ...T.sectie, color: C.textSecondary, marginBottom: 8 },
   blokTekst: { ...T.body, color: C.textPrimary },
@@ -457,11 +459,14 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     backgroundColor: C.accentSoft, borderRadius: 12,
     paddingHorizontal: 12, paddingVertical: 10, marginTop: 2,
   },
-  opschalingTekst: { ...T.rij, color: C.accent, flex: 1 },
+  // accentTekst: het gewone accent haalt op accentSoft geen 4.5:1.
+  opschalingTekst: { ...T.rij, color: C.accentTekst, flex: 1 },
   rijIcoon: { width: 24 },
   rij: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, gap: 10 },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.separator },
   rijTitel: { ...T.body, color: C.textPrimary },
-  rijSub: { ...T.klein, color: C.textMuted, marginTop: 2 },
-  nummer: { fontSize: T.klein.fontSize, color: C.textMuted, fontVariant: ['tabular-nums'] },
+  // textSecondary, niet textMuted: dat is op wit maar ~2:1, te licht voor
+  // tekst die iets zegt. textMuted blijft voor chevrons en plaatshouders.
+  rijSub: { ...T.klein, color: C.textSecondary, marginTop: 2 },
+  nummer: { fontSize: T.klein.fontSize, color: C.textSecondary, fontVariant: ['tabular-nums'] },
 });

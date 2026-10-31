@@ -50,6 +50,11 @@ export default function BuurtScreen() {
   const { marge, kolom } = useInhoudMaat();
   const [rijen, setRijen] = useState<Rij[]>([]);
   const [laden, setLaden] = useState(true);
+  // Laatste keer laden mislukt: dan zegt een lege lijst dat, niet 'All quiet'.
+  const [fout, setFout] = useState(false);
+  // Alleen voor het trekken aan de lijst: live- en voorgrondverversingen
+  // horen geen draaiertje bovenin te geven.
+  const [verversen, setVerversen] = useState(false);
   const [plaatsLabel, setPlaatsLabel] = useState<string | null>(null);
   // Outside Australia the list shows Melbourne; the header then says so.
   const [buitenAu, setBuitenAu] = useState(false);
@@ -70,20 +75,44 @@ export default function BuurtScreen() {
       plekRef.current = plek;
       // Geen tijdvenster in de lijst (keuze Chris 16-08): het venster is er om
       // de kaart behapbaar te houden, hier wil je gewoon terug kunnen scrollen.
+      // strikt: zonder dat wordt een mislukt verzoek stilletjes een lege
+      // lijst, en dan stond er 'All quiet nearby' terwijl het netwerk weg
+      // was. Zonder venster delen alle diensten één feedverzoek, dus het
+      // lukt of mislukt in zijn geheel.
       const ms = await haalMeldingenPerVenster({
         lat: plek.lat, lon: plek.lon, radiusKm: inst.straalKm,
         disciplines: inst.lijstDiensten,
         straalPerDienst: inst.straalPerDienst,
         zonderVenster: true,
         limietPerVenster: 60,
+        strikt: true,
       });
       const metAfstand = ms.map((m) => ({ m, km: afstandKm(plek.lat, plek.lon, m) }));
       metAfstand.sort((a, b) => +new Date(b.m.timestamp) - +new Date(a.m.timestamp));
       setRijen(metAfstand);
       setEindeBereikt(ms.length === 0);
-    } catch { /* netwerkfout: oude lijst laten staan */ }
+      setFout(false);
+    } catch {
+      // Netwerkfout: de oude lijst blijft staan. Is er geen, dan toont de
+      // lege lijst de foutkaart met 'Try again'.
+      setFout(true);
+    }
     setLaden(false);
   }, [inst]);
+
+  /** Trekken aan de lijst: het draaiertje staat tot de herlading klaar is. */
+  const ververs = useCallback(async () => {
+    setVerversen(true);
+    await laad();
+    setVerversen(false);
+  }, [laad]);
+
+  /** 'Try again' op de foutkaart: het skelet als teken dat er iets gebeurt. */
+  const opnieuw = useCallback(() => {
+    setFout(false);
+    setLaden(true);
+    laad();
+  }, [laad]);
 
   /** Onderaan aangekomen: oudere meldingen erbij halen. */
   const laadMeer = useCallback(async () => {
@@ -99,6 +128,8 @@ export default function BuurtScreen() {
         zonderVenster: true,
         voor: new Date(new Date(oudste).getTime() - 1000),
         limietPerVenster: 60,
+        // Een netwerkfout is geen 'einde bereikt': die blijft dan staan.
+        strikt: true,
       });
       if (ms.length === 0) { setEindeBereikt(true); return; }
       setRijen((oud) => {
@@ -293,8 +324,8 @@ export default function BuurtScreen() {
         stickySectionHeadersEnabled={false}
         refreshControl={(
           <RefreshControl
-            refreshing={laden}
-            onRefresh={laad}
+            refreshing={verversen}
+            onRefresh={ververs}
             tintColor={C.textMuted}
             // Android: rood draaiend op een schijf in de kaartkleur. Zonder
             // deze twee is de schijf in het donker wit.
@@ -311,7 +342,18 @@ export default function BuurtScreen() {
         ) : null}
         contentContainerStyle={[styles.lijst, kolom, { paddingHorizontal: marge }]}
         renderSectionHeader={({ section }) => <Text style={styles.sectieKop}>{section.title}</Text>}
-        ListEmptyComponent={!laden ? (
+        // Drie lege staten, en 'All quiet' alleen als het echt stil is: de
+        // eerste keer laden een skelet in de vorm van de lijst, bij een
+        // mislukte herlading zonder oude lijst de foutkaart.
+        ListEmptyComponent={laden ? <Skelet /> : fout ? (
+          <View style={[kaartStijl, styles.leeg]}>
+            <Text style={styles.leegTitel}>Could not load incidents</Text>
+            <Text style={styles.leegTekst}>Check your connection and try again.</Text>
+            <Drukbaar style={styles.opnieuw} onPress={opnieuw}>
+              <Text style={styles.opnieuwTekst}>Try again</Text>
+            </Drukbaar>
+          </View>
+        ) : (
           <View style={[kaartStijl, styles.leeg]}>
             <Text style={styles.leegTitel}>All quiet nearby</Text>
             <Text style={styles.leegTekst}>
@@ -319,12 +361,33 @@ export default function BuurtScreen() {
               to look further.
             </Text>
           </View>
-        ) : null}
+        )}
         renderItem={({ item }) => (
           <MeldingRij m={item.m} km={item.km} onPress={() => navigation.navigate('Detail', { melding: item.m })} />
         )}
       />
     </SafeAreaView>
+  );
+}
+
+/**
+ * Eerste keer laden: vijf kaarten in de vorm van een meldingsrij, met twee
+ * grijze balkjes waar titel en plaats komen. Stil, zonder glinstering: die
+ * trekt de aandacht naar iets dat nog niets zegt. Voor een schermlezer één
+ * element.
+ */
+function Skelet() {
+  const styles = useStijlen(maak_styles);
+  const kaartStijl = useKaartStijl();
+  return (
+    <View accessible accessibilityRole="progressbar" accessibilityLabel="Loading incidents">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <View key={i} style={[kaartStijl, styles.skeletRij]}>
+          <View style={[styles.skeletBalk, styles.skeletLang]} />
+          <View style={[styles.skeletBalk, styles.skeletKort]} />
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -366,8 +429,8 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   // flexGrow: 0, anders eist de schuifrij alle resterende hoogte op en blijft
   // er niets over voor de lijst eronder.
   chipsRij: { flexGrow: 0, flexShrink: 0 },
-  filterHint: { ...T.klein, color: C.textMuted, paddingHorizontal: 20, marginTop: -4, marginBottom: 10 },
-  eindeTekst: { ...T.klein, color: C.textMuted, textAlign: 'center', marginVertical: 18 },
+  filterHint: { ...T.klein, color: C.textSecondary, paddingHorizontal: 20, marginTop: -4, marginBottom: 10 },
+  eindeTekst: { ...T.klein, color: C.textSecondary, textAlign: 'center', marginVertical: 18 },
   // paddingTop 8: een ScrollView neemt geen aanrakingen buiten zijn eigen
   // rand aan, dus zonder die ruimte viel de bovenste 8 van de hitSlop weg.
   // Zo is elke chip minstens 48 hoog te raken.
@@ -402,4 +465,15 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   leeg: { padding: 24, alignItems: 'center', marginTop: 12 },
   leegTitel: { ...T.kop, color: C.textPrimary },
   leegTekst: { ...T.body, color: C.textSecondary, textAlign: 'center', marginTop: 6 },
+  // Tekstknop in de accentkleur; de ronding staat op de Drukbaar zelf, zodat
+  // de Android-drukstaat dezelfde vorm heeft.
+  opnieuw: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: 22, marginTop: 12 },
+  opnieuwTekst: { ...T.kop, color: C.accentTekst },
+
+  // Zelfde maat als een meldingsrij; de balkjes beginnen waar de titel staat
+  // (4 kleurbalk + 44 icoonvak).
+  skeletRij: { height: 72, marginBottom: 8, paddingLeft: 48, paddingRight: 16, justifyContent: 'center' },
+  skeletBalk: { height: 12, borderRadius: 6, backgroundColor: C.chipBg },
+  skeletLang: { width: '60%' },
+  skeletKort: { width: '35%', height: 10, marginTop: 10 },
 });

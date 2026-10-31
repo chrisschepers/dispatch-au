@@ -108,11 +108,14 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     backgroundColor: C.accentSoft, borderRadius: 999,
     paddingLeft: 5, paddingRight: 8, paddingVertical: 2,
   },
-  opschalingTekst: { fontSize: 11.5, fontWeight: F.weightSemibold, color: C.accent },
+  // accentTekst: het gewone accent haalt op accentSoft geen 4.5:1.
+  opschalingTekst: { fontSize: 11.5, fontWeight: F.weightSemibold, color: C.accentTekst },
   plek: { ...T.klein, color: C.textSecondary, marginTop: 3 },
-  urgentie: { ...T.klein, color: C.textMuted, marginTop: 1 },
+  // Urgentie en afstand zijn informatie, dus textSecondary: textMuted is op
+  // wit maar ~2:1 en blijft voor de chevron.
+  urgentie: { ...T.klein, color: C.textSecondary, marginTop: 1 },
   rechts: { alignItems: 'flex-end', gap: 1 },
   // Cijfers op vaste breedte, anders dansen tijd en afstand per regel.
   tijd: { ...T.klein, color: C.textPrimary, fontVariant: ['tabular-nums'] },
-  afstand: { ...T.klein, color: C.textMuted, fontVariant: ['tabular-nums'] },
+  afstand: { ...T.klein, color: C.textSecondary, fontVariant: ['tabular-nums'] },
 });
