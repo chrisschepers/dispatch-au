@@ -8,7 +8,7 @@
  * provider then leaves the app open: a payment module that fails to load must
  * never lock everyone out.
  */
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { ENTITLEMENT, beoordeelEntitlement, proefVanIntro, type Uitkomst } from './abonnementRegels';
 import { kopenMogelijk, laadPurchases, startAankopen } from './aankopen';
 
@@ -40,6 +40,8 @@ export interface Winkel {
   /** Starts the purchase; the outcome arrives through `luister`. */
   koop(p: Product): Promise<void>;
   herstel(): Promise<Uitkomst>;
+  /** Opens the store's own subscription management (cancel, change). */
+  beheer(): Promise<void>;
   luister(cb: (g: Gebeurtenis) => void): () => void;
   leesbaar(e: unknown): string;
 }
@@ -64,15 +66,29 @@ function revenueCatWinkel(android: boolean): Winkel | null {
   // The package behind the product on screen; needed to buy.
   let pakket: Pakket | null = null;
 
+  const beheerUrl = android
+    ? 'https://play.google.com/store/account/subscriptions?package=com.chrisschepers.dispatchau'
+    : 'https://apps.apple.com/account/subscriptions';
+
   return {
     naam: android ? 'Google Play' : 'the App Store',
     account: android ? 'Google Account' : 'Apple Account',
-    beheerUrl: android
-      ? 'https://play.google.com/store/account/subscriptions?package=com.chrisschepers.dispatchau'
-      : 'https://apps.apple.com/account/subscriptions',
+    beheerUrl,
     async toestand() {
       await startAankopen();
       return uit(await P.getCustomerInfo());
+    },
+    async beheer() {
+      // iOS: Apple's own sheet inside the app. Only that sheet also shows
+      // TestFlight subscriptions; the App Store link does not (01-11).
+      if (!android) {
+        try {
+          await startAankopen();
+          await P.showManageSubscriptions();
+          return;
+        } catch { /* fall back to the App Store page */ }
+      }
+      await Linking.openURL(beheerUrl).catch(() => {});
     },
     async product() {
       await startAankopen();

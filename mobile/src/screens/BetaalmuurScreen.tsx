@@ -37,7 +37,7 @@ const PRIVACY = `${SITE}/privacy`;
 export default function BetaalmuurScreen() {
   const {
     toegang, wasActief, product, productGeladen, fout, bezig, koop, herstel,
-    winkelNaam, account, beheerUrl,
+    winkelNaam, account, beheer,
   } = useAbonnement();
   // Once per visit: the RevenueCat paywall over this screen, but only when the
   // backend switch is on (appConfig.ts, revenueCatPaywall). Without a paywall
@@ -125,7 +125,7 @@ export default function BetaalmuurScreen() {
             The subscription renews every year until you cancel it in your {account} settings.
           </Text>
           <View style={styles.links}>
-            <Drukbaar onPress={() => Linking.openURL(beheerUrl).catch(() => {})} trillen={false}>
+            <Drukbaar onPress={() => { void beheer(); }} trillen={false}>
               <Text style={styles.link}>Manage</Text>
             </Drukbaar>
             <Drukbaar onPress={() => Linking.openURL(VOORWAARDEN).catch(() => {})} trillen={false}>

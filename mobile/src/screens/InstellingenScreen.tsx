@@ -28,6 +28,7 @@ import { Drukbaar } from '../components/Drukbaar';
 import { PlaatsZoeker } from '../components/PlaatsZoeker';
 import { Schakelaar } from '../components/Schakelaar';
 import { openRecensiePagina } from '../recensie';
+import { useAbonnement } from '../abonnement';
 import { BRONNEN } from '../bronnen';
 
 const SITE = 'https://emergenciesnearme.online';
@@ -55,6 +56,7 @@ type Nav = NativeStackNavigationProp<Record<string, undefined>>;
 
 export default function InstellingenScreen() {
   const C = useThema();
+  const abonnement = useAbonnement();
   const styles = useStijlen(maak_styles);
   const kaartStijl = useKaartStijl();
   const { inst, zet, zetVeel } = useInstellingen();
@@ -463,6 +465,21 @@ export default function InstellingenScreen() {
             <MaterialCommunityIcons name="chevron-right" size={20} color={C.textMuted} />
           </Drukbaar>
         </View>
+
+        {/* Abonnement beheren (01-11): wie abonnee is, kon in de app nergens
+            opzeggen. Op iOS opent dit het eigen blad van Apple; alleen dat
+            blad toont ook TestFlight-abonnementen. */}
+        {abonnement.vereist && abonnement.toegang === 'actief' ? (
+          <View style={kaartStijl}>
+            <Rij
+              icoon="credit-card-outline" tegelKleur="#34c759"
+              titel="Manage subscription"
+              sub={abonnement.verlengt ? 'Renews every year' : 'Cancelled, runs until the end of the period'}
+              onPress={() => { void abonnement.beheer(); }}
+              rechts={<MaterialCommunityIcons name="chevron-right" size={20} color={C.textMuted} />}
+            />
+          </View>
+        ) : null}
 
         <View style={kaartStijl}>
           <Rij
