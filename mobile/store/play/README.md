@@ -15,3 +15,15 @@ Elke functie in een tekst moet in de Android-build op main zitten. Lengtes telle
 ```sh
 node -e "const t=require('fs').readFileSync('mobile/store/play/beschrijving-en-AU-productie.txt','utf8');const [k,,...r]=t.split('\n');console.log(k.replace('Short description: ','').length, r.join('\n').trim().length)"
 ```
+
+## Ook in de app, vóór de productieaanvraag
+
+De tekst alleen is niet genoeg: de Android-build belooft zelf ook meldingen. Uit de controle van 01-11:
+- **Onboarding:** de stap over meldingen vraagt op Android toestemming voor een functie die er nog niet is.
+- **Instellingen:** de schakelaar "Emergency Warnings anywhere" gaat op Android stil aan, zonder dat er push is.
+
+Er zijn twee oplossingen:
+- push op Android werkend maken (dan klopt de volledige tekst weer);
+- of die onderdelen op Android verbergen zolang er geen push is, met een vlag die app.config.ts zet als `GOOGLE_SERVICES_FILE` er is.
+
+Beide vragen een nieuwe build.
