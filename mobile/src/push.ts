@@ -14,6 +14,7 @@ import { registreerGebruiker, zetPushFilter, zetInstallToken } from './api';
 import { bepaalPlek, bepaalPlekSnel } from './locatie';
 import type { Instellingen } from './instellingen';
 import { GELUIDEN, STANDAARD_GELUID, geldigGeluid, kanaalVoor } from './geluiden';
+import { PUSH_BESCHIKBAAR } from './pushBeschikbaar';
 
 const DEVICE_KEY = 'device_id_v1';
 const TOKEN_KEY = 'install_token_v1';
@@ -42,7 +43,10 @@ export function zetNotificatieGedrag(): void {
       shouldSetBadge: false,
     }),
   });
-  if (Platform.OS === 'android') {
+  // Zonder push (Android zonder google-services.json) geen meldingskanalen:
+  // anders staan er in de systeeminstellingen "Alerts"-kanalen die nooit iets
+  // brengen.
+  if (Platform.OS === 'android' && PUSH_BESCHIKBAAR) {
     // Eén kanaal per geluid: een kanaalgeluid ligt vast zodra het kanaal
     // bestaat, dus je kunt het achteraf niet meer omzetten. De ids liggen vast
     // bij de backend (kanaalVoor in src/geluiden.ts): de server stuurt het
@@ -91,6 +95,9 @@ export async function meldInstallatie(): Promise<void> {
  */
 export async function registreerVoorPushMetInstellingen(inst: Instellingen): Promise<boolean> {
   if (!Device.isDevice) return false;
+  // Vangnet: zonder push nooit om meldingstoestemming vragen. De installatie
+  // telt wel mee, net als bij een geweigerde toestemming (pushBeschikbaar.ts).
+  if (!PUSH_BESCHIKBAAR) { await meldInstallatie(); return false; }
   const perm = await Notifications.requestPermissionsAsync();
   if (!perm.granted) { await meldInstallatie(); return false; }
 

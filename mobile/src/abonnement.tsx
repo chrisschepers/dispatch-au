@@ -43,13 +43,15 @@ interface Ctx {
   koop: () => Promise<void>;
   /** Herstellen = de winkel opnieuw vragen wat er op dit account loopt. */
   herstel: () => Promise<Toegang>;
+  /** Abonnement beheren (opzeggen, wijzigen) in het scherm van de winkel. */
+  beheer: () => Promise<void>;
 }
 
 const AbonnementContext = createContext<Ctx>({
   vereist: false, toegang: 'actief', verlengt: true, wasActief: false,
   product: null, productGeladen: false, fout: null, bezig: false,
   winkelNaam: '', account: '', beheerUrl: '',
-  koop: async () => {}, herstel: async () => 'actief',
+  koop: async () => {}, herstel: async () => 'actief', beheer: async () => {},
 });
 
 export function useAbonnement() {
@@ -214,6 +216,7 @@ export function AbonnementProvider({ children }: { children: React.ReactNode }) 
       product, productGeladen, fout, bezig, koop, herstel,
       winkelNaam: winkel?.naam ?? '', account: winkel?.account ?? '',
       beheerUrl: winkel?.beheerUrl ?? '',
+      beheer: async () => { await winkel?.beheer(); },
     }}>
       {children}
     </AbonnementContext.Provider>

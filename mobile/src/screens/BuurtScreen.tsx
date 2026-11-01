@@ -32,6 +32,7 @@ import { Icoon, DienstIcoon } from '../components/Icoon';
 import { tikStap } from '../trilling';
 import { leesbaar, mengKleur } from '../kleur';
 import { useInhoudMaat } from '../inhoudMaat';
+import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 
 type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
 
@@ -306,7 +307,9 @@ export default function BuurtScreen() {
           als je daadwerkelijk iets hebt weggefilterd. */}
       {inst.lijstDiensten.length < DIENSTEN.length && (
         <Text style={styles.filterHint}>
-          This only filters this list. What you get alerts for is set in Settings.
+          {PUSH_BESCHIKBAAR
+            ? 'This only filters this list. What you get alerts for is set in Settings.'
+            : 'This only filters this list.'}
         </Text>
       )}
     </>

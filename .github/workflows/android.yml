@@ -98,6 +98,20 @@ jobs:
           strings -n 4 /tmp/aab/base/manifest/AndroidManifest.xml | grep -q 'com.google.android.geo.API_KEY' || { echo "::error::Maps key missing from the manifest"; exit 1; }
           echo "Map config OK"
 
+      # Push needs the Firebase config and the matching flag in the embedded app
+      # config. Without google-services.json the flag must be false, so the app
+      # hides every push promise and never asks for notification permission
+      # (src/pushBeschikbaar.ts). GOOGLE_SERVICES_FILE comes from the "Firebase
+      # config" step through GITHUB_ENV, so prebuild and Gradle both see it.
+      # Only a mismatch fails; no file and flag false is a valid build.
+      - name: Check the push config
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          rm -rf /tmp/aab-push && mkdir -p /tmp/aab-push
+          unzip -q -o "$AAB" 'base/assets/app.config' -d /tmp/aab-push
+          EXPECTED=false; [ -n "$GOOGLE_SERVICES_FILE" ] && EXPECTED=true
+          node -e "const c=JSON.parse(require('fs').readFileSync('/tmp/aab-push/base/assets/app.config','utf8')); const v=String(c.extra?.androidPushConfigured===true); if (v!==process.argv[1]) { console.log('::error::androidPushConfigured is '+v+' in the embedded app config, expected '+process.argv[1]); process.exit(1) } console.log('Push config OK: androidPushConfigured='+v)" "$EXPECTED"
+
       - name: Keep the bundle
         # A full Actions storage must never block the Play upload below.
         continue-on-error: true

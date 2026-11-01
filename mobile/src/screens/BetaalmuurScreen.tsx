@@ -26,6 +26,8 @@ import type { IcoonNaam } from '../iconen';
 import { IntroSchil, INTRO } from '../components/intro/IntroSchil';
 import { SchermProef } from '../components/intro/Schermpjes';
 import { toonRevenueCatPaywall } from '../aankopen';
+import { revenueCatPaywallAan } from '../appConfig';
+import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 
 const SITE = 'https://emergenciesnearme.online';
 /** iOS: Apple's standard licence agreement, which App Store Connect uses too. */
@@ -37,10 +39,19 @@ const PRIVACY = `${SITE}/privacy`;
 export default function BetaalmuurScreen() {
   const {
     toegang, wasActief, product, productGeladen, fout, bezig, koop, herstel,
-    winkelNaam, account, beheerUrl,
+    winkelNaam, account, beheer,
   } = useAbonnement();
-  // Once per visit: the RevenueCat paywall over this screen, if one is set up.
-  useEffect(() => { toonRevenueCatPaywall(); }, []);
+  // Once per visit: the RevenueCat paywall over this screen, but only when the
+  // backend switch is on (appConfig.ts, revenueCatPaywall). Without a paywall
+  // designed in the dashboard the SDK shows its default sheet without Terms of
+  // Use and Privacy links (3.1.2); this screen has them.
+  useEffect(() => {
+    let weg = false;
+    revenueCatPaywallAan()
+      .then((aan) => { if (aan && !weg) toonRevenueCatPaywall(); })
+      .catch(() => {});
+    return () => { weg = true; };
+  }, []);
   const Winkel = winkelNaam.charAt(0).toUpperCase() + winkelNaam.slice(1);
 
   const proef = product ? periodeTekst(product.proefPeriode) : null;
@@ -86,7 +97,9 @@ export default function BetaalmuurScreen() {
               ? 'Renew to see what is happening near you again.'
               : heeftProef
                 ? `The first ${proef ?? 'days'} are free. Cancel any time, also during the trial.`
-                : 'Every incident, the map and alerts near you. Cancel any time.'}
+                : PUSH_BESCHIKBAAR
+                  ? 'Every incident, the map and alerts near you. Cancel any time.'
+                  : 'Every incident and the map near you. Cancel any time.'}
           </Text>
         </View>
       }
@@ -114,7 +127,7 @@ export default function BetaalmuurScreen() {
             The subscription renews every year until you cancel it in your {account} settings.
           </Text>
           <View style={styles.links}>
-            <Drukbaar style={styles.tekstKnop} rol="link" onPress={() => Linking.openURL(beheerUrl).catch(() => {})} trillen={false}>
+            <Drukbaar style={styles.tekstKnop} rol="link" onPress={() => { void beheer(); }} trillen={false}>
               <Text style={styles.link}>Manage</Text>
             </Drukbaar>
             <Drukbaar style={styles.tekstKnop} rol="link" onPress={() => Linking.openURL(VOORWAARDEN).catch(() => {})} trillen={false}>

@@ -18,6 +18,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import type { Melding } from '../../api';
 import { DIENSTEN, type Dienst } from '../../diensten';
+import { PUSH_BESCHIKBAAR } from '../../pushBeschikbaar';
 import { PALET_LICHT as C, T, F, isIOS, isIOS26 } from '../../theme';
 import { leesbaar, mengKleur } from '../../kleur';
 import { MeldingRij } from '../MeldingRij';
@@ -350,10 +351,32 @@ function Push({ titel, tekst, tijd }: { titel: string; tekst: string; tijd: stri
  * iOS: de grote titel, kopjes in kapitalen, tegeltjes en haarlijnen. Android:
  * de kleine M3-kopbalk, kopjes in de accentkleur en lijstitems zonder tegel
  * of scheidingslijn.
+ *
+ * Zonder push (`metMeldingen` false, Android zonder google-services.json)
+ * alleen de afstand per dienst, zoals Instellingen die dan toont: geen
+ * "Alerts for" en geen "Warnings only".
  */
-export function SchermDiensten() {
+export function SchermDiensten({ metMeldingen = true }: { metMeldingen?: boolean }) {
   const stralen = ['50 km', '10 km', '20 km', '30 km', '100 km', '10 km'];
   const kop = [s.groepKop, !isIOS && s.instKopAndroid];
+  if (!metMeldingen) {
+    return (
+      <View style={s.scherm}>
+        <Text style={isIOS ? s.schermTitel : s.kopbalkTitel}>Settings</Text>
+        <Text style={kop}>Distance</Text>
+        <View style={s.groep}>
+          {DIENSTEN.map((d, i) => (
+            <View key={d.key} style={[s.instRij, isIOS && i > 0 && s.scheiding]}>
+              <RijIcoon icoon={d} tegel={d.kleur} />
+              <Text style={[s.rijLabel, !isIOS && s.instLabelAndroid, { flex: 1 }]}>{d.label}</Text>
+              <Text style={[s.rijWaarde, { color: d.kleur, fontWeight: '600' }]}>{stralen[i]}</Text>
+            </View>
+          ))}
+        </View>
+        <TabBalk actief="instellingen" />
+      </View>
+    );
+  }
   return (
     <View style={s.scherm}>
       <Text style={isIOS ? s.schermTitel : s.kopbalkTitel}>Settings</Text>
@@ -467,7 +490,10 @@ export function SchermDetail() {
 export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null; proefTekst: string }) {
   const stappen: Array<{ icoon: IcoonNaam; kleur: string; kop: string; tekst: string }> = [
     { icoon: 'ontgrendeld', kleur: C.success, kop: 'Today', tekst: 'Everything unlocked, free.' },
-    { icoon: 'meldingen', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`, tekst: 'Alerts, the map and every incident near you.' },
+    {
+      icoon: PUSH_BESCHIKBAAR ? 'meldingen' : 'kaart', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`,
+      tekst: PUSH_BESCHIKBAAR ? 'Alerts, the map and every incident near you.' : 'The map and every incident near you.',
+    },
     { icoon: 'beoordelen', kleur: C.accent, kop: 'After that', tekst: prijsZin ? `${prijsZin}. Cancel any time.` : 'The yearly price. Cancel any time.' },
   ];
   return (
@@ -494,7 +520,7 @@ export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null;
         ))}
       </View>
       <View style={s.voordelen}>
-        {['Live incidents near you', 'Bushfire, flood and crash alerts', 'Every state in one app', 'No ads'].map((t) => (
+        {['Live incidents near you', PUSH_BESCHIKBAAR ? 'Bushfire, flood and crash alerts' : 'Bushfires, floods and crashes', 'Every state in one app', 'No ads'].map((t) => (
           <View key={t} style={s.voordeel}>
             <Icoon naam="inbegrepen" grootte={17} kleur={C.success} />
             <Text style={s.voordeelTekst}>{t}</Text>
