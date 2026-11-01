@@ -1,14 +1,19 @@
 /**
- * Plaats zoeken met suggesties, voor wie "Huidige locatie" uitzet en zelf een
- * plaats wil kiezen. Zonder suggesties moet je de schrijfwijze raden en weet
- * de app bovendien geen coördinaat, dus dan werkt de straal niet (melding
- * Chris 15-08).
+ * Plaats zoeken, voor wie "Huidige locatie" uitzet en zelf een plaats wil
+ * kiezen. Zonder resultatenlijst moet je de schrijfwijze raden en weet de app
+ * bovendien geen coördinaat, dus dan werkt de straal niet (melding Chris 15-08).
  *
  * Bron is Nominatim (OpenStreetMap), dezelfde dienst die de grote app
  * gebruikt. We slaan naam én coördinaat op, zodat de meldingenlijst meteen om
  * het juiste punt kan zoeken.
+ *
+ * Gebruiksbeleid van de publieke Nominatim-server (controle 01-11-2026): geen
+ * autocomplete, hooguit één verzoek per seconde en de app herkenbaar maken.
+ * Daarom zoeken we pas als je op zoeken drukt (toetsenbord of knop), vanaf
+ * drie tekens, nooit per toetsaanslag; zoekPlaatsen houdt zelf een seconde
+ * afstand tussen verzoeken en onthoudt eerdere antwoorden.
  */
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ActivityIndicator, Keyboard,
 } from 'react-native';
@@ -26,13 +31,37 @@ interface Ruw {
   address?: Record<string, string>;
 }
 
-/** Nederlandse plaatsen die op de invoer lijken, met coördinaat. */
+/** Minder tekens geeft vooral ruis en onnodige verzoeken. */
+export const MIN_TEKENS = 3;
+/** Nominatim: hooguit één verzoek per seconde. */
+const TUSSENPOZE_MS = 1000;
+let volgendeVrij = 0;
+const eerder = new Map<string, PlaatsKeuze[]>();
+
+/** Australische plaatsen die op de invoer lijken, met coördinaat. */
 export async function zoekPlaatsen(vraag: string): Promise<PlaatsKeuze[]> {
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(vraag)}`
+  const sleutel = vraag.trim().toLowerCase();
+  const bekend = eerder.get(sleutel);
+  if (bekend) return bekend;
+
+  // Plek in de rij meteen vastleggen, zodat ook twee snelle aanroepen
+  // minstens een seconde uit elkaar de deur uit gaan.
+  const nu = Date.now();
+  const start = Math.max(nu, volgendeVrij);
+  volgendeVrij = start + TUSSENPOZE_MS;
+  if (start > nu) await new Promise((r) => setTimeout(r, start - nu));
+
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(vraag.trim())}`
     + '&countrycodes=au&format=json&addressdetails=1&limit=10';
   const res = await fetch(url, {
-    headers: { 'Accept-Language': 'en', 'User-Agent': 'EmergenciesNearMe/1.0' },
+    headers: {
+      'Accept-Language': 'en',
+      'User-Agent': 'EmergenciesNearMe/1.0',
+      Referer: 'https://emergenciesnearme.online',
+    },
   });
+  // 429 of een blokkadepagina: als fout melden, niet als "niets gevonden".
+  if (!res.ok) throw new Error(`Nominatim ${res.status}`);
   const data: Ruw[] = await res.json();
 
   const gezien = new Set<string>();
@@ -59,8 +88,12 @@ export async function zoekPlaatsen(vraag: string): Promise<PlaatsKeuze[]> {
     });
     if (uit.length >= 6) break;
   }
+  eerder.set(sleutel, uit);
+  if (eerder.size > 30) eerder.delete(eerder.keys().next().value as string);
   return uit;
 }
+
+type Stand = 'leeg' | 'te-kort' | 'zoekt' | 'klaar' | 'niets' | 'fout';
 
 export function PlaatsZoeker({
   waarde, onKies, onWis,
@@ -69,27 +102,46 @@ export function PlaatsZoeker({
   const styles = useStijlen(maak_styles);
   const [tekst, setTekst] = useState(waarde ?? '');
   const [suggesties, setSuggesties] = useState<PlaatsKeuze[]>([]);
-  const [zoekt, setZoekt] = useState(false);
-  const wacht = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [stand, setStand] = useState<Stand>('leeg');
 
+  // Typen zoekt niets: alleen de vorige uitkomst gaat weg, want die hoort
+  // niet meer bij wat er staat.
   function typ(nieuw: string) {
     setTekst(nieuw);
-    if (wacht.current) clearTimeout(wacht.current);
-    // Wissen moet het zoeken ook echt stoppen, anders blijft het rondje draaien.
-    if (nieuw.trim().length < 2) { setZoekt(false); setSuggesties([]); return; }
-    setZoekt(true);
-    wacht.current = setTimeout(async () => {
-      try { setSuggesties(await zoekPlaatsen(nieuw.trim())); }
-      catch { setSuggesties([]); }
-      finally { setZoekt(false); }
-    }, 350);
+    if (stand !== 'zoekt') { setSuggesties([]); setStand('leeg'); }
   }
+
+  async function zoek() {
+    const vraag = tekst.trim();
+    if (stand === 'zoekt') return;
+    if (vraag.length < MIN_TEKENS) { setSuggesties([]); setStand('te-kort'); return; }
+    setStand('zoekt');
+    try {
+      const gevonden = await zoekPlaatsen(vraag);
+      setSuggesties(gevonden);
+      setStand(gevonden.length > 0 ? 'klaar' : 'niets');
+    } catch {
+      setSuggesties([]);
+      setStand('fout');
+    }
+  }
+
+  const zoekt = stand === 'zoekt';
+  const melding = stand === 'te-kort'
+    ? `Type at least ${MIN_TEKENS} letters, then search.`
+    : stand === 'niets'
+      ? 'No places found. Check the spelling and search again.'
+      : stand === 'fout'
+        ? 'Searching did not work. Check your connection and try again.'
+        : stand === 'leeg' && tekst.trim().length > 0
+          ? 'Press search to look it up.'
+          : null;
 
   return (
     <View>
       {waarde ? (
         // Gekozen plaats: tik erop om hem te wissen en opnieuw te zoeken.
-        <Drukbaar style={styles.gekozen} onPress={() => { onWis(); setTekst(''); setSuggesties([]); }}>
+        <Drukbaar style={styles.gekozen} onPress={() => { onWis(); setTekst(''); setSuggesties([]); setStand('leeg'); }}>
           <MaterialCommunityIcons name="map-marker" size={16} color={C.accent} />
           <Text style={styles.gekozenTekst}>{waarde}</Text>
           <MaterialCommunityIcons name="close-circle" size={17} color={C.textMuted} />
@@ -101,15 +153,33 @@ export function PlaatsZoeker({
             style={styles.invoer}
             value={tekst}
             onChangeText={typ}
-            placeholder="Search your suburb or town"
+            onSubmitEditing={zoek}
+            placeholder="Suburb or town, then search"
             placeholderTextColor={C.textMuted}
             autoCapitalize="words"
             autoCorrect={false}
             returnKeyType="search"
+            accessibilityLabel="Suburb or town"
+            accessibilityHint="Press search to look it up"
           />
-          {zoekt ? <ActivityIndicator size="small" color={C.textMuted} /> : null}
+          {zoekt ? (
+            <ActivityIndicator size="small" color={C.textMuted} />
+          ) : (
+            <Drukbaar
+              style={styles.zoekKnop}
+              onPress={zoek}
+              label="Search for this suburb or town"
+              trillen={false}
+            >
+              <Text style={styles.zoekKnopTekst}>Search</Text>
+            </Drukbaar>
+          )}
         </View>
       )}
+
+      {!waarde && melding ? (
+        <Text style={styles.melding} accessibilityLiveRegion="polite">{melding}</Text>
+      ) : null}
 
       {suggesties.length > 0 && (
         <View style={styles.lijst}>
@@ -122,6 +192,7 @@ export function PlaatsZoeker({
                 onKies(s);
                 setTekst(s.naam);
                 setSuggesties([]);
+                setStand('leeg');
                 Keyboard.dismiss();
               }}
             >
@@ -144,6 +215,12 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   gekozenTekst: { ...T.body, color: C.textPrimary, fontWeight: '600' },
   invoerRij: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   invoer: { flex: 1, ...T.body, fontSize: 16, color: C.textPrimary, paddingVertical: 6 },
+  zoekKnop: {
+    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
+    backgroundColor: C.accentSoft, minHeight: 36, justifyContent: 'center',
+  },
+  zoekKnopTekst: { ...T.body, fontSize: 15, fontWeight: '600', color: C.accent },
+  melding: { ...T.klein, color: C.textSecondary, marginTop: 6 },
   lijst: { marginTop: 8, borderRadius: 10, backgroundColor: C.chipBg, overflow: 'hidden' },
   suggestie: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 11 },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border },
