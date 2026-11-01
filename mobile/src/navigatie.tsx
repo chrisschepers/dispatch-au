@@ -264,6 +264,11 @@ export function TabNavigatie() {
         tabBarLabelStyle: isIOS ? undefined : { fontWeight: '500' },
         // Onder iOS 26 waarschuwt de native kant bij alles behalve 'automatic'.
         tabBarMinimizeBehavior: isIOS26 ? 'onScrollDown' : undefined,
+        // Altijd de gewone tabbalk, ook als de iPhone Duo opengevouwen een
+        // brede (regular) scène geeft: 'auto' kan daar de iPad-zijbalk
+        // kiezen, die de app niet kent. Op een gewone iPhone is dit gelijk
+        // aan 'auto'.
+        tabBarControllerMode: isIOS ? 'tabBar' : undefined,
       }}
     >
       <Tab.Screen

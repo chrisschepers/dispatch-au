@@ -12,7 +12,7 @@ if (
 const config: ExpoConfig = {
   name: 'Dispatch Australia',
   slug: 'dispatch-australia',
-  version: '1.0.3',
+  version: '1.0.4',
   scheme: 'dispatchau',
   platforms: ['ios', 'android'],
   orientation: 'portrait',
@@ -24,7 +24,7 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
-    buildNumber: '11',
+    buildNumber: '12',
     // iPhone only: App Review tests on an iPad, and an iPhone-only app runs
     // there in compatibility mode without needing an iPad layout or screenshots.
     supportsTablet: false,
@@ -59,6 +59,10 @@ const config: ExpoConfig = {
   },
   plugins: [
     './plugins/with-native-module-name.cjs',
+    // iOS 27 stops the app at launch without the scene-based life cycle
+    // (crash 1.0.3 (11) on the iPhone Duo). Expo 57 has none; this adds a
+    // SceneDelegate like Expo 58. Drop it when upgrading to Expo 58.
+    './plugins/with-scene-delegate.cjs',
     './plugins/with-release-signing.cjs',
     './plugins/with-android-label.cjs',
     './plugins/with-tab-iconen.cjs',
