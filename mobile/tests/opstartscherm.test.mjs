@@ -57,7 +57,7 @@ test('Android splash is the launcher glyph on the launcher red, in light and dar
   assert.equal(android.backgroundColor, rood);
   assert.equal(android.dark.backgroundColor, rood);
   assert.equal(android.image, config.android.adaptiveIcon.foregroundImage);
-  assert.equal(android.imageWidth, 200);
+  assert.equal(android.imageWidth, 240);
 });
 
 test('the Android 12 splash glyph fits inside the 192 dp circle', () => {
