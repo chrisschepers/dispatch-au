@@ -12,6 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import type { Melding } from '../../api';
 import { DIENSTEN } from '../../diensten';
+import { PUSH_BESCHIKBAAR } from '../../pushBeschikbaar';
 import { PALET_LICHT as C, T } from '../../theme';
 import { MeldingRij } from '../MeldingRij';
 import { NepKaart } from './NepKaart';
@@ -207,9 +208,33 @@ function Push({ titel, tekst, tijd }: { titel: string; tekst: string; tijd: stri
   );
 }
 
-/** Diensten aan/uit met een eigen straal. */
-export function SchermDiensten() {
+/**
+ * Diensten aan/uit met een eigen straal. Zonder push (`metMeldingen` false,
+ * Android zonder google-services.json) alleen de afstand per dienst, zoals
+ * Instellingen die dan toont: geen "Alerts for" en geen "Warnings only".
+ */
+export function SchermDiensten({ metMeldingen = true }: { metMeldingen?: boolean }) {
   const stralen = ['50 km', '10 km', '20 km', '30 km', '100 km', '10 km'];
+  if (!metMeldingen) {
+    return (
+      <View style={s.scherm}>
+        <Text style={s.schermTitel}>Settings</Text>
+        <Text style={s.groepKop}>DISTANCE</Text>
+        <View style={s.groep}>
+          {DIENSTEN.map((d, i) => (
+            <View key={d.key} style={[s.instRij, i > 0 && s.scheiding]}>
+              <View style={[s.instIcoon, { backgroundColor: d.kleur }]}>
+                <MaterialCommunityIcons name={d.icoon as never} size={15} color="#fff" />
+              </View>
+              <Text style={[s.rijLabel, { flex: 1 }]}>{d.label}</Text>
+              <Text style={[s.rijWaarde, { color: d.kleur, fontWeight: '600' }]}>{stralen[i]}</Text>
+            </View>
+          ))}
+        </View>
+        <TabBalk actief={2} />
+      </View>
+    );
+  }
   return (
     <View style={s.scherm}>
       <Text style={s.schermTitel}>Settings</Text>
@@ -327,7 +352,10 @@ export function SchermDetail() {
 export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null; proefTekst: string }) {
   const stappen = [
     { icoon: 'lock-open-variant', kleur: C.success, kop: 'Today', tekst: 'Everything unlocked, free.' },
-    { icoon: 'bell-ring', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`, tekst: 'Alerts, the map and every incident near you.' },
+    {
+      icoon: 'bell-ring', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`,
+      tekst: PUSH_BESCHIKBAAR ? 'Alerts, the map and every incident near you.' : 'The map and every incident near you.',
+    },
     { icoon: 'star', kleur: C.accent, kop: 'After that', tekst: prijsZin ? `${prijsZin}. Cancel any time.` : 'The yearly price. Cancel any time.' },
   ];
   return (
@@ -354,7 +382,7 @@ export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null;
         ))}
       </View>
       <View style={s.voordelen}>
-        {['Live incidents near you', 'Bushfire, flood and crash alerts', 'Every state in one app', 'No ads'].map((t) => (
+        {['Live incidents near you', PUSH_BESCHIKBAAR ? 'Bushfire, flood and crash alerts' : 'Bushfires, floods and crashes', 'Every state in one app', 'No ads'].map((t) => (
           <View key={t} style={s.voordeel}>
             <MaterialCommunityIcons name="check-circle" size={17} color={C.success} />
             <Text style={s.voordeelTekst}>{t}</Text>

@@ -89,6 +89,12 @@ const config: ExpoConfig = {
   ],
   extra: {
     androidMapsConfigured: Boolean(mapsKey),
+    // Push on Android only with the Firebase config (see googleServicesFile
+    // above). Without it the app hides every push promise and never asks for
+    // notification permission (src/pushBeschikbaar.ts). Gradle evaluates this
+    // file again for the embedded config, so the workflow must set
+    // GOOGLE_SERVICES_FILE for the bundle step too (lesson 30-10, maps flag).
+    androidPushConfigured: Boolean(process.env.GOOGLE_SERVICES_FILE),
     feedApiUrl: 'https://incident-feed-production.up.railway.app',
   },
 };

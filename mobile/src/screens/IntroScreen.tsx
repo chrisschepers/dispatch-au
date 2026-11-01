@@ -19,6 +19,7 @@ import React, { useState } from 'react';
 import { useInstellingen } from '../instellingen';
 import { vraagLocatiePermissie } from '../locatie';
 import { registreerVoorPushMetInstellingen } from '../push';
+import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 import { IntroSchil } from '../components/intro/IntroSchil';
 import {
   SchermLijst, SchermStraal, SchermVergrendel, SchermDiensten, SchermDetail,
@@ -35,7 +36,7 @@ interface Stap {
   actie?: 'locatie' | 'meldingen';
 }
 
-const STAPPEN: Stap[] = [
+const ALLE_STAPPEN: Stap[] = [
   {
     titel: 'Welcome to Emergencies Near Me',
     tekst: 'See what is happening around you right now: fires, rescues, storms, floods and other emergencies, straight from the official agencies.',
@@ -59,9 +60,11 @@ const STAPPEN: Stap[] = [
   },
   {
     titel: 'Your services',
-    tekst: 'Choose what you follow, each with its own radius: a bushfire 50 km away matters, a road crash usually only nearby.',
+    tekst: PUSH_BESCHIKBAAR
+      ? 'Choose what you follow, each with its own radius: a bushfire 50 km away matters, a road crash usually only nearby.'
+      : 'Choose how far to look for each service: a bushfire 50 km away matters, a road crash usually only nearby.',
     knop: 'Continue',
-    scherm: <SchermDiensten />,
+    scherm: <SchermDiensten metMeldingen={PUSH_BESCHIKBAAR} />,
   },
   {
     titel: 'Everything about an incident',
@@ -76,6 +79,13 @@ const STAPPEN: Stap[] = [
     scherm: <SchermLijst />,
   },
 ];
+
+/**
+ * Zonder push (Android zonder google-services.json, pushBeschikbaar.ts) valt
+ * de stap Alerts weg: geen belofte van meldingen en geen toestemmingsvraag
+ * die nergens toe leidt. Op iOS blijven alle stappen staan.
+ */
+const STAPPEN = ALLE_STAPPEN.filter((s) => PUSH_BESCHIKBAAR || s.actie !== 'meldingen');
 
 export default function IntroScreen({ klaar }: Props) {
   const { inst, zet } = useInstellingen();

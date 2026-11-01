@@ -24,6 +24,7 @@ import { Drukbaar } from '../components/Drukbaar';
 import { IntroSchil, INTRO } from '../components/intro/IntroSchil';
 import { SchermProef } from '../components/intro/Schermpjes';
 import { toonRevenueCatPaywall } from '../aankopen';
+import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 
 const SITE = 'https://emergenciesnearme.online';
 /** iOS: Apple's standard licence agreement, which App Store Connect uses too. */
@@ -84,7 +85,9 @@ export default function BetaalmuurScreen() {
               ? 'Renew to see what is happening near you again.'
               : heeftProef
                 ? `The first ${proef ?? 'days'} are free. Cancel any time, also during the trial.`
-                : 'Every incident, the map and alerts near you. Cancel any time.'}
+                : PUSH_BESCHIKBAAR
+                  ? 'Every incident, the map and alerts near you. Cancel any time.'
+                  : 'Every incident and the map near you. Cancel any time.'}
           </Text>
         </View>
       }
