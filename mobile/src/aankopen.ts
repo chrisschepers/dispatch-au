@@ -55,6 +55,10 @@ export async function startAankopen(): Promise<void> {
  * paywall configured yet, the module missing, an error or a close tap all
  * leave the own wall in view. A purchase reaches abonnement.tsx through the
  * CustomerInfo listener and the wall disappears.
+ *
+ * Only called when the backend switch revenueCatPaywall is on (appConfig.ts,
+ * 01-11-2026): with no paywall designed in the dashboard the SDK falls back to
+ * its default template, which lacks Terms of Use and Privacy links (3.1.2).
  */
 export async function toonRevenueCatPaywall(): Promise<void> {
   if (!kopenMogelijk()) return;

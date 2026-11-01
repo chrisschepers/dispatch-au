@@ -24,6 +24,7 @@ import { Drukbaar } from '../components/Drukbaar';
 import { IntroSchil, INTRO } from '../components/intro/IntroSchil';
 import { SchermProef } from '../components/intro/Schermpjes';
 import { toonRevenueCatPaywall } from '../aankopen';
+import { revenueCatPaywallAan } from '../appConfig';
 import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 
 const SITE = 'https://emergenciesnearme.online';
@@ -38,8 +39,17 @@ export default function BetaalmuurScreen() {
     toegang, wasActief, product, productGeladen, fout, bezig, koop, herstel,
     winkelNaam, account, beheerUrl,
   } = useAbonnement();
-  // Once per visit: the RevenueCat paywall over this screen, if one is set up.
-  useEffect(() => { toonRevenueCatPaywall(); }, []);
+  // Once per visit: the RevenueCat paywall over this screen, but only when the
+  // backend switch is on (appConfig.ts, revenueCatPaywall). Without a paywall
+  // designed in the dashboard the SDK shows its default sheet without Terms of
+  // Use and Privacy links (3.1.2); this screen has them.
+  useEffect(() => {
+    let weg = false;
+    revenueCatPaywallAan()
+      .then((aan) => { if (aan && !weg) toonRevenueCatPaywall(); })
+      .catch(() => {});
+    return () => { weg = true; };
+  }, []);
   const Winkel = winkelNaam.charAt(0).toUpperCase() + winkelNaam.slice(1);
 
   const proef = product ? periodeTekst(product.proefPeriode) : null;
