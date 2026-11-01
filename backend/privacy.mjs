@@ -20,13 +20,16 @@ no tracking across apps.</p>
 
 <h2>What we store</h2>
 <ul>
-<li><b>A random device ID and an installation token</b>, created by the app, so
-your alert settings belong to your device.</li>
+<li><b>A random device ID</b>, created by the app, and <b>an installation
+token</b> that our server gives your device (we keep only a scrambled hash of
+it), so your settings belong to your device.</li>
 <li><b>Your push token</b> (from Apple or Google), only when you turn on
 alerts, so we can send them.</li>
 <li><b>Your alert location</b>: the place you chose, or your current location
-while the app is open. We use it only to decide which incidents are within
-your radius. The app never tracks your location in the background.</li>
+while the app is open. The app sends it when you open the app or change a
+setting, also while alerts are off, so alerts work as soon as you turn them
+on. We use it only to decide which incidents are within your radius. The app
+never tracks your location in the background.</li>
 <li><b>Your alert settings</b>: radius, services, warning levels and sound.</li>
 <li><b>App version and platform</b>, to fix problems.</li>
 </ul>
@@ -57,13 +60,20 @@ to OpenStreetMap Nominatim to find matching places. Your location is not sent
 with it.
 See the <a href="https://osmfoundation.org/wiki/Privacy_Policy">OpenStreetMap
 Foundation's privacy policy</a>.</li>
-<li><b>Alerts</b> are delivered by Apple (iPhone) and Google Firebase Cloud
-Messaging (Android). They receive your push token and the text of the alert.</li>
+<li><b>Alerts</b> are delivered by Apple on iPhone and by Google Firebase
+Cloud Messaging on Android, once alerts are available there; some early test
+versions used Expo's push service. They receive your push token and the alert
+itself: the incident, its place and how far it is from your alert
+location.</li>
 <li><b>Links</b> to directions, Street View or an emergency service's website
 open in your maps app or browser, only when you tap them.</li>
 </ul>
-<p>The app has no analytics or crash-reporting tools. Our website loads its
-font from Google Fonts.</p>
+<p>The app has no analytics or crash-reporting tools. Apple and Google may
+share anonymous crash reports with us if you allowed that in your phone's
+settings. Our website loads its font from Google Fonts.</p>
+<p>As with any internet service, our host and the services above see your IP
+address when your device connects. Our own server does not store it; our host
+may keep it briefly in its technical logs.</p>
 
 <h2>Incident data</h2>
 <p>Incidents come from public feeds of Australian state emergency services.
@@ -72,8 +82,9 @@ Always follow the advice of official emergency services and call 000 in an
 emergency.</p>
 
 <h2>How long we keep it</h2>
-<p>Your device record (device ID, alert location, settings and app version)
-is kept until you ask us to delete it; there is no automatic expiry. Your push
+<p>Your device record (device ID, alert location, settings, app version and
+platform) is created when you first open the app and kept until you ask us to
+delete it; there is no automatic expiry. Your push
 token is removed once Apple or Google reports it invalid, for example after
 you delete the app. The list of alerts sent to your device, used to avoid sending the same
 alert twice, is deleted after 7 days.</p>
