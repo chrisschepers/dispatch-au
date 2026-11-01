@@ -17,6 +17,7 @@ import { vraagLocatiePermissie } from '../locatie';
 import {
   registreerVoorPushMetInstellingen, huidigeGebruiker, werkPushFilterBij, zorgVoorGebruiker,
 } from '../push';
+import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 import { T, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import {
@@ -27,6 +28,7 @@ import { Drukbaar } from '../components/Drukbaar';
 import { PlaatsZoeker } from '../components/PlaatsZoeker';
 import { Schakelaar } from '../components/Schakelaar';
 import { openRecensiePagina } from '../recensie';
+import { useAbonnement } from '../abonnement';
 import { BRONNEN } from '../bronnen';
 
 const SITE = 'https://emergenciesnearme.online';
@@ -54,6 +56,7 @@ type Nav = NativeStackNavigationProp<Record<string, undefined>>;
 
 export default function InstellingenScreen() {
   const C = useThema();
+  const abonnement = useAbonnement();
   const styles = useStijlen(maak_styles);
   const kaartStijl = useKaartStijl();
   const { inst, zet, zetVeel } = useInstellingen();
@@ -176,47 +179,68 @@ export default function InstellingenScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.inhoud}>
+      {/* "handled": met het toetsenbord open telt een tik op Search of op een
+          plaats in de plaatszoeker meteen, in plaats van eerst alleen het
+          toetsenbord te sluiten. Tikken naast een knop sluit het nog steeds. */}
+      <ScrollView contentContainerStyle={styles.inhoud} keyboardShouldPersistTaps="handled">
         <Text style={styles.kop}>Settings</Text>
 
         {/* Opzet gelijk aan het voorbeeld op het startscherm (wens Chris
             27-09): elke rij een gekleurd tegeltje, een naam en eronder in één
             regel wat hij doet. Hoofdschakelaar bovenaan (17-08): uit = de
             meldingen-laag klapt in; de lijst en de kaart blijven gewoon werken. */}
-        <Text style={styles.groepKop}>Alerts</Text>
-        <View style={kaartStijl}>
-          <Rij
-            icoon="bell-ring" tegelKleur={C.accent}
-            titel="Receive alerts"
-            sub={inst.notificaties
-              ? 'An alert when something happens near you'
-              : 'The app keeps working, you just get no alerts'}
-            rechts={<Schakelaar value={inst.notificaties} onValueChange={toggleNotificaties} />}
-          />
-          {inst.notificaties && (
-            <>
-              {/* Heette "Alleen grote incidenten", maar filtert op spoed:
-                  Chris miste een ambulance op 4 km omdat die als A2 binnenkwam
-                  (15-08). Zelfde woorden als in de lijst. */}
+        {/* Zonder push (Android zonder google-services.json) geen schakelaars
+            die meldingen beloven, alleen één eerlijke regel. "Receive alerts"
+            antwoordde daar "Alerts are coming soon" en "Emergency Warnings
+            anywhere" kon stil aan gaan (controle 01-11). */}
+        {PUSH_BESCHIKBAAR ? (
+          <>
+            <Text style={styles.groepKop}>Alerts</Text>
+            <View style={kaartStijl}>
               <Rij
-                icoon="lightning-bolt" tegelKleur="#ff9500" scheiding
-                titel="Warnings only"
-                sub="Only Advice, Watch and Act or Emergency Warning"
-                rechts={<Schakelaar value={inst.alleenGroot} onValueChange={(v) => zet('alleenGroot', v)} />}
+                icoon="bell-ring" tegelKleur={C.accent}
+                titel="Receive alerts"
+                sub={inst.notificaties
+                  ? 'An alert when something happens near you'
+                  : 'The app keeps working, you just get no alerts'}
+                rechts={<Schakelaar value={inst.notificaties} onValueChange={toggleNotificaties} />}
               />
-            </>
-          )}
-          {/* GRIP landelijk, zoals de "GRIP-opschaling alert" van de grote app
-              (wens Chris 27-09). Staat los van straal en diensten, en werkt
-              ook als de gewone meldingen uit staan (backend gripOnly is een
-              override), dus altijd zichtbaar. */}
-          <Rij
-            icoon="alert-octagon" tegelKleur="#f59e0b" scheiding
-            titel="Emergency Warnings anywhere"
-            sub="An alert for every Emergency Warning in Australia"
-            rechts={<Schakelaar value={inst.gripAlarm} onValueChange={toggleGrip} />}
-          />
-        </View>
+              {inst.notificaties && (
+                <>
+                  {/* Heette "Alleen grote incidenten", maar filtert op spoed:
+                      Chris miste een ambulance op 4 km omdat die als A2 binnenkwam
+                      (15-08). Zelfde woorden als in de lijst. */}
+                  <Rij
+                    icoon="lightning-bolt" tegelKleur="#ff9500" scheiding
+                    titel="Warnings only"
+                    sub="Only Advice, Watch and Act or Emergency Warning"
+                    rechts={<Schakelaar value={inst.alleenGroot} onValueChange={(v) => zet('alleenGroot', v)} />}
+                  />
+                </>
+              )}
+              {/* GRIP landelijk, zoals de "GRIP-opschaling alert" van de grote app
+                  (wens Chris 27-09). Staat los van straal en diensten, en werkt
+                  ook als de gewone meldingen uit staan (backend gripOnly is een
+                  override), dus altijd zichtbaar. */}
+              <Rij
+                icoon="alert-octagon" tegelKleur="#f59e0b" scheiding
+                titel="Emergency Warnings anywhere"
+                sub="An alert for every Emergency Warning in Australia"
+                rechts={<Schakelaar value={inst.gripAlarm} onValueChange={toggleGrip} />}
+              />
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.groepKop}>Alerts</Text>
+            <View style={kaartStijl}>
+              <Rij
+                icoon="bell-off-outline" tegelKleur="#8e8e93"
+                titel="Push alerts are not available on Android yet."
+              />
+            </View>
+          </>
+        )}
 
         {/* Afstand: eerst één hoofdschuif die ook "In de buurt" bepaalt, en
             pas als je wilt per dienst verfijnen (wens Chris 27-09). Staat altijd
@@ -226,7 +250,9 @@ export default function InstellingenScreen() {
           <Rij
             icoon="map-marker-radius" tegelKleur={C.accent}
             titel="Radius"
-            sub={perDienstAan ? 'Set per service' : 'Applies to your alerts and to Nearby'}
+            sub={perDienstAan
+              ? 'Set per service'
+              : PUSH_BESCHIKBAAR ? 'Applies to your alerts and to Nearby' : 'Applies to Nearby'}
             rechts={perDienstAan ? null : <Text style={[styles.waarde, { color: C.accent, fontWeight: '600' }]}>{straalTekst(live.__ ?? inst.straalKm)}</Text>}
           />
           {!perDienstAan && (
@@ -290,7 +316,7 @@ export default function InstellingenScreen() {
 
         {/* Welke diensten je gepusht krijgt. Over meldingen, niet over de
             lijst: de chips boven de lijst zijn een ander filter (16-08). */}
-        {inst.notificaties && (
+        {PUSH_BESCHIKBAAR && inst.notificaties && (
           <>
             <Text style={styles.groepKop}>Alerts for</Text>
             <View style={kaartStijl}>
@@ -404,6 +430,14 @@ export default function InstellingenScreen() {
               {i > 0 ? '\n' : ''}{b.vermelding}
             </Text>
           ))}
+          {/* Plaats zoeken loopt via Nominatim; de ODbL vraagt naamsvermelding. */}
+          <Text
+            style={styles.voetnootLink}
+            accessibilityRole="link"
+            onPress={() => { Linking.openURL('https://www.openstreetmap.org/copyright').catch(() => {}); }}
+          >
+            {'\n'}Place search: Nominatim, © OpenStreetMap contributors, licensed under the ODbL.
+          </Text>
         </Text>
 
         <View style={kaartStijl}>
@@ -431,6 +465,21 @@ export default function InstellingenScreen() {
             <MaterialCommunityIcons name="chevron-right" size={20} color={C.textMuted} />
           </Drukbaar>
         </View>
+
+        {/* Abonnement beheren (01-11): wie abonnee is, kon in de app nergens
+            opzeggen. Op iOS opent dit het eigen blad van Apple; alleen dat
+            blad toont ook TestFlight-abonnementen. */}
+        {abonnement.vereist && abonnement.toegang === 'actief' ? (
+          <View style={kaartStijl}>
+            <Rij
+              icoon="credit-card-outline" tegelKleur="#34c759"
+              titel="Manage subscription"
+              sub={abonnement.verlengt ? 'Renews every year' : 'Cancelled, runs until the end of the period'}
+              onPress={() => { void abonnement.beheer(); }}
+              rechts={<MaterialCommunityIcons name="chevron-right" size={20} color={C.textMuted} />}
+            />
+          </View>
+        ) : null}
 
         <View style={kaartStijl}>
           <Rij

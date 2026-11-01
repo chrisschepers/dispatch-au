@@ -29,6 +29,7 @@ import { T, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { DIENSTEN, wisselDienst, straalVoor, straalTekst, LANDELIJK_KM } from '../diensten';
 import { Drukbaar } from '../components/Drukbaar';
+import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 
 type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
 
@@ -234,7 +235,9 @@ export default function BuurtScreen() {
           als je daadwerkelijk iets hebt weggefilterd. */}
       {inst.lijstDiensten.length < DIENSTEN.length && (
         <Text style={styles.filterHint}>
-          This only filters this list. What you get alerts for is set in Settings.
+          {PUSH_BESCHIKBAAR
+            ? 'This only filters this list. What you get alerts for is set in Settings.'
+            : 'This only filters this list.'}
         </Text>
       )}
     </>
