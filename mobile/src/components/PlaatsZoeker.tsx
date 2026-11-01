@@ -11,11 +11,12 @@
  * autocomplete, hooguit één verzoek per seconde en de app herkenbaar maken.
  * Daarom zoeken we pas als je op zoeken drukt (toetsenbord of knop), vanaf
  * drie tekens, nooit per toetsaanslag; zoekPlaatsen houdt zelf een seconde
- * afstand tussen verzoeken en onthoudt eerdere antwoorden.
+ * afstand tussen verzoeken en onthoudt eerdere antwoorden. Onder de
+ * resultaten staat de naamsvermelding die het beleid en de ODbL vragen.
  */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, ActivityIndicator, Keyboard,
+  View, Text, TextInput, StyleSheet, ActivityIndicator, Keyboard, Linking,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { T, type Palet } from '../theme';
@@ -35,6 +36,7 @@ interface Ruw {
 export const MIN_TEKENS = 3;
 /** Nominatim: hooguit één verzoek per seconde. */
 const TUSSENPOZE_MS = 1000;
+const OSM_COPYRIGHT = 'https://www.openstreetmap.org/copyright';
 let volgendeVrij = 0;
 const eerder = new Map<string, PlaatsKeuze[]>();
 
@@ -103,11 +105,19 @@ export function PlaatsZoeker({
   const [tekst, setTekst] = useState(waarde ?? '');
   const [suggesties, setSuggesties] = useState<PlaatsKeuze[]>([]);
   const [stand, setStand] = useState<Stand>('leeg');
+  // De tekst zoals hij nu in het veld staat. zoek() leest hem na het wachten
+  // op Nominatim; de `tekst` uit de closure is dan die van vóór het wachten.
+  const actueel = useRef(waarde ?? '');
+
+  function zetTekst(nieuw: string) {
+    actueel.current = nieuw;
+    setTekst(nieuw);
+  }
 
   // Typen zoekt niets: alleen de vorige uitkomst gaat weg, want die hoort
-  // niet meer bij wat er staat.
+  // niet meer bij wat er staat. Tijdens een zoekopdracht ruimt zoek() zelf op.
   function typ(nieuw: string) {
-    setTekst(nieuw);
+    zetTekst(nieuw);
     if (stand !== 'zoekt') { setSuggesties([]); setStand('leeg'); }
   }
 
@@ -116,13 +126,18 @@ export function PlaatsZoeker({
     if (stand === 'zoekt') return;
     if (vraag.length < MIN_TEKENS) { setSuggesties([]); setStand('te-kort'); return; }
     setStand('zoekt');
+    // Doorgetypt terwijl het verzoek liep (dat kan ruim een seconde duren
+    // door de tussenpoos): de uitkomst hoort dan bij een oude tekst. Weggooien
+    // en terug naar 'leeg', zodat de hint om opnieuw te zoeken verschijnt.
+    const verouderd = () => actueel.current.trim() !== vraag;
     try {
       const gevonden = await zoekPlaatsen(vraag);
+      if (verouderd()) { setSuggesties([]); setStand('leeg'); return; }
       setSuggesties(gevonden);
       setStand(gevonden.length > 0 ? 'klaar' : 'niets');
     } catch {
       setSuggesties([]);
-      setStand('fout');
+      setStand(verouderd() ? 'leeg' : 'fout');
     }
   }
 
@@ -141,7 +156,7 @@ export function PlaatsZoeker({
     <View>
       {waarde ? (
         // Gekozen plaats: tik erop om hem te wissen en opnieuw te zoeken.
-        <Drukbaar style={styles.gekozen} onPress={() => { onWis(); setTekst(''); setSuggesties([]); setStand('leeg'); }}>
+        <Drukbaar style={styles.gekozen} onPress={() => { onWis(); zetTekst(''); setSuggesties([]); setStand('leeg'); }}>
           <MaterialCommunityIcons name="map-marker" size={16} color={C.accent} />
           <Text style={styles.gekozenTekst}>{waarde}</Text>
           <MaterialCommunityIcons name="close-circle" size={17} color={C.textMuted} />
@@ -190,7 +205,7 @@ export function PlaatsZoeker({
               style={[styles.suggestie, i > 0 && styles.scheiding]}
               onPress={() => {
                 onKies(s);
-                setTekst(s.naam);
+                zetTekst(s.naam);
                 setSuggesties([]);
                 setStand('leeg');
                 Keyboard.dismiss();
@@ -201,6 +216,18 @@ export function PlaatsZoeker({
             </Drukbaar>
           ))}
         </View>
+      )}
+
+      {/* Naamsvermelding volgens het Nominatim-beleid en de ODbL: zichtbaar
+          zolang er resultaten uit OpenStreetMap in beeld staan. */}
+      {suggesties.length > 0 && (
+        <Text
+          style={styles.bron}
+          accessibilityRole="link"
+          onPress={() => { Linking.openURL(OSM_COPYRIGHT).catch(() => {}); }}
+        >
+          Search by Nominatim · © OpenStreetMap contributors
+        </Text>
       )}
     </View>
   );
@@ -225,4 +252,5 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   suggestie: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 11 },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border },
   suggestieTekst: { ...T.body, color: C.textPrimary },
+  bron: { ...T.klein, color: C.textMuted, marginTop: 6 },
 });

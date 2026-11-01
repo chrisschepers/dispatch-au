@@ -177,7 +177,10 @@ export default function InstellingenScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.inhoud}>
+      {/* "handled": met het toetsenbord open telt een tik op Search of op een
+          plaats in de plaatszoeker meteen, in plaats van eerst alleen het
+          toetsenbord te sluiten. Tikken naast een knop sluit het nog steeds. */}
+      <ScrollView contentContainerStyle={styles.inhoud} keyboardShouldPersistTaps="handled">
         <Text style={styles.kop}>Settings</Text>
 
         {/* Opzet gelijk aan het voorbeeld op het startscherm (wens Chris
@@ -425,6 +428,14 @@ export default function InstellingenScreen() {
               {i > 0 ? '\n' : ''}{b.vermelding}
             </Text>
           ))}
+          {/* Plaats zoeken loopt via Nominatim; de ODbL vraagt naamsvermelding. */}
+          <Text
+            style={styles.voetnootLink}
+            accessibilityRole="link"
+            onPress={() => { Linking.openURL('https://www.openstreetmap.org/copyright').catch(() => {}); }}
+          >
+            {'\n'}Place search: Nominatim, © OpenStreetMap contributors, licensed under the ODbL.
+          </Text>
         </Text>
 
         <View style={kaartStijl}>
