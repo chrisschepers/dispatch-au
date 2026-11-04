@@ -52,9 +52,12 @@ const config: ExpoConfig = {
     ],
     predictiveBackGestureEnabled: true,
     adaptiveIcon: {
+      // White map of Australia with a cut-out "you are here" dot, on a deeper
+      // red than the brand red so white passes 4.5:1 (#c8291f: 5.54:1).
+      // Android 13+ themed icons use the separate monochrome glyph.
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#d83329',
-      monochromeImage: './assets/adaptive-icon.png',
+      backgroundColor: '#c8291f',
+      monochromeImage: './assets/adaptive-monochrome.png',
     },
   },
   plugins: [
@@ -87,10 +90,13 @@ const config: ExpoConfig = {
         dark: { backgroundColor: '#000000' },
         ios: { image: './assets/opstart-leeg.png', imageWidth: 1 },
         android: {
+          // The map glyph is narrower than its 1024 canvas (about half), so 240 dp
+          // gives it the launcher's proportions; it stays well inside the 192 dp
+          // circle Android 12+ masks the splash icon to.
           image: './assets/adaptive-icon.png',
-          imageWidth: 200,
-          backgroundColor: '#d83329',
-          dark: { backgroundColor: '#d83329' },
+          imageWidth: 240,
+          backgroundColor: '#c8291f',
+          dark: { backgroundColor: '#c8291f' },
         },
       },
     ],
@@ -102,9 +108,10 @@ const config: ExpoConfig = {
       {
         // TestFlight and App Store builds talk to Apple's production push service.
         mode: 'production',
-        // Android status bar and shade: the broadcast glyph from the adaptive
-        // icon, white on transparent (96 px, about 20 of 24 dp), tinted in the
-        // brand red. Without it Android shows a grey square of the launcher icon.
+        // Android status bar and shade: the map of Australia with its cut-out
+        // dot from the launcher icon (Tasmania left out, it vanishes at 24 dp),
+        // white on transparent (96 px), tinted in the brand red. Without it
+        // Android shows a grey square of the launcher icon.
         icon: './assets/notification-icon.png',
         color: '#e5372c',
         sounds: [
