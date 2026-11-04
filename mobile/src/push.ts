@@ -13,7 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registreerGebruiker, zetPushFilter, zetInstallToken } from './api';
 import { bepaalPlek, bepaalPlekSnel } from './locatie';
 import type { Instellingen } from './instellingen';
-import { GELUIDEN, geldigGeluid, kanaalVoor } from './geluiden';
+import { GELUIDEN, STANDAARD_GELUID, geldigGeluid, kanaalVoor } from './geluiden';
 import { PUSH_BESCHIKBAAR } from './pushBeschikbaar';
 
 const DEVICE_KEY = 'device_id_v1';
@@ -48,11 +48,19 @@ export function zetNotificatieGedrag(): void {
   // brengen.
   if (Platform.OS === 'android' && PUSH_BESCHIKBAAR) {
     // Eén kanaal per geluid: een kanaalgeluid ligt vast zodra het kanaal
-    // bestaat, dus je kunt het achteraf niet meer omzetten. De server stuurt
-    // het kanaal mee dat bij de keuze van de gebruiker hoort.
+    // bestaat, dus je kunt het achteraf niet meer omzetten. De ids liggen vast
+    // bij de backend (kanaalVoor in src/geluiden.ts): de server stuurt het
+    // kanaal mee dat bij de keuze van de gebruiker hoort. Id, belang en
+    // geluid blijven dus zoals ze zijn.
+    // De naam zegt sinds 31-10 wat de melding is, niet alleen welk geluid
+    // (R8.1). Android werkt naam en uitleg van een bestaand kanaal gewoon bij.
     for (const g of GELUIDEN) {
+      const standaard = g.sleutel === STANDAARD_GELUID;
       Notifications.setNotificationChannelAsync(kanaalVoor(g.sleutel), {
-        name: `Alerts (${g.naam.toLowerCase()})`,
+        name: standaard ? 'Incident alerts' : `Incident alerts (${g.naam} sound)`,
+        description: standaard
+          ? 'Fires, floods, storms and other incidents within your radius, from the official agencies.'
+          : `The same alerts with the ${g.naam} sound.`,
         // HIGH: shown as a heads-up banner, as people expect from an emergency alert.
         importance: Notifications.AndroidImportance.HIGH,
         sound: `${g.sleutel}.wav`,

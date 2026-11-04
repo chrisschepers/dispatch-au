@@ -10,81 +10,32 @@
  *
  * Opzet blijft Apples eigen Instellingen-app: gegroepeerde kaarten op een
  * ondergrond, in het donker omgekeerd (zwarte grond, iets lichtere kaarten).
+ * Op Android is die grond in het donker geen zwart maar M3-donkergrijs, en
+ * de tekst volgt de M3-typeschaal (zie DONKER_ANDROID en T hieronder).
  */
 import { AccessibilityInfo, Platform } from 'react-native';
+import { PALET_LICHT, PALET_DONKER as DONKER_BASIS, DONKER_ANDROID, type Palet } from './palet';
+
+// De paletten zelf staan in palet.ts (zonder react-native, voor de tests);
+// hier doorgegeven zodat elke bestaande import blijft werken.
+export { PALET_LICHT };
+export type { Palet };
+
+export const isIOS = Platform.OS === 'ios';
 
 /**
- * Kleuren die in BEIDE thema's gelijk blijven: de disciplines. Dat zijn
- * herkenningskleuren, geen decoratie — brandweerrood hoort brandweerrood te
- * blijven, ook 's nachts. Ze zijn verzadigd genoeg om op wit én op zwart te
- * lezen. Hierdoor kunnen diensten.ts en vertaal.ts hun kleuren gewoon op
- * moduleniveau blijven gebruiken.
+ * Het donkere palet van dit platform. iOS houdt zijn OLED-zwart
+ * (systemBackground); Android krijgt de M3-donkervlakken eroverheen.
  */
-const VAST = {
-  brandweer: '#e5372c',
-  ambulance: '#f4a814',
-  politie: '#2f6fde',
-  knrm: '#0d9488',          // waterhulp: KNRM en reddingsbrigades
-  mmt: '#7c4dbe',           // traumahelikopter, apart van de gele ambulance
-  success: '#34c759',
-  /** Neutrale stip voor een onbekende dienst; leesbaar op beide gronden. */
-  dienstOnbekend: '#8e8e93',
-} as const;
-
-export interface Palet {
-  donker: boolean;
-  bg: string; card: string; border: string; separator: string;
-  textPrimary: string; textSecondary: string; textMuted: string;
-  accent: string; accentSoft: string; chipBg: string; schaduw: string;
-  brandweer: string; ambulance: string; politie: string; knrm: string; mmt: string;
-  success: string; dienstOnbekend: string;
-}
-
-export const PALET_LICHT: Palet = {
-  ...VAST,
-  donker: false,
-  bg: '#f2f2f7',            // systeemgrijs van iOS-instellingen
-  card: '#ffffff',
-  border: '#e5e5ea',
-  separator: '#e5e5ea',
-
-  textPrimary: '#1c1c1e',
-  textSecondary: '#6e6e73',
-  textMuted: '#aeaeb2',
-
-  accent: '#e5372c',        // zelfde rood-familie als het grote merk, iets warmer
-  accentSoft: '#fdeceb',
-
-  chipBg: '#eeeef2',
-  /** Schaduw onder kaarten: in het licht subtiel, in het donker niets. */
-  schaduw: 'rgba(0,0,0,0.06)',
-};
+export const PALET_DONKER: Palet = Platform.OS === 'android'
+  ? { ...DONKER_BASIS, ...DONKER_ANDROID }
+  : DONKER_BASIS;
 
 /**
- * Donker volgt de systeemkleuren van iOS: zwarte grond met iets lichtere
- * kaarten erop, precies andersom dan licht. Puur zwart (#000) is bewust: op
- * OLED-schermen scheelt dat stroom én het geeft de kaarten hun eigen vlak.
- * Het accentrood is een tint lichter, want #e5372c is op zwart te donker om
- * als knopkleur te lezen.
+ * iOS 26 of nieuwer: Liquid Glass, en het gedrag van kopbalk en tabbalk dat
+ * daarbij hoort. Platform.Version is op iOS een tekst als '26.0'.
  */
-export const PALET_DONKER: Palet = {
-  ...VAST,
-  donker: true,
-  bg: '#000000',
-  card: '#1c1c1e',
-  border: '#38383a',
-  separator: '#38383a',
-
-  textPrimary: '#ffffff',
-  textSecondary: '#98989f',
-  textMuted: '#6c6c70',
-
-  accent: '#ff5247',
-  accentSoft: '#3a1512',
-
-  chipBg: '#2c2c2e',
-  schaduw: 'transparent',
-};
+export const isIOS26 = isIOS && parseInt(String(Platform.Version), 10) >= 26;
 
 /**
  * Het lichte palet blijft de standaard-export, zodat modules die géén
@@ -99,7 +50,9 @@ export const F = {
   // en letterafstandtabellen mee.
   weightRegular: '400' as const,
   weightMedium: '500' as const,
-  weightSemibold: '600' as const,
+  // Roboto heeft op Android meestal geen 600: dat valt terug op vet (700).
+  // M3 benadrukt met 500, dus daar is "halfvet" medium.
+  weightSemibold: (Platform.OS === 'android' ? '500' : '600') as '500' | '600',
   weightBold: '700' as const,
 };
 
@@ -110,28 +63,62 @@ export const F = {
  * Regelhoogte gaat de andere kant op: strak bij koppen, ruimer bij lopende
  * tekst.
  */
-export const T = {
-  display: { fontSize: 32, fontWeight: F.weightBold, letterSpacing: -0.6, lineHeight: 38 },
-  titel:   { fontSize: 26, fontWeight: F.weightBold, letterSpacing: -0.4, lineHeight: 32 },
-  kop:     { fontSize: 17, fontWeight: F.weightSemibold, letterSpacing: -0.2, lineHeight: 22 },
-  rij:     { fontSize: 16, fontWeight: F.weightSemibold, letterSpacing: -0.1, lineHeight: 21 },
-  body:    { fontSize: 15, fontWeight: F.weightRegular, letterSpacing: 0, lineHeight: 21 },
-  klein:   { fontSize: 13, fontWeight: F.weightRegular, letterSpacing: 0.1, lineHeight: 18 },
-  // Kapitalen hebben altijd extra ruimte nodig, ongeacht de maat.
-  sectie:  { fontSize: 13, fontWeight: F.weightSemibold, letterSpacing: 0.5, lineHeight: 18 },
-};
+const T_IOS = {
+  display: { fontSize: 32, fontWeight: '700', letterSpacing: -0.6, lineHeight: 38 },
+  titel:   { fontSize: 26, fontWeight: '700', letterSpacing: -0.4, lineHeight: 32 },
+  kop:     { fontSize: 17, fontWeight: '600', letterSpacing: -0.2, lineHeight: 22 },
+  rij:     { fontSize: 16, fontWeight: '600', letterSpacing: -0.1, lineHeight: 21 },
+  body:    { fontSize: 15, fontWeight: '400', letterSpacing: 0, lineHeight: 21 },
+  klein:   { fontSize: 13, fontWeight: '400', letterSpacing: 0.1, lineHeight: 18 },
+  // Sectiekoppen in kapitalen, zoals iOS-instellingen. Kapitalen hebben
+  // altijd extra ruimte nodig, ongeacht de maat.
+  sectie:  { fontSize: 13, fontWeight: '600', letterSpacing: 0.5, lineHeight: 18, textTransform: 'uppercase' },
+} as const;
 
-/** Afgeronde kaart zoals in iOS-instellingen, in de kleur van het thema. */
+/**
+ * Android volgt de M3-typeschaal: display = headlineMedium, titel =
+ * headlineSmall (iets zwaarder), kop en rij = titleMedium, body = bodyLarge,
+ * klein = bodyMedium, sectie = titleSmall. Sectiekoppen in zinsvorm, zonder
+ * kapitalen: zo doet Material dat.
+ */
+const T_ANDROID = {
+  display: { fontSize: 28, fontWeight: '400', letterSpacing: 0, lineHeight: 36 },
+  titel:   { fontSize: 24, fontWeight: '500', letterSpacing: 0, lineHeight: 32 },
+  kop:     { fontSize: 16, fontWeight: '500', letterSpacing: 0.15, lineHeight: 24 },
+  rij:     { fontSize: 16, fontWeight: '500', letterSpacing: 0.15, lineHeight: 24 },
+  body:    { fontSize: 16, fontWeight: '400', letterSpacing: 0.5, lineHeight: 24 },
+  klein:   { fontSize: 14, fontWeight: '400', letterSpacing: 0.25, lineHeight: 20 },
+  sectie:  { fontSize: 14, fontWeight: '500', letterSpacing: 0.1, lineHeight: 20 },
+} as const;
+
+export const T = Platform.OS === 'android' ? T_ANDROID : T_IOS;
+
+/**
+ * Afgeronde kaart zoals in iOS-instellingen, in de kleur van het thema.
+ * borderCurve 'continuous': de vloeiende hoek van iOS (een squircle) in
+ * plaats van een cirkelboog; Android negeert hem.
+ */
 export function kaartVoor(palet: Palet) {
   return {
     backgroundColor: palet.card,
     borderRadius: 12,
+    borderCurve: 'continuous' as const,
     overflow: 'hidden' as const,
   };
 }
 
 /** Lichte variant als losse constante — voor plekken zonder thema-context. */
 export const kaartStijl = kaartVoor(PALET_LICHT);
+
+/**
+ * Schaduwen voor nieuwe code, als boxShadow-tekst (niet de oude shadow*- en
+ * elevation-props). zwevend: kaartknoppen boven de kaart. fab: M3-niveau 3
+ * voor de zwevende actieknop op Android.
+ */
+export const SCHADUW = {
+  zwevend: '0px 2px 8px rgba(0, 0, 0, 0.16)',
+  fab: '0px 1px 3px 0px rgba(0, 0, 0, 0.30), 0px 4px 8px 3px rgba(0, 0, 0, 0.15)',
+} as const;
 
 /**
  * Veerwaarden uit de Apple-ontwerprichtlijnen: standaard kritisch gedempt
@@ -144,11 +131,13 @@ export const VEER = {
   momentum:  { damping: 18, stiffness: 300, mass: 0.9 },   // lichte bounce
 };
 
-/** Respecteert "verminder beweging" uit de systeeminstellingen. */
+/**
+ * Respecteert "verminder beweging" uit de systeeminstellingen. Dit is een
+ * momentopname voor code buiten React; een component gebruikt
+ * useMinderBeweging() uit thema.tsx, die opnieuw rendert bij een wissel.
+ */
 export let mindeBeweging = false;
 AccessibilityInfo.isReduceMotionEnabled?.()
   .then((aan) => { mindeBeweging = !!aan; })
   .catch(() => {});
 AccessibilityInfo.addEventListener?.('reduceMotionChanged', (aan) => { mindeBeweging = !!aan; });
-
-export const isIOS = Platform.OS === 'ios';

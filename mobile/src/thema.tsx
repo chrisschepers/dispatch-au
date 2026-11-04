@@ -12,17 +12,19 @@
  * twee keer een stylesheet gebouwd (licht en donker) in plaats van bij elke
  * render — dat is precies wat StyleSheet.create op moduleniveau ook deed.
  */
-import React, { createContext, useContext, useMemo, useRef } from 'react';
-import { useColorScheme } from 'react-native';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, Appearance, useColorScheme } from 'react-native';
 import type { StyleSheet } from 'react-native';
-import { PALET_LICHT, PALET_DONKER, kaartVoor, type Palet } from './theme';
+import { PALET_LICHT, PALET_DONKER, kaartVoor, mindeBeweging, type Palet } from './theme';
 import { useInstellingen } from './instellingen';
 
 const ThemaContext = createContext<Palet>(PALET_LICHT);
 
+type SysteemStand = 'light' | 'dark' | 'unspecified';
+
 export function ThemaProvider({ children }: { children: React.ReactNode }) {
   const systeem = useColorScheme();
-  const { inst } = useInstellingen();
+  const { inst, geladen } = useInstellingen();
   // 'automatisch' = volg de telefoon. Dat is de standaard: wie zijn toestel
   // 's avonds op donker zet, wil dat hier ook.
   const palet = useMemo(() => {
@@ -30,6 +32,31 @@ export function ThemaProvider({ children }: { children: React.ReactNode }) {
     if (inst.thema === 'donker') return PALET_DONKER;
     return systeem === 'dark' ? PALET_DONKER : PALET_LICHT;
   }, [inst.thema, systeem]);
+
+  /**
+   * Het systeem volgt de keuze in de app, niet alleen de telefoon: meldingen
+   * (Alert), het toetsenbord, het deelvenster, de betaalmuur van RevenueCat,
+   * de tab- en kopbalken. iOS zet daarvoor overrideUserInterfaceStyle op de
+   * vensters; Android roept AppCompatDelegate.setDefaultNightMode aan, en
+   * omdat MainActivity uiMode zelf afhandelt, wordt de activity daarbij niet
+   * opnieuw gemaakt. useColorScheme geeft daarna de gekozen stand terug, dus
+   * het palet hierboven blijft kloppen.
+   *
+   * Pas als de instellingen geladen zijn, en alleen bij een andere stand: bij
+   * het opstarten is er nog niets overschreven ('unspecified'), dus een
+   * gebruiker op 'automatisch' raakt het systeem nooit aan en niemand ziet
+   * eerst de verkeerde stand.
+   */
+  const toegepast = useRef<SysteemStand>('unspecified');
+  useEffect(() => {
+    if (!geladen) return;
+    const stand: SysteemStand =
+      inst.thema === 'licht' ? 'light' : inst.thema === 'donker' ? 'dark' : 'unspecified';
+    if (stand === toegepast.current) return;
+    toegepast.current = stand;
+    Appearance.setColorScheme(stand);
+  }, [geladen, inst.thema]);
+
   return <ThemaContext.Provider value={palet}>{children}</ThemaContext.Provider>;
 }
 
@@ -70,4 +97,28 @@ export function useStijlen<T extends StyleSheet.NamedStyles<T>>(fabriek: StijlFa
     cache.current.set(C, nieuw);
     return nieuw;
   }, [C, fabriek]);
+}
+
+/**
+ * "Verminder beweging" als haak: het scherm rendert opnieuw zodra je het in
+ * de systeeminstellingen omzet. Begint bij de momentopname uit theme.ts (die
+ * is bij de start al opgehaald), zodat er geen flits van de verkeerde
+ * animatie is; daarna vraagt hij het zelf nog eens na en luistert mee.
+ */
+export function useMinderBeweging(): boolean {
+  const [aan, zetAan] = useState(mindeBeweging);
+  useEffect(() => {
+    let actief = true;
+    AccessibilityInfo.isReduceMotionEnabled?.()
+      .then((v) => { if (actief) zetAan(!!v); })
+      .catch(() => {});
+    const luisteraar = AccessibilityInfo.addEventListener?.('reduceMotionChanged', (v) => {
+      if (actief) zetAan(!!v);
+    });
+    return () => {
+      actief = false;
+      luisteraar?.remove();
+    };
+  }, []);
+  return aan;
 }

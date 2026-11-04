@@ -4,17 +4,26 @@
  * (MeldingRij, de dienstkleuren, de geluidsnamen), zodat het voorbeeld er
  * precies zo uitziet als wat je daarna krijgt.
  *
+ * Dat geldt per platform: de tabbalk, de chips en de instellingenrijen zijn
+ * op iOS en Android elk die van de echte app op dat platform (navigatie.tsx,
+ * BuurtScreen, InstellingenScreen). Verandert daar iets, dan hier ook.
+ *
  * The sample incidents are typical VicEmergency rows around Kilmore, Victoria.
  */
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import {
+  View, Text, StyleSheet, Image, type StyleProp, type TextStyle, type ViewStyle,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import type { Melding } from '../../api';
-import { DIENSTEN } from '../../diensten';
+import { DIENSTEN, type Dienst } from '../../diensten';
 import { PUSH_BESCHIKBAAR } from '../../pushBeschikbaar';
-import { PALET_LICHT as C, T } from '../../theme';
+import { PALET_LICHT as C, T, F, isIOS, isIOS26 } from '../../theme';
+import { leesbaar, mengKleur } from '../../kleur';
 import { MeldingRij } from '../MeldingRij';
+import { Icoon, DienstIcoon } from '../Icoon';
+import type { IcoonNaam } from '../../iconen';
 import { NepKaart } from './NepKaart';
 import { SCHERM_B, SCHERM_H } from './Toestel';
 
@@ -48,32 +57,96 @@ const niets = () => {};
 
 // ── Losse onderdelen ────────────────────────────────────────────────────────
 
-/** De zwevende tabbalk van de app, met één tab actief. */
-function TabBalk({ actief }: { actief: 0 | 1 | 2 }) {
-  const tabs = [
-    { icoon: 'map-marker-radius', label: 'Nearby' },
-    { icoon: 'map', label: 'Map' },
-    { icoon: 'cog', label: 'Settings' },
-  ] as const;
+type TabNaam = 'buurt' | 'kaart' | 'zoeken' | 'instellingen';
+
+/** Label en iconen per tab, met dezelfde namen uit iconen.ts als navigatie.tsx. */
+const TABS: Record<TabNaam, { label: string; icoon: IcoonNaam; gekozen: IcoonNaam }> = {
+  buurt: { label: 'Nearby', icoon: 'tabBuurt', gekozen: 'tabBuurtActief' },
+  kaart: { label: 'Map', icoon: 'tabKaart', gekozen: 'tabKaartActief' },
+  zoeken: { label: 'Search', icoon: 'zoeken', gekozen: 'zoeken' },
+  instellingen: { label: 'Settings', icoon: 'tabInstellingen', gekozen: 'tabInstellingenActief' },
+};
+
+/** De volgorde van de echte balk: zoeken op iOS achteraan, op Android als derde. */
+const VOLGORDE: TabNaam[] = isIOS
+  ? ['buurt', 'kaart', 'instellingen', 'zoeken']
+  : ['buurt', 'kaart', 'zoeken', 'instellingen'];
+
+/** systemGray: de niet-gekozen tabs onder iOS 26, net als in navigatie.tsx. */
+const SYSTEEMGRIJS = '#8e8e93';
+
+/** Eén iOS-tab: icoon met het label eronder, in één kleur. */
+function TabKnop({ naam, aan, kleur, grootte, stijl, labelStijl }: {
+  naam: TabNaam; aan: boolean; kleur: string; grootte: number;
+  stijl: StyleProp<ViewStyle>; labelStijl: StyleProp<TextStyle>;
+}) {
+  const t = TABS[naam];
   return (
-    <View style={s.tabOmhulsel}>
-      <View style={s.tabRij}>
-      <View style={s.tabPil}>
-        {tabs.map((t, i) => (
-          <View key={t.label} style={[s.tab, i === actief && s.tabActief]}>
-            <MaterialCommunityIcons
-              name={(i === actief ? t.icoon : `${t.icoon}-outline`) as never}
-              size={20}
-              color={i === actief ? C.accent : C.textMuted}
-            />
-            <Text style={[s.tabLabel, i === actief && { color: C.accent }]}>{t.label}</Text>
-          </View>
+    <View style={stijl}>
+      <Icoon naam={aan ? t.gekozen : t.icoon} grootte={grootte} kleur={kleur} />
+      <Text style={[labelStijl, { color: kleur }]}>{t.label}</Text>
+    </View>
+  );
+}
+
+/**
+ * De tabbalk van het systeem, zoals dit toestel hem in de app krijgt, met
+ * één tab gekozen.
+ * - iOS 26: een zwevende glazen pil met drie tabs en zoeken als los rondje
+ *   ernaast. Gekozen in het accent op een neutraal vlakje, de rest in de
+ *   tekstkleur.
+ * - Ouder iOS: de volle balk onderin met vier tabs, zoeken achteraan. Gekozen
+ *   in het accent, de rest systeemgrijs.
+ * - Android: de M3-navigatiebalk op het kaartvlak met vier tabs, zoeken als
+ *   derde. Achter het gekozen icoon een indicator van 64×32.
+ */
+function TabBalk({ actief }: { actief: Exclude<TabNaam, 'zoeken'> }) {
+  if (!isIOS) {
+    return (
+      <View style={s.m3Balk}>
+        {VOLGORDE.map((naam) => {
+          const aan = naam === actief;
+          const kleur = aan ? C.accent : C.textSecondary;
+          const t = TABS[naam];
+          return (
+            <View key={naam} style={s.m3Tab}>
+              <View style={[s.m3Indicator, aan && { backgroundColor: C.accentSoft }]}>
+                <Icoon naam={aan ? t.gekozen : t.icoon} grootte={24} kleur={kleur} />
+              </View>
+              <Text style={[s.m3Label, { color: kleur }]}>{t.label}</Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  }
+  if (!isIOS26) {
+    return (
+      <View style={s.iosBalk}>
+        {VOLGORDE.map((naam) => (
+          <TabKnop
+            key={naam} naam={naam} aan={naam === actief} grootte={20}
+            kleur={naam === actief ? C.accent : SYSTEEMGRIJS}
+            stijl={s.iosTab} labelStijl={s.tabLabel}
+          />
         ))}
       </View>
-      {/* Zoeken zit rechts naast de tabs, als in de echte balk. */}
-      <View style={s.tabZoek}>
-        <MaterialCommunityIcons name="magnify" size={20} color={C.textPrimary} />
+    );
+  }
+  return (
+    <View style={s.tabOmhulsel}>
+      <View style={s.tabPil}>
+        {VOLGORDE.filter((naam) => naam !== 'zoeken').map((naam) => (
+          <TabKnop
+            key={naam} naam={naam} aan={naam === actief} grootte={20}
+            kleur={naam === actief ? C.accent : C.textPrimary}
+            stijl={[s.tab, naam === actief && s.tabActief]} labelStijl={s.tabLabel}
+          />
+        ))}
       </View>
+      {/* Zoeken staat los rechts naast de pil, als in de echte balk. */}
+      <View style={s.tabZoek}>
+        <Icoon naam="zoeken" grootte={20} kleur={C.textPrimary} />
       </View>
     </View>
   );
@@ -88,17 +161,86 @@ function Pil() {
   );
 }
 
-function Schakelaar() {
+/** iOS: het vlak van een gekozen chip is de dienstkleur op 0x14 (8%), als in BuurtScreen. */
+const TINT_IOS = '14';
+
+/**
+ * De tekst van een gekozen iOS-chip: de dienstkleur, maar donker genoeg voor
+ * 4.5:1 op het getinte vlak, zoals BuurtScreen. Het voorbeeld is altijd licht.
+ */
+const CHIP_TEKST_IOS = Object.fromEntries(DIENSTEN.map((d) => [
+  d.key, leesbaar(d.kleur, mengKleur(d.kleur, C.bg, parseInt(TINT_IOS, 16) / 255)),
+])) as Record<string, string>;
+
+/**
+ * Een gekozen dienst-chip, zoals de lijst hem standaard toont (alles aan).
+ * iOS: een capsule met rand, het SF-icoon van de dienst en de tekst in zijn
+ * kleur. Android: de gekozen M3-filterchip, een getint vlak met een vinkje
+ * vooraan en de tekst in textPrimary.
+ */
+function Chip({ d }: { d: Dienst }) {
+  if (isIOS) {
+    return (
+      <View style={[s.chip, { backgroundColor: `${d.kleur}${TINT_IOS}`, borderColor: d.kleur }]}>
+        <DienstIcoon dienst={d} grootte={13} kleur={d.kleur} />
+        <Text style={[s.chipTekst, { color: CHIP_TEKST_IOS[d.key] }]}>{d.label}</Text>
+      </View>
+    );
+  }
   return (
-    <View style={s.schakelaar}>
-      <View style={s.schakelBol} />
+    <View style={[s.chip, { backgroundColor: `${d.kleur}29` }]}>
+      <Icoon naam="gekozen" grootte={14} kleur={C.textPrimary} />
+      <Text style={s.chipTekst}>{d.label}</Text>
     </View>
   );
 }
 
+/**
+ * Een schakelaar zoals Schakelaar.tsx hem tekent. iOS: de Switch van het
+ * systeem met het merkrood als aan-kleur. Android: het M3-schuifje, aan een
+ * grote witte knop op een rode baan, uit een kleine knop in een omlijnde baan.
+ */
+function Schakelaar({ aan = true }: { aan?: boolean }) {
+  if (isIOS) {
+    return (
+      <View style={[s.schakelaar, !aan && s.schakelaarUit]}>
+        <View style={[s.schakelBol, !aan && s.schakelBolUit]} />
+      </View>
+    );
+  }
+  return (
+    <View style={[s.m3Baan, !aan && s.m3BaanUit]}>
+      <View style={aan ? s.m3Knop : s.m3KnopUit} />
+    </View>
+  );
+}
+
+/**
+ * Het icoon vooraan een instellingenrij, als in InstellingenScreen. iOS: wit
+ * in een gekleurd tegeltje. Android: los op 24 (M3-lijstitem), een dienst in
+ * zijn eigen kleur en de rest in textSecondary.
+ */
+function RijIcoon({ icoon, tegel }: { icoon: IcoonNaam | Dienst; tegel: string }) {
+  if (isIOS) {
+    return (
+      <View style={[s.instIcoon, { backgroundColor: tegel }]}>
+        {typeof icoon === 'string'
+          ? <Icoon naam={icoon} grootte={15} kleur="#fff" />
+          : <DienstIcoon dienst={icoon} grootte={15} kleur="#fff" />}
+      </View>
+    );
+  }
+  return typeof icoon === 'string'
+    ? <Icoon naam={icoon} grootte={24} kleur={C.textSecondary} />
+    : <DienstIcoon dienst={icoon} grootte={24} kleur={icoon.kleur} />;
+}
+
 // ── Schermen ────────────────────────────────────────────────────────────────
 
-/** De lijst "In de buurt", zoals na het openen van de app. */
+/**
+ * De lijst "In de buurt", zoals na het openen van de app. Net als daar geen
+ * grote titel (keuze Chris 01-09): bovenaan alleen de Live-pil.
+ */
 export function SchermLijst() {
   return (
     <View style={s.scherm}>
@@ -107,20 +249,16 @@ export function SchermLijst() {
       </View>
       <Text style={s.subkop}>Around your current location · 20 km</Text>
       <View style={s.chips}>
-        {DIENSTEN.slice(0, 3).map((d) => (
-          <View key={d.key} style={[s.chip, { backgroundColor: `${d.kleur}14`, borderColor: d.kleur }]}>
-            <MaterialCommunityIcons name={d.icoon as never} size={13} color={d.kleur} />
-            <Text style={[s.chipTekst, { color: d.kleur }]}>{d.label}</Text>
-          </View>
-        ))}
+        {DIENSTEN.slice(0, 3).map((d) => <Chip key={d.key} d={d} />)}
       </View>
-      <Text style={s.sectie}>TODAY</Text>
+      {/* T.sectie zet hem op iOS in kapitalen; Android houdt de zinsvorm. */}
+      <Text style={s.sectie}>Today</Text>
       <View style={s.lijst}>
         {VOORBEELDEN.map((m, i) => (
           <MeldingRij key={m.id} m={m} km={AFSTANDEN[i] ?? null} onPress={niets} />
         ))}
       </View>
-      <TabBalk actief={0} />
+      <TabBalk actief="buurt" />
     </View>
   );
 }
@@ -209,69 +347,72 @@ function Push({ titel, tekst, tijd }: { titel: string; tekst: string; tijd: stri
 }
 
 /**
- * Diensten aan/uit met een eigen straal. Zonder push (`metMeldingen` false,
- * Android zonder google-services.json) alleen de afstand per dienst, zoals
- * Instellingen die dan toont: geen "Alerts for" en geen "Warnings only".
+ * Diensten aan/uit met een eigen straal, als in Instellingen op dit platform.
+ * iOS: de grote titel, kopjes in kapitalen, tegeltjes en haarlijnen. Android:
+ * de kleine M3-kopbalk, kopjes in de accentkleur en lijstitems zonder tegel
+ * of scheidingslijn.
+ *
+ * Zonder push (`metMeldingen` false, Android zonder google-services.json)
+ * alleen de afstand per dienst, zoals Instellingen die dan toont: geen
+ * "Alerts for" en geen "Warnings only".
  */
 export function SchermDiensten({ metMeldingen = true }: { metMeldingen?: boolean }) {
   const stralen = ['50 km', '10 km', '20 km', '30 km', '100 km', '10 km'];
+  const kop = [s.groepKop, !isIOS && s.instKopAndroid];
   if (!metMeldingen) {
     return (
       <View style={s.scherm}>
-        <Text style={s.schermTitel}>Settings</Text>
-        <Text style={s.groepKop}>DISTANCE</Text>
+        <Text style={isIOS ? s.schermTitel : s.kopbalkTitel}>Settings</Text>
+        <Text style={kop}>Distance</Text>
         <View style={s.groep}>
           {DIENSTEN.map((d, i) => (
-            <View key={d.key} style={[s.instRij, i > 0 && s.scheiding]}>
-              <View style={[s.instIcoon, { backgroundColor: d.kleur }]}>
-                <MaterialCommunityIcons name={d.icoon as never} size={15} color="#fff" />
-              </View>
-              <Text style={[s.rijLabel, { flex: 1 }]}>{d.label}</Text>
+            <View key={d.key} style={[s.instRij, isIOS && i > 0 && s.scheiding]}>
+              <RijIcoon icoon={d} tegel={d.kleur} />
+              <Text style={[s.rijLabel, !isIOS && s.instLabelAndroid, { flex: 1 }]}>{d.label}</Text>
               <Text style={[s.rijWaarde, { color: d.kleur, fontWeight: '600' }]}>{stralen[i]}</Text>
             </View>
           ))}
         </View>
-        <TabBalk actief={2} />
+        <TabBalk actief="instellingen" />
       </View>
     );
   }
   return (
     <View style={s.scherm}>
-      <Text style={s.schermTitel}>Settings</Text>
-      <Text style={s.groepKop}>ALERTS FOR</Text>
+      <Text style={isIOS ? s.schermTitel : s.kopbalkTitel}>Settings</Text>
+      <Text style={kop}>Alerts for</Text>
       <View style={s.groep}>
         {DIENSTEN.map((d, i) => (
-          <View key={d.key} style={[s.instRij, i > 0 && s.scheiding]}>
-            <View style={[s.instIcoon, { backgroundColor: d.kleur }]}>
-              <MaterialCommunityIcons name={d.icoon as never} size={15} color="#fff" />
-            </View>
+          <View key={d.key} style={[s.instRij, isIOS && i > 0 && s.scheiding]}>
+            <RijIcoon icoon={d} tegel={d.kleur} />
             <View style={{ flex: 1 }}>
-              <Text style={s.rijLabel}>{d.label}</Text>
+              <Text style={[s.rijLabel, !isIOS && s.instLabelAndroid]}>{d.label}</Text>
               <Text style={s.rijSub}>Within {stralen[i]}</Text>
             </View>
             <Schakelaar />
           </View>
         ))}
       </View>
-      <Text style={s.groepKop}>GENERAL</Text>
+      <Text style={kop}>General</Text>
       <View style={s.groep}>
         <View style={s.instRij}>
-          <View style={[s.instIcoon, { backgroundColor: '#ff9500' }]}>
-            <MaterialCommunityIcons name="alert" size={15} color="#fff" />
-          </View>
+          <RijIcoon icoon="alleenWaarschuwingen" tegel="#ff9500" />
           <View style={{ flex: 1 }}>
-            <Text style={s.rijLabel}>Warnings only</Text>
+            <Text style={[s.rijLabel, !isIOS && s.instLabelAndroid]}>Warnings only</Text>
             <Text style={s.rijSub}>Alert only for Watch and Act or higher</Text>
           </View>
-          <View style={[s.schakelaar, s.schakelaarUit]}>
-            <View style={[s.schakelBol, s.schakelBolUit]} />
-          </View>
+          <Schakelaar aan={false} />
         </View>
       </View>
-      <TabBalk actief={2} />
+      <TabBalk actief="instellingen" />
     </View>
   );
 }
+
+const DETAIL_RIJEN: Array<{ icoon: IcoonNaam; naam: string; post: string; nr: string }> = [
+  { icoon: 'bron', naam: 'CFA', post: 'Country Fire Authority', nr: 'VIC' },
+  { icoon: 'eenheden', naam: '6 resources', post: 'assigned to this incident', nr: 'Live' },
+];
 
 /** Detail van een melding: kaart, straatbeeld, route en voertuigen. */
 export function SchermDetail() {
@@ -291,7 +432,7 @@ export function SchermDetail() {
             <Rect x={78} y={18} width={9} height={10} fill="#e8eef5" />
           </Svg>
           <View style={s.verrekijker}>
-            <MaterialCommunityIcons name="binoculars" size={11} color="#fff" />
+            <Icoon naam="straatbeeld" grootte={11} kleur="#fff" />
           </View>
         </View>
       </View>
@@ -305,7 +446,7 @@ export function SchermDetail() {
         <View style={s.kaartje}>
           <View style={s.navRij}>
             <View style={s.navIcoon}>
-              <MaterialCommunityIcons name="navigation-variant" size={15} color="#fff" />
+              <Icoon naam="route" grootte={15} kleur="#fff" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.rijLabel}>Lancefield Rd, Kilmore</Text>
@@ -314,14 +455,11 @@ export function SchermDetail() {
             <Text style={s.rijWaarde}>1.2 km</Text>
           </View>
         </View>
-        <Text style={s.groepKop}>FROM THE AGENCY</Text>
+        <Text style={s.groepKop}>From the agency</Text>
         <View style={s.kaartje}>
-          {[
-            ['shield-check-outline', 'CFA', 'Country Fire Authority', 'VIC'],
-            ['account-group-outline', '6 resources', 'assigned to this incident', 'Live'],
-          ].map(([icoon, naam, post, nr], i) => (
+          {DETAIL_RIJEN.map(({ icoon, naam, post, nr }, i) => (
             <View key={nr} style={[s.voertuig, i > 0 && s.scheiding]}>
-              <MaterialCommunityIcons name={icoon as never} size={18} color={C.brandweer} />
+              <Icoon naam={icoon} grootte={18} kleur={C.brandweer} />
               <View style={{ flex: 1 }}>
                 <Text style={s.rijLabel}>{naam}</Text>
                 <Text style={s.rijSub}>{post}</Text>
@@ -330,7 +468,7 @@ export function SchermDetail() {
             </View>
           ))}
         </View>
-        <Text style={s.groepKop}>TIMELINE</Text>
+        <Text style={s.groepKop}>Timeline</Text>
         <View style={[s.kaartje, { paddingVertical: 10 }]}>
           {[
             ['2:02 pm', 'Grass fire reported by CFA', C.brandweer],
@@ -350,13 +488,13 @@ export function SchermDetail() {
 
 /** Trial preview on the paywall: what you get today, during and after. */
 export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null; proefTekst: string }) {
-  const stappen = [
-    { icoon: 'lock-open-variant', kleur: C.success, kop: 'Today', tekst: 'Everything unlocked, free.' },
+  const stappen: Array<{ icoon: IcoonNaam; kleur: string; kop: string; tekst: string }> = [
+    { icoon: 'ontgrendeld', kleur: C.success, kop: 'Today', tekst: 'Everything unlocked, free.' },
     {
-      icoon: 'bell-ring', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`,
+      icoon: PUSH_BESCHIKBAAR ? 'meldingen' : 'kaart', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`,
       tekst: PUSH_BESCHIKBAAR ? 'Alerts, the map and every incident near you.' : 'The map and every incident near you.',
     },
-    { icoon: 'star', kleur: C.accent, kop: 'After that', tekst: prijsZin ? `${prijsZin}. Cancel any time.` : 'The yearly price. Cancel any time.' },
+    { icoon: 'beoordelen', kleur: C.accent, kop: 'After that', tekst: prijsZin ? `${prijsZin}. Cancel any time.` : 'The yearly price. Cancel any time.' },
   ];
   return (
     <View style={s.scherm}>
@@ -370,7 +508,7 @@ export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null;
           <View key={st.kop} style={s.tlRij}>
             <View style={s.tlKolom}>
               <View style={[s.tlBol, { backgroundColor: st.kleur }]}>
-                <MaterialCommunityIcons name={st.icoon as never} size={15} color="#fff" />
+                <Icoon naam={st.icoon} grootte={15} kleur="#fff" />
               </View>
               {i < stappen.length - 1 && <View style={s.tlLijn} />}
             </View>
@@ -384,7 +522,7 @@ export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null;
       <View style={s.voordelen}>
         {['Live incidents near you', PUSH_BESCHIKBAAR ? 'Bushfire, flood and crash alerts' : 'Bushfires, floods and crashes', 'Every state in one app', 'No ads'].map((t) => (
           <View key={t} style={s.voordeel}>
-            <MaterialCommunityIcons name="check-circle" size={17} color={C.success} />
+            <Icoon naam="inbegrepen" grootte={17} kleur={C.success} />
             <Text style={s.voordeelTekst}>{t}</Text>
           </View>
         ))}
@@ -404,37 +542,63 @@ const s = StyleSheet.create({
     borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,
   },
   pilStip: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.success },
-  pilTekst: { fontSize: 12, fontWeight: '600', color: C.textPrimary },
+  pilTekst: { fontSize: 12, fontWeight: F.weightSemibold, color: C.textPrimary },
   subkop: { ...T.klein, fontSize: 12, color: C.textSecondary, paddingHorizontal: 18, marginTop: 10 },
   chips: { flexDirection: 'row', gap: 6, paddingHorizontal: 14, marginTop: 10 },
-  chip: {
+  chip: isIOS ? {
     flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1,
     borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5,
+  } : {
+    // M3-filterchip op de schaal van dit voorbeeld; in BuurtScreen 32 hoog
+    // met hoek 8, vooraan 8 en achteraan 16.
+    flexDirection: 'row', alignItems: 'center', gap: 6, height: 26,
+    borderRadius: 7, paddingLeft: 7, paddingRight: 13,
   },
-  chipTekst: { fontSize: 11.5, fontWeight: '600' },
+  chipTekst: isIOS
+    ? { fontSize: 11.5, fontWeight: '600' }
+    : { fontSize: 11.5, fontWeight: F.weightMedium, letterSpacing: 0.1, color: C.textPrimary },
   sectie: { ...T.sectie, fontSize: 11, color: C.textSecondary, marginTop: 14, marginBottom: 6, marginLeft: 18 },
   lijst: { paddingHorizontal: 12 },
 
-  tabOmhulsel: { position: 'absolute', left: 0, right: 0, bottom: 22, alignItems: 'center' },
-  tabRij: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  tabZoek: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.97)',
-    alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: C.border,
-    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 3 },
+  // iOS 26: pil en zoekrondje zweven boven de lijst, als glas.
+  tabOmhulsel: {
+    position: 'absolute', left: 0, right: 0, bottom: 22,
+    flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16,
   },
   tabPil: {
-    flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 24,
+    flex: 1, flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 999,
     padding: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: C.border,
-    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 3 },
+    boxShadow: '0px 3px 20px rgba(0, 0, 0, 0.12)',
   },
-  tab: { alignItems: 'center', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20 },
-  tabActief: { backgroundColor: C.accentSoft },
-  tabLabel: { fontSize: 10, fontWeight: '600', color: C.textMuted, marginTop: 1 },
+  tab: { flex: 1, alignItems: 'center', paddingHorizontal: 4, paddingVertical: 5, borderRadius: 999 },
+  tabActief: { backgroundColor: C.chipBg },
+  tabZoek: {
+    width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.97)',
+    alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: C.border,
+    boxShadow: '0px 3px 20px rgba(0, 0, 0, 0.12)',
+  },
+  tabLabel: { fontSize: 11, lineHeight: 13, fontWeight: F.weightSemibold, marginTop: 1 },
+  // Ouder iOS: de doorschijnende balk over de volle breedte, met ruimte
+  // voor de thuisbalk eronder.
+  iosBalk: {
+    position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row',
+    paddingTop: 6, paddingBottom: 26, backgroundColor: 'rgba(249,249,249,0.94)',
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border,
+  },
+  iosTab: { flex: 1, alignItems: 'center' },
+  // Android: de M3-navigatiebalk, 80 hoog, plus de strook van de gebarenbalk.
+  m3Balk: {
+    position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row',
+    backgroundColor: C.card, paddingTop: 12, paddingBottom: 30,
+  },
+  m3Tab: { flex: 1, alignItems: 'center' },
+  m3Indicator: { width: 64, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  m3Label: { fontSize: 12, lineHeight: 16, letterSpacing: 0.5, fontWeight: F.weightMedium, marginTop: 4 },
 
   blad: {
     position: 'absolute', left: 10, right: 10, bottom: 18, backgroundColor: C.card,
     borderRadius: 22, padding: 16,
-    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 3 },
+    boxShadow: '0px 3px 24px rgba(0, 0, 0, 0.12)',
   },
   bladGreep: { width: 36, height: 4, borderRadius: 2, backgroundColor: C.border, alignSelf: 'center', marginBottom: 10 },
   bladKop: { ...T.kop, fontSize: 16, color: C.textPrimary, marginBottom: 10 },
@@ -445,7 +609,7 @@ const s = StyleSheet.create({
   schuifBol: {
     position: 'absolute', left: '19%', width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff',
     borderWidth: StyleSheet.hairlineWidth, borderColor: C.border,
-    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 3, shadowOffset: { width: 0, height: 1 },
+    boxShadow: '0px 1px 6px rgba(0, 0, 0, 0.25)',
   },
 
   lockDatum: { color: 'rgba(255,255,255,0.9)', fontSize: 16, fontWeight: '600', textAlign: 'center', marginTop: 70 },
@@ -463,30 +627,53 @@ const s = StyleSheet.create({
   pushTekst: { fontSize: 12, color: '#3a3a3c', marginTop: 1 },
 
   schermTitel: { ...T.titel, fontSize: 26, color: C.textPrimary, paddingHorizontal: 18, paddingTop: 58 },
+  // Android-instellingen: de titel in de kleine M3-kopbalk (64 hoog, titleLarge).
+  kopbalkTitel: {
+    fontSize: 22, fontWeight: F.weightRegular, lineHeight: 28, color: C.textPrimary,
+    paddingHorizontal: 16, paddingTop: 64, paddingBottom: 18,
+  },
   groepKop: { ...T.sectie, fontSize: 11, color: C.textSecondary, marginTop: 18, marginBottom: 6, marginLeft: 18 },
-  groep: { backgroundColor: C.card, borderRadius: 14, marginHorizontal: 12, paddingLeft: 12 },
-  instRij: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingRight: 12 },
+  // Het M3-kopje in de accentkleur, gelijk met de iconen eronder.
+  instKopAndroid: { fontSize: 12, lineHeight: 16, color: C.accentTekst, marginTop: 20, marginLeft: 28 },
+  groep: { backgroundColor: C.card, borderRadius: 14, marginHorizontal: 12, paddingLeft: isIOS ? 12 : 16 },
+  instRij: {
+    flexDirection: 'row', alignItems: 'center', gap: isIOS ? 10 : 16,
+    paddingVertical: 10, paddingRight: isIOS ? 12 : 16,
+  },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.separator },
   instIcoon: { width: 28, height: 28, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
-  rijLabel: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
+  // M3-lijstitem: de titel in gewoon gewicht (bodyLarge).
+  instLabelAndroid: { fontWeight: F.weightRegular },
+  rijLabel: { fontSize: 14, fontWeight: F.weightSemibold, color: C.textPrimary },
   rijSub: { fontSize: 11.5, color: C.textSecondary, marginTop: 1 },
   rijWaarde: { fontSize: 13, color: C.textSecondary },
   schakelaar: {
-    width: 44, height: 26, borderRadius: 13, backgroundColor: C.success, padding: 2, alignItems: 'flex-end',
+    width: 44, height: 26, borderRadius: 13, backgroundColor: C.accent, padding: 2, alignItems: 'flex-end',
   },
   schakelaarUit: { backgroundColor: C.chipBg, alignItems: 'flex-start' },
   schakelBol: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff' },
-  schakelBolUit: { shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } },
-  speelt: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'center', marginTop: 22,
-    backgroundColor: C.accentSoft, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8,
+  schakelBolUit: { boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.15)' },
+  // M3-schakelaar op de schaal van dit voorbeeld (echt: baan 52×32, knop 24/16).
+  m3Baan: {
+    width: 42, height: 26, borderRadius: 13, borderWidth: 2, borderColor: C.accent,
+    backgroundColor: C.accent, justifyContent: 'center', alignItems: 'flex-end', paddingHorizontal: 1,
   },
-  speeltTekst: { fontSize: 13, fontWeight: '600', color: C.accent },
+  m3BaanUit: {
+    backgroundColor: C.schakelBaan, borderColor: C.schakelRand, alignItems: 'flex-start', paddingHorizontal: 4.5,
+  },
+  m3Knop: {
+    width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff',
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.20)',
+  },
+  m3KnopUit: {
+    width: 13, height: 13, borderRadius: 6.5, backgroundColor: C.schakelKnop,
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.20)',
+  },
 
   detailKaart: { height: 250 },
   straatbeeld: {
     position: 'absolute', left: 12, top: 58, width: 110, height: 70, borderRadius: 10,
-    overflow: 'hidden', borderWidth: 2, borderColor: '#fff',
+    overflow: 'hidden', borderWidth: 2, borderColor: C.card,
   },
   verrekijker: { position: 'absolute', right: 4, bottom: 4, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 999, padding: 3 },
   detailInhoud: { padding: 12, gap: 10 },
@@ -497,7 +684,8 @@ const s = StyleSheet.create({
   navRij: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   navIcoon: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#2f6fde', alignItems: 'center', justifyContent: 'center' },
   voertuig: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
-  nummer: { fontSize: 12, color: C.textMuted },
+  // textSecondary, als in DetailScreen: textMuted haalt als tekst geen 4.5:1.
+  nummer: { fontSize: 12, color: C.textSecondary },
 
   proefKop: { alignItems: 'center', paddingTop: 66 },
   voordelen: { marginHorizontal: 22, marginTop: 20, gap: 10 },

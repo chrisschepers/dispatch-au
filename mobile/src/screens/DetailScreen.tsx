@@ -3,13 +3,17 @@
  * voertuig, plus de oorspronkelijke meldtekst voor wie het naadje wil weten.
  * Codes vertalen we; we verbergen ze niet voor wie doorleest.
  */
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Share, Image, Linking, Platform } from 'react-native';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView, Share, Image, Linking, Platform, Pressable, useWindowDimensions,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MiniKaart } from '../components/MiniKaart';
 import { BrandendIcoon, BotsingIcoon, VlammenIcoon } from '../components/IncidentIcoon';
-import type { RouteProp } from '@react-navigation/native';
+import type { CompositeNavigationProp, RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeBottomTabNavigationProp } from '@react-navigation/bottom-tabs/unstable';
 import {
   haalMelding, haalVerloop,
   type Melding, type VerloopRegel,
@@ -19,36 +23,26 @@ import { misschienVragen } from '../recensie';
 import { LookAround } from '../../modules/look-around';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlekSnel } from '../locatie';
-import { vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst } from '../vertaal';
-import { T, type Palet } from '../theme';
+import {
+  vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst, plaatsOnnauwkeurig,
+} from '../vertaal';
+import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { Drukbaar } from '../components/Drukbaar';
+import { Icoon } from '../components/Icoon';
+import { ICONEN, type IcoonNaam } from '../iconen';
 import { bronVan, domeinVan } from '../bronnen';
+import type { StapelParams, TabParams } from '../navigatie';
+import { useInhoudMaat } from '../inhoudMaat';
+import { mengKleur, opKleur } from '../kleur';
 
 type Rt =RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
-
-/**
- * Staat de pin op de echte plek? De backend zegt zelf hoe nauwkeurig hij de
- * melding kon plaatsen: 'street' is de straat zelf, 'city' het midden van
- * de plaats, 'region' nog ruwer.
- */
-function plaatsOnnauwkeurig(m: Melding): boolean {
-  const p = m.geoPrecision;
-  return !!p && p !== 'street' && p !== 'hecto' && p !== 'none';
-}
-
-/**
- * De uitspaartruc in BrandendIcoon schildert de vlamrand in de fondkleur en
- * heeft dus een dékkende kleur nodig. De tegel achter het titel-icoon is de
- * dienstkleur op 9% over een witte kaart; dit mengt die tint naar één vaste
- * kleur zodat de rand naadloos wegvalt.
- */
-function tegelFond(kleur: string): string {
-  const n = parseInt(kleur.slice(1), 16);
-  const meng = (kanaal: number) => Math.round(kanaal + (255 - kanaal) * (1 - 0x18 / 255));
-  const r = meng((n >> 16) & 255), g = meng((n >> 8) & 255), b = meng(n & 255);
-  return `rgb(${r}, ${g}, ${b})`;
-}
+// Detail zit in de stapel van een tabblad, en het kaartje springt naar een
+// ander tabblad: dus beide navigators in één type.
+type Nav = CompositeNavigationProp<
+  NativeStackNavigationProp<StapelParams, 'Detail'>,
+  NativeBottomTabNavigationProp<TabParams>
+>;
 
 /**
  * Navigeren naar de melding (wens Chris 27-09). iOS: routebeschrijving in
@@ -77,9 +71,19 @@ export default function DetailScreen() {
   const styles = useStijlen(maak_styles);
   const kaartStijl = useKaartStijl();
   const { melding: begin } = useRoute<Rt>().params;
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<Nav>();
+  // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
+  const { marge, kolom } = useInhoudMaat();
+  // Grote tekst (vanaf 150%): de routeregel mag dan over twee regels.
+  const groot = useWindowDimensions().fontScale >= 1.5;
   const [melding, setMelding] = useState<Melding>(begin);
   const v = vertaalMelding(melding);
+  // De uitspaartruc in BrandendIcoon schildert de vlamrand in de fondkleur en
+  // heeft dus een dékkende kleur nodig. De tegel achter het titel-icoon is de
+  // dienstkleur op 0x18 over de grond van het scherm; dit is diezelfde tint
+  // als één vaste kleur, zodat de rand naadloos wegvalt. Eerst mengde dit
+  // altijd naar wit, wat in het donker een lichte rand om de vlam gaf.
+  const tegelFond = mengKleur(v.kleur, C.bg, 0x18 / 255);
   const [verloop, setVerloop] = useState<VerloopRegel[]>([]);
   const { inst } = useInstellingen();
   const [mijnPlek, setMijnPlek] = useState<{ lat: number; lon: number } | null>(null);
@@ -94,7 +98,17 @@ export default function DetailScreen() {
   // Terug uit een melding: het moment om eventueel om een recensie te vragen
   // (recensie.ts beslist of het er de tijd voor is). Kort wachten zodat de
   // terug-animatie eerst klaar is.
-  useEffect(() => () => { setTimeout(() => { void misschienVragen(); }, 700); }, []);
+  // Niet als je via het kaartje weggaat: in de kaartstapel haalt dat Detail
+  // van de stapel (pop terug naar de kaart), en dan kwam de vraag over de
+  // kaart heen die je net opende.
+  // In de stapel van Buurt of Zoeken blijft Detail staan (alleen het tabblad
+  // wisselt); kom je terug, dan telt een gewone terug weer.
+  const naarKaart = useRef(false);
+  useEffect(() => navigation.addListener('focus', () => { naarKaart.current = false; }), [navigation]);
+  useEffect(() => () => {
+    if (naarKaart.current) return;
+    setTimeout(() => { void misschienVragen(); }, 700);
+  }, []);
 
   useEffect(() => {
     bepaalPlekSnel(inst).then((p) => { if (p && p.bron !== 'geen' && p.bron !== 'buiten-au') setMijnPlek(p); }).catch(() => {});
@@ -111,16 +125,42 @@ export default function DetailScreen() {
   }, [begin.id]);
 
   // Delen hoort in de kop: het is een bijactie, geen hoofdknop (audit 20-08).
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Drukbaar onPress={deel} label="Share incident" trillen={false} style={{ padding: 4 }}>
-          <MaterialCommunityIcons name="share-variant-outline" size={22} color={C.accent} />
-        </Drukbaar>
-      ),
-    });
+  // iOS: een echte UIBarButtonItem met het deelsymbool van het systeem, in de
+  // tintkleur van de kop (het accent); op iOS 26 krijgt hij vanzelf een
+  // glazen capsule. Met een icoon toont iOS het label niet; VoiceOver leest
+  // 'Share incident'.
+  // Android: een M3-actie in de kopbalk. Raakvlak 48 dp, icoon in
+  // onSurfaceVariant, ronde rimpel van 40 dp zoals een M3-icoonknop. Gewone
+  // Pressable: Drukbaar kent geen randloze rimpel.
+  // Elke optie alleen op haar eigen platform: native-stack verwerkt de
+  // knoppenlijst ook op Android. Opnieuw zetten als de volledige melding
+  // binnen is (met straat en status), anders deelt de knop de korte versie.
+  useLayoutEffect(() => {
+    navigation.setOptions(isIOS
+      ? {
+        unstable_headerRightItems: () => [{
+          type: 'button',
+          label: 'Share',
+          icon: { type: 'sfSymbol', name: ICONEN.delen.ios },
+          onPress: deel,
+          accessibilityLabel: 'Share incident',
+        }],
+      }
+      : {
+        headerRight: () => (
+          <Pressable
+            onPress={deel}
+            accessibilityRole="button"
+            accessibilityLabel="Share incident"
+            android_ripple={{ color: C.rimpel, borderless: true, radius: 20 }}
+            style={styles.deelKnop}
+          >
+            <Icoon naam="delen" grootte={24} kleur={C.textSecondary} />
+          </Pressable>
+        ),
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [melding.id, melding.city]);
+  }, [navigation, melding, C]);
 
   const lat = melding.lat, lon = melding.lon ?? melding.lng;
   const opStraat = lat != null && lon != null && !plaatsOnnauwkeurig(melding);
@@ -149,6 +189,12 @@ export default function DetailScreen() {
   const afstand = mijnPlek ? afstandTekst(afstandKm(mijnPlek.lat, mijnPlek.lon, melding)) : null;
   const plaatsNaam = melding.city ? nettePlaats(melding.city) : null;
   const bron = bronVan(melding.sourceRegion);
+  // Rijen van het blok "From the agency" hieronder.
+  const vanDeDienst: Array<{ icoon: IcoonNaam; titel: string; sub: string | null }> = [
+    { icoon: 'bron', titel: melding.agency || 'Emergency services', sub: bron ? `Source: ${bron.naam}` : melding.sourceRegion ? melding.sourceRegion.toUpperCase() : null },
+    { icoon: 'status', titel: melding.status || 'Status not published', sub: melding.updated ? `updated ${tijdTekst(melding.updated)}` : null },
+    ...(melding.resources ? [{ icoon: 'eenheden' as const, titel: `${melding.resources} ${melding.resources === 1 ? 'resource' : 'resources'} assigned`, sub: null }] : []),
+  ];
 
   async function deel() {
     const plek = plaatsRegel(melding.location, melding.city);
@@ -158,24 +204,30 @@ export default function DetailScreen() {
   }
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.inhoud}>
+    <ScrollView
+      style={styles.root}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.inhoud, kolom, { paddingHorizontal: marge }]}
+    >
       {/* Icoon in plaats van emoji (audit 20-08): dezelfde reden als in de
           lijst en de tabbalk. Het is meteen het soort-icoon van de kaart. */}
       <View style={styles.titelRij}>
         <View style={[styles.titelIcoon, { backgroundColor: `${v.kleur}18` }]}>
           {v.kaartBrandend ? (
-            <BrandendIcoon object={v.kaartBrandend} maat={30} kleur={v.kleur} fond={tegelFond(v.kleur)} />
+            <BrandendIcoon object={v.kaartBrandend} maat={30} kleur={v.kleur} fond={tegelFond} />
           ) : v.kaartBotsing ? (
-            <BotsingIcoon maat={30} kleur={v.kleur} fond={tegelFond(v.kleur)} />
+            <BotsingIcoon maat={30} kleur={v.kleur} fond={tegelFond} />
           ) : v.kaartVlammen ? (
             <VlammenIcoon vlammen={v.kaartVlammen} maat={28} kleur={v.kleur} />
           ) : (
             <MaterialCommunityIcons name={v.kaartIcoon as never} size={26} color={v.kleur} />
           )}
         </View>
-        <Text style={[styles.titel, { flex: 1 }]}>{v.titel}</Text>
+        {/* Kop voor de schermlezer; selecteerbaar, zoals alle gegevens
+            hieronder die je wilt kunnen kopiëren of doorsturen. */}
+        <Text style={[styles.titel, { flex: 1 }]} accessibilityRole="header" selectable>{v.titel}</Text>
       </View>
-      <Text style={styles.sub}>
+      <Text style={styles.sub} selectable>
         {[plaatsRegel(melding.location, melding.city), tijdTekst(melding.timestamp)].filter(Boolean).join(' · ')}
       </Text>
 
@@ -186,7 +238,7 @@ export default function DetailScreen() {
       {/* Australian Warning System level, with the agency's own advice. */}
       {v.opschaling ? (
         <View style={styles.opschaling}>
-          <MaterialCommunityIcons name="alert" size={20} color={C.accent} />
+          <Icoon naam="waarschuwing" grootte={20} kleur={C.accent} />
           <Text style={styles.opschalingTekst}>
             {v.opschaling}{melding.action ? ` · ${melding.action}` : ''}
           </Text>
@@ -200,7 +252,22 @@ export default function DetailScreen() {
           schaal={0.99}
           trillen={false}
           style={[kaartStijl, styles.kaartWrap]}
-          onPress={() => navigation.navigate('Tabs', { screen: 'Kaart', params: { lat, lon, id: melding.id } })}
+          label="Show this incident on the map"
+          // Het straatbeeld is een knop binnen deze knop; de schermlezer ziet
+          // alleen de buitenste. Daarom zit hij er ook als actie op, zodra
+          // het plaatje er echt staat.
+          acties={opStraat && beeldBron && straatbeeld === 'ok'
+            ? [{ naam: 'lookAround', label: 'Look around this place', doe: openBeeld }]
+            : undefined}
+          // pop: in de kaartstapel terug naar de bestaande kaart in plaats
+          // van een tweede kaart erbovenop. t: ook bij dezelfde plek als de
+          // vorige keer opnieuw inzoomen.
+          onPress={() => {
+            naarKaart.current = true;
+            navigation.navigate('KaartTab', {
+              screen: 'Kaart', params: { lat, lon, id: melding.id, t: Date.now() }, pop: true,
+            });
+          }}
         >
           <MiniKaart lat={lat} lon={lon} kleur={v.kleur} />
           {/* Straatbeeld linksboven, zoals in de grote app. Alleen als de pin
@@ -225,7 +292,7 @@ export default function DetailScreen() {
                 }}
               />
               <View style={styles.straatbeeldIcoon}>
-                <MaterialCommunityIcons name="binoculars" size={14} color="#fff" />
+                <Icoon naam="straatbeeld" grootte={14} kleur="#fff" />
               </View>
             </Drukbaar>
           )}
@@ -251,14 +318,16 @@ export default function DetailScreen() {
       {lat != null && lon != null && (
         <Drukbaar
           style={[kaartStijl, styles.navRij]}
+          // Een rij, geen knop: oplichten in plaats van inzakken (iOS).
+          markeer
           onPress={() => navigeer(lat, lon, plaatsRegel(melding.location, melding.city) || v.titel)}
           label={`Directions to ${plaatsNaam ?? 'the incident'}${afstand ? `, ${afstand}` : ''}`}
         >
           <View style={styles.navIcoon}>
-            <MaterialCommunityIcons name="navigation-variant" size={19} color="#fff" />
+            <Icoon naam="route" grootte={19} kleur="#fff" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.rijTitel} numberOfLines={1}>
+            <Text style={styles.rijTitel} numberOfLines={groot ? 2 : 1}>
               {plaatsRegel(melding.location, melding.city) || 'Incident location'}
             </Text>
             <Text style={styles.rijSub}>
@@ -266,7 +335,8 @@ export default function DetailScreen() {
             </Text>
           </View>
           {afstand ? <Text style={styles.nummer}>{afstand}</Text> : null}
-          <MaterialCommunityIcons name="chevron-right" size={18} color={C.textMuted} />
+          {/* Alleen iOS: Android kent geen chevron, daar zegt de drukstaat het. */}
+          {isIOS && <Icoon naam="chevron" grootte={18} kleur={C.textMuted} gewicht="semibold" />}
         </Drukbaar>
       )}
 
@@ -274,16 +344,12 @@ export default function DetailScreen() {
           Met de bron en het overheidsdomein erbij: Google Play wil dat elke
           melding herleidbaar is tot de officiële site (afwijzing 26-10). */}
       <View style={[kaartStijl, styles.blok]}>
-        <Text style={styles.blokKop}>From the agency</Text>
-        {[
-          ['shield-check-outline', melding.agency || 'Emergency services', bron ? `Source: ${bron.naam}` : melding.sourceRegion ? melding.sourceRegion.toUpperCase() : null],
-          ['progress-check', melding.status || 'Status not published', melding.updated ? `updated ${tijdTekst(melding.updated)}` : null],
-          ...(melding.resources ? [['account-group-outline', `${melding.resources} ${melding.resources === 1 ? 'resource' : 'resources'} assigned`, null]] : []),
-        ].map(([icoon, titel, sub], i) => (
-          <View key={String(icoon)} style={[styles.rij, i > 0 && styles.scheiding]}>
-            <MaterialCommunityIcons name={icoon as never} size={20} color={v.kleur} style={styles.rijIcoon} />
+        <Text style={styles.blokKop} accessibilityRole="header">From the agency</Text>
+        {vanDeDienst.map(({ icoon, titel, sub }, i) => (
+          <View key={icoon} style={[styles.rij, i > 0 && styles.scheiding]}>
+            <Icoon naam={icoon} grootte={20} kleur={v.kleur} style={styles.rijIcoon} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.rijTitel}>{titel}</Text>
+              <Text style={styles.rijTitel} selectable>{titel}</Text>
               {sub ? <Text style={styles.rijSub}>{sub}</Text> : null}
             </View>
           </View>
@@ -292,12 +358,13 @@ export default function DetailScreen() {
           <Drukbaar
             style={[styles.rij, styles.scheiding]}
             onPress={() => { Linking.openURL(melding.officialUrl!).catch(() => {}); }}
+            kopieerbaar
             label={`Open official advice on ${domeinVan(melding.officialUrl)}`}
           >
-            <MaterialCommunityIcons name="open-in-new" size={20} color={C.accent} style={styles.rijIcoon} />
+            <Icoon naam="extern" grootte={20} kleur={C.accent} style={styles.rijIcoon} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.rijTitel, { color: C.accent }]}>Official advice and warnings</Text>
-              <Text style={styles.rijSub}>{domeinVan(melding.officialUrl)}</Text>
+              <Text style={[styles.rijTitel, { color: C.accentTekst }]}>Official advice and warnings</Text>
+              <Text style={styles.rijSub} selectable>{domeinVan(melding.officialUrl)}</Text>
             </View>
           </Drukbaar>
         ) : null}
@@ -309,35 +376,41 @@ export default function DetailScreen() {
           precies wat de eenheden-lijst hierboven al zegt. */}
       {verloop.length > 1 && (
         <View style={[kaartStijl, styles.blok]}>
-          <Text style={styles.blokKop}>Timeline</Text>
-          {verloop.map((r, i) => (
-            <View key={`${r.at}-${i}`} style={styles.tlRij}>
-              {/* De lijn loopt door tussen de bolletjes, maar niet ná de
-                  laatste: anders lijkt het alsof er nog iets komt. */}
-              <View style={styles.tlKolom}>
-                <View style={[styles.tlBol, { backgroundColor: r.soort === 'alarmering' ? v.kleur : C.accent }]}>
-                  <MaterialCommunityIcons
-                    name={r.soort === 'alarmering' ? 'flash' : r.soort === 'opschaling' ? 'arrow-up-bold' : 'flag-checkered'}
-                    size={13}
-                    color="#fff"
-                  />
+          <Text style={styles.blokKop} accessibilityRole="header">Timeline</Text>
+          {verloop.map((r, i) => {
+            const bol = r.soort === 'alarmering' ? v.kleur : C.accent;
+            return (
+              <View key={`${r.at}-${i}`} style={styles.tlRij}>
+                {/* De lijn loopt door tussen de bolletjes, maar niet ná de
+                    laatste: anders lijkt het alsof er nog iets komt. */}
+                <View style={styles.tlKolom}>
+                  {/* Wit of bijna-zwart, wat het meest afsteekt: wit op het
+                      amber van de ambulance was 2:1. */}
+                  <View style={[styles.tlBol, { backgroundColor: bol }]}>
+                    <Icoon
+                      naam={r.soort === 'alarmering' ? 'alarmering' : r.soort === 'opschaling' ? 'opschaling' : 'afgerond'}
+                      grootte={13}
+                      kleur={opKleur(bol)}
+                      gewicht={r.soort === 'opschaling' ? 'bold' : 'regular'}
+                    />
+                  </View>
+                  {i < verloop.length - 1 && <View style={styles.tlLijn} />}
                 </View>
-                {i < verloop.length - 1 && <View style={styles.tlLijn} />}
+                <View style={styles.tlInhoud}>
+                  <Text style={styles.tlTijd} selectable>
+                    {new Date(r.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
+                    {r.kop ? `  ·  ${r.kop}` : ''}
+                  </Text>
+                  <Text style={styles.tlTekst} selectable>{r.tekst}</Text>
+                </View>
               </View>
-              <View style={styles.tlInhoud}>
-                <Text style={styles.tlTijd}>
-                  {new Date(r.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
-                  {r.kop ? `  ·  ${r.kop}` : ''}
-                </Text>
-                <Text style={styles.tlTekst}>{r.tekst}</Text>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
       )}
 
       <View style={[kaartStijl, styles.blok]}>
-        <Text style={styles.blokKop}>Good to know</Text>
+        <Text style={styles.blokKop} accessibilityRole="header">Good to know</Text>
         <Text style={styles.blokTekst}>
           This app shows public information published by the emergency services. It is not an
           emergency service and it can be delayed or incomplete. In an emergency, call 000. Always
@@ -351,37 +424,45 @@ export default function DetailScreen() {
 
 const maak_styles = (C: Palet) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  inhoud: { padding: 16, paddingBottom: 96, gap: 12 },
+  deelKnop: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  inhoud: { padding: 16, paddingBottom: 32, gap: 12 },
   titel: { ...T.titel, color: C.textPrimary },
   titelRij: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  // borderCurve 'continuous': de vloeiende iOS-hoek op vlakken met afgeronde
+  // hoeken; Android negeert hem.
   titelIcoon: {
-    width: 46, height: 46, borderRadius: 13,
+    width: 46, height: 46, borderRadius: 13, borderCurve: 'continuous',
     alignItems: 'center', justifyContent: 'center',
   },
   sub: { ...T.body, color: C.textSecondary, marginTop: -6 },
   kaartWrap: { height: 180, overflow: 'hidden' },
   straatbeeld: {
     position: 'absolute', left: 10, top: 10, width: 116, height: 74,
-    borderRadius: 10, overflow: 'hidden', backgroundColor: C.chipBg,
-    borderWidth: 2, borderColor: '#fff',
+    borderRadius: 10, borderCurve: 'continuous', overflow: 'hidden', backgroundColor: C.chipBg,
+    borderWidth: 2, borderColor: C.card,
   },
-  verborgen: { opacity: 0 },
+  // Onzichtbaar tot het plaatje er is, en dan ook niet aanraakbaar: een tik
+  // op die plek opent gewoon de kaart.
+  verborgen: { opacity: 0, pointerEvents: 'none' },
   straatbeeldIcoon: {
     position: 'absolute', right: 5, bottom: 5, borderRadius: 999,
     backgroundColor: 'rgba(0,0,0,0.55)', padding: 4,
   },
   navRij: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
   navIcoon: {
-    width: 32, height: 32, borderRadius: 9, backgroundColor: '#2f6fde',
+    width: 32, height: 32, borderRadius: 9, borderCurve: 'continuous', backgroundColor: '#2f6fde',
     alignItems: 'center', justifyContent: 'center',
   },
+  // Dicht vlak, geen glas: de kaart eromheen knipt af (overflow: 'hidden'),
+  // en glas mag geen knippende ouder hebben. Vast wit was in het donker wit
+  // op wit.
   kaartHint: {
     position: 'absolute', right: 10, bottom: 10,
-    backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999,
+    backgroundColor: C.zwevend, borderRadius: 999,
     paddingHorizontal: 10, paddingVertical: 5,
   },
-  pinHint: { ...T.klein, color: C.textMuted, marginTop: 6, marginHorizontal: 4, lineHeight: 18 },
-  kaartHintTekst: { fontSize: 12, fontWeight: '600', color: C.textPrimary },
+  pinHint: { ...T.klein, color: C.textSecondary, marginTop: 6, marginHorizontal: 4 },
+  kaartHintTekst: { fontSize: 12, fontWeight: F.weightSemibold, color: C.textPrimary },
   blok: { padding: 16 },
   tlRij: { flexDirection: 'row', gap: 12 },
   tlKolom: { alignItems: 'center', width: 24 },
@@ -391,21 +472,24 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   },
   tlLijn: { flex: 1, width: 2, backgroundColor: C.separator, marginVertical: 2 },
   tlInhoud: { flex: 1, paddingBottom: 14 },
-  tlTijd: { ...T.klein, color: C.textMuted, marginBottom: 2 },
-  tlTekst: { ...T.body, color: C.textPrimary, lineHeight: 21 },
-  blokKop: { ...T.sectie, color: C.textSecondary, textTransform: 'uppercase', marginBottom: 8 },
+  tlTijd: { ...T.klein, color: C.textSecondary, marginBottom: 2 },
+  tlTekst: { ...T.body, color: C.textPrimary },
+  blokKop: { ...T.sectie, color: C.textSecondary, marginBottom: 8 },
   blokTekst: { ...T.body, color: C.textPrimary },
   meldtekst: { ...T.klein, color: C.textSecondary },
   opschaling: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: C.accentSoft, borderRadius: 12,
+    backgroundColor: C.accentSoft, borderRadius: 12, borderCurve: 'continuous',
     paddingHorizontal: 12, paddingVertical: 10, marginTop: 2,
   },
-  opschalingTekst: { ...T.rij, color: C.accent, flex: 1 },
-  rijIcoon: { width: 24, textAlign: 'center' },
+  // accentTekst: het gewone accent haalt op accentSoft geen 4.5:1.
+  opschalingTekst: { ...T.rij, color: C.accentTekst, flex: 1 },
+  rijIcoon: { width: 24 },
   rij: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, gap: 10 },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.separator },
   rijTitel: { ...T.body, color: C.textPrimary },
-  rijSub: { ...T.klein, color: C.textMuted, marginTop: 2 },
-  nummer: { fontSize: 13, color: C.textMuted, fontVariant: ['tabular-nums'] },
+  // textSecondary, niet textMuted: dat is op wit maar ~2:1, te licht voor
+  // tekst die iets zegt. textMuted blijft voor chevrons en plaatshouders.
+  rijSub: { ...T.klein, color: C.textSecondary, marginTop: 2 },
+  nummer: { fontSize: T.klein.fontSize, color: C.textSecondary, fontVariant: ['tabular-nums'] },
 });

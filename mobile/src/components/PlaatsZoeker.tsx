@@ -18,10 +18,10 @@ import React, { useRef, useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, ActivityIndicator, Keyboard, Linking,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { T, type Palet } from '../theme';
+import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
 import { Drukbaar } from './Drukbaar';
+import { Icoon } from './Icoon';
 
 export interface PlaatsKeuze { naam: string; lat: number; lon: number }
 
@@ -155,17 +155,25 @@ export function PlaatsZoeker({
   return (
     <View>
       {waarde ? (
-        // Gekozen plaats: tik erop om hem te wissen en opnieuw te zoeken.
-        <Drukbaar style={styles.gekozen} onPress={() => { onWis(); zetTekst(''); setSuggesties([]); setStand('leeg'); }}>
-          <MaterialCommunityIcons name="map-marker" size={16} color={C.accent} />
+        // Gekozen plaats: tik erop om hem te wissen en opnieuw te zoeken. Het
+        // kruisje zegt dat alleen in beeld, dus de schermlezer krijgt het zo.
+        <Drukbaar
+          style={styles.gekozen}
+          label={`${waarde}. Tap to clear and choose another place`}
+          onPress={() => { onWis(); zetTekst(''); setSuggesties([]); setStand('leeg'); }}
+        >
+          <Icoon naam="plaats" grootte={16} kleur={C.accent} />
           <Text style={styles.gekozenTekst}>{waarde}</Text>
-          <MaterialCommunityIcons name="close-circle" size={17} color={C.textMuted} />
+          <Icoon naam="wissen" grootte={17} kleur={C.textMuted} />
         </Drukbaar>
       ) : (
         <View style={styles.invoerRij}>
-          <MaterialCommunityIcons name="map-marker-outline" size={18} color={C.textMuted} />
+          <Icoon naam="plaatsZoeken" grootte={18} kleur={C.textMuted} />
           <TextInput
             style={styles.invoer}
+            // Een plaatshouder is geen naam: hij verdwijnt zodra je typt.
+            accessibilityLabel="Suburb or town"
+            accessibilityHint="Press search to look it up"
             value={tekst}
             onChangeText={typ}
             onSubmitEditing={zoek}
@@ -174,8 +182,14 @@ export function PlaatsZoeker({
             autoCapitalize="words"
             autoCorrect={false}
             returnKeyType="search"
-            accessibilityLabel="Suburb or town"
-            accessibilityHint="Press search to look it up"
+            // Android: geen streep onder het veld (het staat al als rij in
+            // een kaart) en cursor, grepen en selectie in het accent van het
+            // palet. iOS houdt de standaard: daar kleurt selectionColor ook
+            // de cursor, en met deze doorzichtigheid zie je die nauwelijks.
+            underlineColorAndroid="transparent"
+            cursorColor={C.accent}
+            selectionHandleColor={C.accent}
+            selectionColor={isIOS ? undefined : `${C.accent}55`}
           />
           {zoekt ? (
             <ActivityIndicator size="small" color={C.textMuted} />
@@ -201,7 +215,8 @@ export function PlaatsZoeker({
           {suggesties.map((s, i) => (
             <Drukbaar
               key={`${s.naam}-${s.lat}`}
-              schaal={0.99}
+              // Oplichten zoals een rij in een lijst, niet inzakken.
+              markeer
               style={[styles.suggestie, i > 0 && styles.scheiding]}
               onPress={() => {
                 onKies(s);
@@ -211,7 +226,7 @@ export function PlaatsZoeker({
                 Keyboard.dismiss();
               }}
             >
-              <MaterialCommunityIcons name="map-marker" size={16} color={C.textMuted} />
+              <Icoon naam="plaats" grootte={16} kleur={C.textMuted} />
               <Text style={styles.suggestieTekst}>{s.naam}</Text>
             </Drukbaar>
           ))}
@@ -239,17 +254,26 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999,
     backgroundColor: C.accentSoft, alignSelf: 'flex-start',
   },
-  gekozenTekst: { ...T.body, color: C.textPrimary, fontWeight: '600' },
+  gekozenTekst: { ...T.body, color: C.textPrimary, fontWeight: F.weightSemibold },
   invoerRij: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  invoer: { flex: 1, ...T.body, fontSize: 16, color: C.textPrimary, paddingVertical: 6 },
+  // Raakvlak van het platform: 44 pt (iOS) of 48 dp (Android), ook voor de
+  // suggesties en de zoekknop. hitSlop helpt daar niet: de lijst knipt af
+  // (overflow).
+  invoer: { flex: 1, ...T.body, fontSize: 16, color: C.textPrimary, paddingVertical: 6, minHeight: isIOS ? 44 : 48 },
+  // Zoeken gebeurt pas op deze knop of de zoektoets (Nominatim-beleid, zie
+  // boven), dus een echte knop met tekst in het accent, als een capsule.
   zoekKnop: {
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
-    backgroundColor: C.accentSoft, minHeight: 36, justifyContent: 'center',
+    paddingHorizontal: 14, borderRadius: 999, borderCurve: 'continuous',
+    backgroundColor: C.accentSoft, minHeight: isIOS ? 44 : 48, justifyContent: 'center',
   },
-  zoekKnopTekst: { ...T.body, fontSize: 15, fontWeight: '600', color: C.accent },
+  zoekKnopTekst: { ...T.body, fontSize: 15, fontWeight: F.weightSemibold, color: C.accent },
   melding: { ...T.klein, color: C.textSecondary, marginTop: 6 },
-  lijst: { marginTop: 8, borderRadius: 10, backgroundColor: C.chipBg, overflow: 'hidden' },
-  suggestie: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 11 },
+  // borderCurve: de vloeiende iOS-hoek; Android negeert hem.
+  lijst: { marginTop: 8, borderRadius: 10, borderCurve: 'continuous', backgroundColor: C.chipBg, overflow: 'hidden' },
+  suggestie: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 11,
+    minHeight: isIOS ? 44 : 48,
+  },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.border },
   suggestieTekst: { ...T.body, color: C.textPrimary },
   bron: { ...T.klein, color: C.textMuted, marginTop: 6 },

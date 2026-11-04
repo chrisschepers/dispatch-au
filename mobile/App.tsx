@@ -1,49 +1,72 @@
 /**
  * Dispatch Australia: emergency incidents near you, from the official
- * Australian agency feeds. Built on the 112 Meldingen app: three tabs,
- * a short introduction with the two permission questions, and a detail screen.
+ * Australian agency feeds. Built on the 112 Meldingen app: Nearby, Map and
+ * Settings plus a Search tab on the system tab bar (src/navigatie.tsx), a
+ * short introduction with the two permission questions, and a detail screen
+ * in every tab.
  */
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, ActivityIndicator, Appearance } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { InstellingenProvider, useInstellingen } from './src/instellingen';
 import { ThemaProvider, useThema } from './src/thema';
-import { type Palet } from './src/theme';
+import { T, PALET_LICHT, PALET_DONKER, type Palet } from './src/theme';
 import { vraagLocatiePermissie } from './src/locatie';
 import { laadInstallToken, zetNotificatieGedrag, meldInstallatie, registreerVoorPushMetInstellingen, werkPushFilterBij } from './src/push';
 import { laadAppConfig } from './src/appConfig';
-import BuurtScreen from './src/screens/BuurtScreen';
-import KaartScreen from './src/screens/KaartScreen';
-import DetailScreen from './src/screens/DetailScreen';
-import InstellingenScreen from './src/screens/InstellingenScreen';
 import IntroScreen from './src/screens/IntroScreen';
 import BetaalmuurScreen from './src/screens/BetaalmuurScreen';
 import { AbonnementProvider, useAbonnement } from './src/abonnement';
-import { C } from './src/theme';
 import { navRef, luisterNaarMeldingTikken } from './src/meldingOpenen';
 import { telOpening } from './src/recensie';
-import { TabBalk } from './src/components/TabBalk';
+import { TabNavigatie } from './src/navigatie';
+import { Navigatiebalk } from './src/components/Navigatiebalk';
+
+/**
+ * Het opstartscherm van het systeem blijft staan tot de app weet wat hij
+ * moet tonen (instellingen geladen, startscherm al gezien of niet, stand van
+ * het abonnement). Zo zit er geen leeg vlak of draaiertje tussen het logo en
+ * het eerste scherm. Hooguit 3 s: blijft het opstarten ergens hangen, dan
+ * gaat het toch weg en neemt het Laadscherm het over. Zonder de native
+ * module (oude build) doen beide aanroepen niets.
+ */
+SplashScreen.preventAutoHideAsync().catch(() => {});
+setTimeout(() => { SplashScreen.hideAsync().catch(() => {}); }, 3000);
 
 /**
  * Vangnet: een JS-fout bij het opstarten gaf een stil wit scherm (melding
  * Chris, build 6). Met deze boundary staat de fout leesbaar op het scherm,
  * zodat een tester hem kan doorsturen in plaats van 'er gebeurt niks'.
+ *
+ * De boundary hangt buiten de ThemaProvider, dus de kleuren komen uit
+ * Appearance. Die geeft na setColorScheme (thema.tsx) de keuze in de app
+ * terug, en anders de stand van de telefoon. Bij een fout verdwijnt de
+ * Systeembalk mee met de rest van de app; daarom zet de foutpagina zelf de
+ * statusbalk en de Android-navigatiebalk.
  */
 class FoutVanger extends React.Component<{ children: React.ReactNode }, { fout: Error | null }> {
   state = { fout: null as Error | null };
   static getDerivedStateFromError(fout: Error) { return { fout }; }
+  // Fout tijdens het opstarten: meteen het opstartscherm weg, niet pas na
+  // de 3 s, anders lijkt de app te hangen.
+  componentDidCatch() { SplashScreen.hideAsync().catch(() => {}); }
   render() {
     if (this.state.fout) {
+      const P = Appearance.getColorScheme() === 'dark' ? PALET_DONKER : PALET_LICHT;
+      const stijl = P.donker ? 'light' : 'dark';
       return (
-        <View style={{ flex: 1, backgroundColor: '#f2f2f7', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: '#1c1c1e' }}>Something went wrong</Text>
-          <Text style={{ marginTop: 10, color: '#6e6e73', fontSize: 13 }} selectable>
+        <View style={{ flex: 1, backgroundColor: P.bg, justifyContent: 'center', padding: 24 }}>
+          <StatusBar style={stijl} />
+          <Navigatiebalk stijl={stijl} />
+          <Text accessibilityRole="header" style={{ fontSize: 20, fontWeight: '700', color: P.textPrimary }}>
+            Something went wrong
+          </Text>
+          <Text style={{ marginTop: 10, color: P.textSecondary, fontSize: 13 }} selectable>
             {String(this.state.fout)}
           </Text>
         </View>
@@ -53,25 +76,45 @@ class FoutVanger extends React.Component<{ children: React.ReactNode }, { fout: 
   }
 }
 
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
-
 const ONBOARD_KEY = 'dispatch.onboarded.v2';
 
-function Tabs() {
+/**
+ * Wat er onder het opstartscherm klaarstaat: een leeg vlak in de grondkleur,
+ * zonder logo of emoji die het opstartscherm nadoen. Duurt het opstarten
+ * langer dan 2 s (het opstartscherm gaat na 3 s hoe dan ook weg), dan een
+ * klein draaiertje met 'Loading…'. Zo zie je bij het testen nog steeds of
+ * React draait of dat de bundel al eerder sneuvelde.
+ */
+function Laadscherm() {
+  const C = useThema();
+  const [traag, setTraag] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setTraag(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
   return (
-    <Tab.Navigator
-      tabBar={(props) => <TabBalk {...props} />}
-      screenOptions={{ headerShown: false }}
+    <View
+      style={{ flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' }}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel="Loading"
     >
-      <Tab.Screen name="Buurt" component={BuurtScreen} />
-      <Tab.Screen name="Kaart" component={KaartScreen} />
-      <Tab.Screen name="Instellingen" component={InstellingenScreen} />
-    </Tab.Navigator>
+      {traag && (
+        <>
+          <ActivityIndicator color={C.textSecondary} />
+          <Text style={[T.klein, { color: C.textSecondary, marginTop: 8 }]}>Loading…</Text>
+        </>
+      )}
+    </View>
   );
 }
 
-/** Navigatiekleuren volgen het thema; anders flitst er wit tussen schermen. */
+/**
+ * Navigatiekleuren volgen het thema; anders flitst er wit tussen schermen.
+ * `dark` stuurt ook de tabbalk en de koppen (licht of donker, los van het
+ * systeem), `card` is de achtergrond van de Android-tabbalk en `background`
+ * die van de native container.
+ */
 function navThemaVoor(C: Palet) {
   const basis = C.donker ? DarkTheme : DefaultTheme;
   return {
@@ -147,16 +190,14 @@ function Binnenkant() {
   // eerste controle het laadscherm, niet even de muur: anders flitst hij bij
   // elke start voor een betalende gebruiker.
   const muurLaden = abonnement.vereist && abonnement.toegang === 'onbekend';
-  if (!geladen || onboarded === null || (onboarded && muurLaden)) {
-    // Zichtbaar laadscherm in plaats van een leeg vlak: zo weet je bij het
-    // testen meteen of React draait of dat de bundel al eerder sneuvelde.
-    return (
-      <View style={{ flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 40 }}>📍</Text>
-        <Text style={{ marginTop: 8, color: C.textSecondary }}>Loading…</Text>
-      </View>
-    );
-  }
+  const opstarten = !geladen || onboarded === null || (onboarded && muurLaden);
+
+  // Klaar met opstarten: het opstartscherm weg, het eerste scherm staat er.
+  useEffect(() => {
+    if (!opstarten) SplashScreen.hideAsync().catch(() => {});
+  }, [opstarten]);
+
+  if (opstarten) return <Laadscherm />;
   if (!onboarded) {
     return <IntroScreen klaar={() => { AsyncStorage.setItem(ONBOARD_KEY, '1'); setOnboarded(true); }} />;
   }
@@ -166,29 +207,27 @@ function Binnenkant() {
 
   return (
     <NavigationContainer theme={navThema} ref={navRef}>
-      <Stack.Navigator
-        screenOptions={{
-          headerBackTitle: 'Back',
-          headerTintColor: C.accent,
-          headerTitleStyle: { color: C.textPrimary },
-          headerStyle: { backgroundColor: C.bg },
-          headerShadowVisible: false,
-        }}
-      >
-        <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
-        {/* Eén navigatietaal (audit 20-08): elk subscherm dezelfde native kop
-            als Detail, in plaats van losse chevron-knopjes per scherm. */}
-        <Stack.Screen name="Detail" component={DetailScreen}
-          options={{ title: 'Incident' }} />
-      </Stack.Navigator>
+      {/* Eén navigatietaal (audit 20-08): elk subscherm dezelfde native kop
+          als Detail, in plaats van losse chevron-knopjes per scherm. */}
+      <TabNavigatie />
     </NavigationContainer>
   );
 }
 
-/** Los component: de statusbalk moet binnen de ThemaProvider hangen. */
+/**
+ * Los component: de systeembalken moeten binnen de ThemaProvider hangen.
+ * Lichte tekens op donker, donkere op licht; op Android ook de knoppen van de
+ * navigatiebalk, die over de tabbalk liggen.
+ */
 function Systeembalk() {
   const C = useThema();
-  return <StatusBar style={C.donker ? 'light' : 'dark'} />;
+  const stijl = C.donker ? 'light' : 'dark';
+  return (
+    <>
+      <StatusBar style={stijl} />
+      <Navigatiebalk stijl={stijl} />
+    </>
+  );
 }
 
 export default function App() {

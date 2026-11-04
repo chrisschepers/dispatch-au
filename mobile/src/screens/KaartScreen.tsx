@@ -4,14 +4,18 @@
  * heli's, geen posten: dit is de kaart voor de vraag "waar is dat?".
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import {
+  View, Text, StyleSheet, Pressable, Platform, AccessibilityInfo, useWindowDimensions,
+} from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-screens/experimental';
 import { haalMeldingenPerVenster, type Melding } from '../api';
 import { kaartVenster } from '../kaartVenster';
-import { vertaalMelding } from '../vertaal';
+import { vertaalMelding, plaatsRegel, type VertaaldeMelding } from '../vertaal';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlek, bepaalPlekSnel } from '../locatie';
 import { ALLE_DIENSTKEYS } from '../diensten';
@@ -19,24 +23,36 @@ import { kaartTerugblikUren } from '../appConfig';
 import { kaartStijlVoor, appleKaartVoor } from '../kaartstijl';
 import { BrandendIcoon, BotsingIcoon, VlammenIcoon, type BrandendObject } from '../components/IncidentIcoon';
 
-import { type Palet } from '../theme';
-import { useThema, useStijlen } from '../thema';
+import { T, F, SCHADUW, isIOS, type Palet } from '../theme';
+import { useThema, useStijlen, useMinderBeweging } from '../thema';
+import { Icoon } from '../components/Icoon';
+import { Drukbaar } from '../components/Drukbaar';
+import { ZwevendVlak, useGlas } from '../components/ZwevendVlak';
 import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
+import type { StapelParams } from '../navigatie';
+import { MAX_SMAL } from '../inhoudMaat';
+import { groepeer, zoomVan, opEenPlek, type GroepPunt, type KaartGroep } from '../kaartGroepen';
+import { opKleur } from '../kleur';
 
 /**
- * Boven dit aantal in beeld gaan we groeperen; daaronder losse pins. Op Android
- * lager: daar is elke marker een bitmap die het toestel apart moet tekenen, en
- * de pins dragen sinds 18-08 een icoon. Op eenvoudige toestellen (en die zijn
- * er op Android nu eenmaal veel) scheelt eerder groeperen merkbaar.
+ * Pins die op het scherm dichter bij elkaar staan dan dit, worden één groep
+ * (zie kaartGroepen.ts). Gelijk aan het kleinste tikvlak van het platform
+ * (44 pt HIG, 48 dp M3): twee pins die dichter op elkaar staan, kun je toch
+ * niet los aantikken.
  */
-const LOS_MAX = Platform.OS === 'android' ? 55 : 90;
+const GROEP_AFSTAND = Platform.OS === 'android' ? 48 : 44;
+/**
+ * Meer pins in beeld dan dit, dan groeperen we ruimer. Op Android lager:
+ * daar is elke marker een bitmap die het toestel apart moet tekenen, en op
+ * eenvoudige toestellen (en die zijn er op Android nu eenmaal veel) scheelt
+ * dat merkbaar.
+ */
+const MAX_PINS = Platform.OS === 'android' ? 60 : 150;
 
 /** Landelijk uitzicht: het beeld waarmee de kaart opent als we nog niets weten. */
 const NL_REGIO = { latitude: -28, longitude: 140, latitudeDelta: 32, longitudeDelta: 32 };
-/** Aantal rastervakken over de breedte van het beeld bij het groeperen. */
-const RASTER = Platform.OS === 'android' ? 6 : 8;
 
-type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
+type Nav = NativeStackNavigationProp<StapelParams, 'Kaart'>;
 
 /** Tot hoelang na binnenkomst een melding "vers" is en dus opvalt. */
 const VERS_MINUTEN = 30;
@@ -55,9 +71,11 @@ function Pin({ kleur, icoon, groot, vers, vlammen, brandend, botsing }: {
   kleur: string; icoon: string; groot: boolean; vers: boolean;
   vlammen?: 1 | 2 | 3; brandend?: BrandendObject; botsing?: boolean;
 }) {
-  const C = useThema();
   const styles = useStijlen(maak_styles);
   const maat = vers || groot ? 36 : 28;
+  // Symbool in wit of bijna-zwart, wat het best leest op de dienstkleur: wit
+  // op het amber van de ambulance haalt maar ~2:1.
+  const glyph = opKleur(kleur);
   return (
     <View style={styles.pinWrap}>
       {vers && (
@@ -70,17 +88,36 @@ function Pin({ kleur, icoon, groot, vers, vlammen, brandend, botsing }: {
       )}
       <View style={[styles.bol, { backgroundColor: kleur, width: maat, height: maat, borderRadius: maat / 2 }]}>
         {brandend ? (
-          <BrandendIcoon object={brandend} maat={Math.round(maat * 0.72)} kleur="#fff" fond={kleur} />
+          <BrandendIcoon object={brandend} maat={Math.round(maat * 0.72)} kleur={glyph} fond={kleur} />
         ) : botsing ? (
-          <BotsingIcoon maat={Math.round(maat * 0.72)} kleur="#fff" fond={kleur} />
+          <BotsingIcoon maat={Math.round(maat * 0.72)} kleur={glyph} fond={kleur} />
         ) : vlammen ? (
-          <VlammenIcoon vlammen={vlammen} maat={Math.round(maat * 0.68)} kleur="#fff" />
+          <VlammenIcoon vlammen={vlammen} maat={Math.round(maat * 0.68)} kleur={glyph} />
         ) : (
-          <MaterialCommunityIcons name={icoon as never} size={Math.round(maat * 0.54)} color="#fff" />
+          <MaterialCommunityIcons name={icoon as never} size={Math.round(maat * 0.54)} color={glyph} />
         )}
       </View>
       {/* Wit driehoekje onder de bol: de punt staat op de coördinaat. */}
       <View style={styles.punt} />
+    </View>
+  );
+}
+
+/**
+ * Een groepje pins: een bol met het aantal, groter naarmate er meer in
+ * zitten. De doorzichtige rand eromheen maakt het tikvlak minstens 44 pt
+ * (iOS) of 48 dp (Android), ook voor de kleinste bol.
+ */
+function GroepBol({ aantal, vulling }: { aantal: number; vulling: string }) {
+  const styles = useStijlen(maak_styles);
+  const maat = aantal < 10 ? 32 : aantal < 100 ? 38 : 44;
+  return (
+    <View style={styles.groepVak}>
+      <View style={[styles.groep, { width: maat, height: maat, borderRadius: maat / 2, backgroundColor: vulling }]}>
+        <Text style={[styles.groepTekst, { color: opKleur(vulling) }]} maxFontSizeMultiplier={1.2}>
+          {aantal > 99 ? '99+' : aantal}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -95,11 +132,11 @@ function KaartNogNiet() {
   const C = useThema();
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: C.bg, gap: 10 }}>
-      <MaterialCommunityIcons name="map-outline" size={40} color={C.textMuted} />
-      <Text style={{ fontSize: 17, fontWeight: '600', color: C.textPrimary, textAlign: 'center' }}>
+      <Icoon naam="kaart" grootte={40} kleur={C.textMuted} />
+      <Text style={{ ...T.kop, color: C.textPrimary, textAlign: 'center' }} accessibilityRole="header">
         The map is coming soon on Android
       </Text>
-      <Text style={{ fontSize: 15, color: C.textSecondary, textAlign: 'center' }}>
+      <Text style={{ ...T.body, color: C.textSecondary, textAlign: 'center' }}>
         You can already see every incident near you in the Nearby list.
       </Text>
     </View>
@@ -111,8 +148,28 @@ function KaartMetMeldingen() {
   const styles = useStijlen(maak_styles);
   const { inst } = useInstellingen();
   const navigation = useNavigation<Nav>();
+  const { width } = useWindowDimensions();
+  // Bovenrand op Android, voor de knoppenlaag en de kaartpadding. Uit
+  // safe-area-context en niet de SafeAreaView van react-native-screens: op
+  // Android mag die maar één keer per tabblad (zie androidLaag in
+  // navigatie.tsx).
+  const insets = useSafeAreaInsets();
+  // Camerabewegingen volgen "Verminder beweging": dan springt de kaart
+  // meteen naar het nieuwe beeld (duur 0) in plaats van te vliegen. Via een
+  // ref, zodat het plek-effect hieronder niet opnieuw hoeft te draaien.
+  const minderBeweging = useMinderBeweging();
+  const minderBewegingRef = useRef(minderBeweging);
+  minderBewegingRef.current = minderBeweging;
+  const duur = (ms: number) => (minderBewegingRef.current ? 0 : ms);
+  // Android: het kompas onder de statusbalk in plaats van erachter. iOS houdt
+  // het kompas zelf binnen zijn veilige zone. Vast object per inset, zodat de
+  // kaart niet bij elke render een nieuwe padding krijgt.
+  const kaartPadding = React.useMemo(
+    () => (isIOS ? undefined : { top: insets.top, right: 0, bottom: 0, left: 0 }),
+    [insets.top],
+  );
   // Vanuit een melding gekomen? Dan daarop inzoomen in plaats van op de buurt.
-  const params = (useRoute().params ?? {}) as { lat?: number; lon?: number; id?: string };
+  const params = useRoute<RouteProp<StapelParams, 'Kaart'>>().params ?? {};
   const mapRef = useRef<MapView>(null);
   const [meldingen, setMeldingen] = useState<Melding[]>([]);
   const [start, setStart] = useState<{ lat: number; lon: number } | null>(null);
@@ -126,6 +183,14 @@ function KaartMetMeldingen() {
   const ingezoomd = regio ? kaartVenster(regio).laden : false;
   const [kaartStatus, setKaartStatus] = useState('');
   const geladenGebied = useRef<{ lat: number; lon: number; radiusKm: number; tijd: number } | null>(null);
+
+  // Mislukt het laden, dan hoort VoiceOver dat ook. Android leest de hint
+  // zelf voor (accessibilityLiveRegion); iOS kent geen live regions.
+  useEffect(() => {
+    if (isIOS && kaartStatus.startsWith('Could not load')) {
+      AccessibilityInfo.announceForAccessibility(kaartStatus);
+    }
+  }, [kaartStatus]);
 
   // Alleen het huidige kaartbeeld laden. Cleanup voorkomt dat een oud antwoord
   // een nieuw kaartbeeld overschrijft, ook wanneer de gebruiker snel uitzoomt.
@@ -185,7 +250,7 @@ function KaartMetMeldingen() {
         const beeld = { latitude: eersteBeeld.lat, longitude: eersteBeeld.lon,
           latitudeDelta: params.id ? 0.03 : beeldDelta, longitudeDelta: params.id ? 0.03 : beeldDelta };
         setRegio(beeld);
-        mapRef.current?.animateToRegion(beeld, 350);
+        mapRef.current?.animateToRegion(beeld, duur(350));
       }
 
       // En dan pas de verse fix. Alleen bijstellen als het echt iets uitmaakt:
@@ -203,23 +268,25 @@ function KaartMetMeldingen() {
         mapRef.current?.animateToRegion({
           latitude: eigen.lat, longitude: eigen.lon,
           latitudeDelta: beeldDelta, longitudeDelta: beeldDelta,
-        }, 450);
+        }, duur(450));
 
       } else if (!vanMelding && verschoven) {
         mapRef.current?.animateToRegion({
           latitude: eigen.lat, longitude: eigen.lon,
           latitudeDelta: beeldDelta, longitudeDelta: beeldDelta,
-        }, 350);
+        }, duur(350));
 
       }
     })();
     return () => { levend = false; };
-  }, [inst.handLat, inst.handLon, inst.volgLocatie, params.lat, params.lon]);
+    // params.t: ook opnieuw inzoomen als je vanuit Detail twee keer dezelfde
+    // plek opent (de kaart kan intussen verschoven zijn).
+  }, [inst.handLat, inst.handLon, inst.volgLocatie, params.lat, params.lon, params.t]);
 
   function naarMij() {
     if (!mijnPlek) return;
     mapRef.current?.animateToRegion(
-      { latitude: mijnPlek.lat, longitude: mijnPlek.lon, latitudeDelta: beeldDelta, longitudeDelta: beeldDelta }, 350,
+      { latitude: mijnPlek.lat, longitude: mijnPlek.lon, latitudeDelta: beeldDelta, longitudeDelta: beeldDelta }, duur(350),
     );
     // Kwam je van een melding ver weg, dan staan er pins uit die omgeving.
     // Terug naar huis hoort ook de meldingen van thuis te tonen.
@@ -228,41 +295,53 @@ function KaartMetMeldingen() {
 
   // Geen enkele melding weglaten (keuze Chris 16-08), maar honderden losse
   // pins leggen de kaart plat — de app bevroor (16-08). Daarom groeperen we
-  // wat te dicht op elkaar staat om te kunnen onderscheiden: één bolletje met
-  // een aantal, dat bij inzoomen weer uit elkaar valt. Er verdwijnt niets, je
-  // ziet het alleen samengevat tot het zin heeft ze los te tekenen.
-  const zichtbaar = React.useMemo(() => {
-    if (!regio || !ingezoomd) return [];
+  // wat op het scherm te dicht op elkaar staat om los aan te tikken: één
+  // bolletje met een aantal, dat bij inzoomen weer uit elkaar valt. Er
+  // verdwijnt niets, je ziet het alleen samengevat tot het zin heeft ze los
+  // te tekenen.
+  //
+  // Eén keer per melding vertalen: groeperen en tekenen hebben allebei de
+  // kleur en de grootte nodig.
+  const vertaald = React.useMemo(() => {
+    const per = new Map<string, VertaaldeMelding>();
+    for (const m of meldingen) per.set(m.id, vertaalMelding(m));
+    return per;
+  }, [meldingen]);
+  // Zoom op halve stappen: slepen laat hem gelijk, dus groeperen gebeurt
+  // alleen bij zoomen of nieuwe meldingen.
+  const zoom = regio && ingezoomd ? zoomVan(regio.longitudeDelta, width) : null;
+  const puntVan = React.useCallback((m: Melding): GroepPunt => {
+    const v = vertaald.get(m.id);
+    return {
+      id: m.id,
+      lat: m.lat as number,
+      lon: (m.lon ?? m.lng) as number,
+      gewicht: (isVers(m.timestamp) ? 2 : 0) + (v?.groot ? 1 : 0),
+      tijd: Date.parse(m.timestamp),
+    };
+  }, [vertaald]);
+  const alleGroepen = React.useMemo(
+    () => (zoom == null ? [] : groepeer(meldingen, puntVan, zoom, GROEP_AFSTAND)),
+    [meldingen, puntVan, zoom],
+  );
+
+  /** De groepen in beeld (met wat marge), zo nodig ruimer gegroepeerd. */
+  const groepen = React.useMemo(() => {
+    if (!regio || zoom == null) return [];
     const marge = 1.15;
     const dLat = (regio.latitudeDelta / 2) * marge;
     const dLon = (regio.longitudeDelta / 2) * marge;
-    return meldingen.filter((m) => {
-      const lat = m.lat as number, lon = (m.lon ?? m.lng) as number;
-      return Math.abs(lat - regio.latitude) <= dLat && Math.abs(lon - regio.longitude) <= dLon;
-    });
-  }, [meldingen, regio, ingezoomd]);
-
-  /** Losse pins als het er weinig zijn, anders groepjes per rastervak. */
-  const groepen = React.useMemo(() => {
-    if (!regio || zichtbaar.length <= LOS_MAX) {
-      return zichtbaar.map((m) => ({ sleutel: m.id, lat: m.lat as number, lon: (m.lon ?? m.lng) as number, leden: [m] }));
+    const inBeeld = (gs: KaartGroep<Melding>[]) => gs.filter((g) =>
+      Math.abs(g.lat - regio.latitude) <= dLat && Math.abs(g.lon - regio.longitude) <= dLon);
+    let uit = inBeeld(alleGroepen);
+    // Nog te veel voor een vloeiende kaart: tot drie keer 1,5 × zo ruim.
+    let afstand = GROEP_AFSTAND;
+    for (let i = 0; i < 3 && uit.length > MAX_PINS; i++) {
+      afstand *= 1.5;
+      uit = inBeeld(groepeer(meldingen, puntVan, zoom, afstand));
     }
-    // Rastervak ≈ 1/RASTER van het beeld: dichter bij elkaar dan dat kun je
-    // op dit zoomniveau toch niet uit elkaar houden.
-    const stapLat = regio.latitudeDelta / RASTER;
-    const stapLon = regio.longitudeDelta / RASTER;
-    const vakken = new Map<string, { sleutel: string; lat: number; lon: number; leden: Melding[] }>();
-    for (const m of zichtbaar) {
-      const lat = m.lat as number, lon = (m.lon ?? m.lng) as number;
-      const rij = Math.max(0, Math.min(RASTER - 1, Math.floor((lat - regio.latitude + regio.latitudeDelta / 2) / stapLat)));
-      const kol = Math.max(0, Math.min(RASTER - 1, Math.floor((lon - regio.longitude + regio.longitudeDelta / 2) / stapLon)));
-      const sleutel = `${rij}:${kol}`;
-      const bestaand = vakken.get(sleutel);
-      if (bestaand) bestaand.leden.push(m);
-      else vakken.set(sleutel, { sleutel, lat, lon, leden: [m] });
-    }
-    return [...vakken.values()];
-  }, [zichtbaar, regio]);
+    return uit;
+  }, [alleGroepen, meldingen, puntVan, regio, zoom]);
 
   // Android tekent een marker als bitmap en bevriest die daarna. Met een kale
   // stip ging dat goed, maar deze pins bevatten een icoonfont en die is soms
@@ -270,8 +349,10 @@ function KaartMetMeldingen() {
   // wijziging van de pinnenset kort blijven her-tekenen en het dan weer
   // uitzetten (les uit de kaart-overhaul van de grote app). Sleutelen op de
   // ID-set, niet op de meldingenlijst: die krijgt bij elke verversing een
-  // nieuwe identiteit en dan knippert de kaart continu.
-  const pinsSleutel = groepen.map((g) => g.sleutel).join('|');
+  // nieuwe identiteit en dan knippert de kaart continu. Het aantal hoort
+  // erbij: een groep met dezelfde sleutel maar een ander getal moet ook
+  // opnieuw getekend worden.
+  const pinsSleutel = groepen.map((g) => `${g.sleutel}:${g.leden.length}`).join('|');
   const [herteken, setHerteken] = useState(true);
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -300,6 +381,11 @@ function KaartMetMeldingen() {
         initialRegion={beginRegio}
         onRegionChangeComplete={setRegio}
         showsUserLocation={inst.volgLocatie}
+        // Android: geen eigen mijn-plekknop van Google. Die verschijnt alleen
+        // als showsUserLocation aan staat, en precies dan brengt 'My area' je
+        // al naar je GPS-plek: twee knoppen voor hetzelfde.
+        showsMyLocationButton={false}
+        mapPadding={kaartPadding}
         toolbarEnabled={false}
         // Rustige, getekende ondergrond zonder winkels en wijknamen. Alleen
         // Android tekent hiermee; iOS houdt Apple Maps (zie kaartstijl.ts).
@@ -311,55 +397,175 @@ function KaartMetMeldingen() {
             hij een grens die nergens meer over gaat (wens Chris). */}
         {groepen.map((g) => {
           const eerste = g.leden[0]!;
-          const v = vertaalMelding(eerste);
+          const v = vertaald.get(eerste.id) ?? vertaalMelding(eerste);
           const aantal = g.leden.length;
+          const vers = isVers(eerste.timestamp);
+          if (aantal === 1) {
+            const plaats = plaatsRegel(eerste.location, eerste.city);
+            return (
+              <Marker
+                key={g.sleutel}
+                coordinate={{ latitude: g.lat, longitude: g.lon }}
+                // De punt van de pin staat op de plek.
+                anchor={{ x: 0.5, y: 1 }}
+                // Vers boven groot boven groepjes boven de rest.
+                zIndex={vers ? 3 : v.groot ? 2 : 0}
+                // VoiceOver: een knop, met wat hij doet als hint en alleen de
+                // inhoud in het label.
+                accessibilityRole="button"
+                accessibilityLabel={`${v.titel}${plaats ? ', ' + plaats : ''}`}
+                accessibilityHint="Opens the incident"
+                // Doorlopend her-tekenen kost bij honderden pins de vloeiendheid
+                // van het slepen; alleen de korte puls hieronder staat het toe.
+                tracksViewChanges={Platform.OS === 'android' ? herteken : false}
+                onPress={() => navigation.navigate('Detail', { melding: eerste })}
+              >
+                <Pin kleur={v.kleur} icoon={v.kaartIcoon} groot={v.groot} vers={vers} vlammen={v.kaartVlammen} brandend={v.kaartBrandend} botsing={v.kaartBotsing} />
+              </Marker>
+            );
+          }
+          // Eén dienst in de groep: zijn kleur. Gemengd: een neutrale bol.
+          const kleuren = new Set(g.leden.map((m) => vertaald.get(m.id)?.kleur ?? v.kleur));
+          const vulling = kleuren.size === 1 ? v.kleur : C.groepVlak;
+          const coords = g.leden.map((m) => ({ latitude: m.lat as number, longitude: (m.lon ?? m.lng) as number }));
+          const eenPlek = (zoom ?? 0) >= 16 || opEenPlek(coords.map((c) => ({ lat: c.latitude, lon: c.longitude })));
           return (
             <Marker
               key={g.sleutel}
               coordinate={{ latitude: g.lat, longitude: g.lon }}
-              // Losse pin wijst met zijn punt naar de plek; een groepje is een
-              // bolletje en staat dus gecentreerd.
-              anchor={aantal === 1 ? { x: 0.5, y: 1 } : { x: 0.5, y: 0.5 }}
-              // Doorlopend her-tekenen kost bij honderden pins de vloeiendheid
-              // van het slepen; alleen de korte puls hierboven staat het toe.
+              // Een groepje is een bolletje en staat dus gecentreerd.
+              anchor={{ x: 0.5, y: 0.5 }}
+              zIndex={1}
+              accessibilityRole="button"
+              accessibilityLabel={eenPlek ? `${aantal} incidents here` : `${aantal} incidents`}
+              accessibilityHint={eenPlek ? 'Lists the incidents here' : 'Zooms in'}
               tracksViewChanges={Platform.OS === 'android' ? herteken : false}
               onPress={() => {
-                if (aantal === 1) { navigation.navigate('Detail', { melding: eerste }); return; }
-                // Groepje: inzoomen tot ze uit elkaar vallen.
-                mapRef.current?.animateToRegion({
-                  latitude: g.lat, longitude: g.lon,
-                  latitudeDelta: Math.max((regio?.latitudeDelta ?? 0.3) / 3, 0.01),
-                  longitudeDelta: Math.max((regio?.longitudeDelta ?? 0.3) / 3, 0.01),
-                }, 350);
+                if (eenPlek) {
+                  // Inzoomen maakt ze niet los (één coördinaat, of al zo
+                  // ver ingezoomd als zinnig is): dan een blad met de lijst.
+                  navigation.navigate('Groep', { leden: g.leden });
+                  return;
+                }
+                // Groepje: precies zo ver inzoomen dat alle leden in beeld
+                // staan, met ruimte voor de hint bovenin en 'My area' onderin.
+                mapRef.current?.fitToCoordinates(coords, {
+                  edgePadding: { top: 120, right: 60, bottom: 160, left: 60 },
+                  animated: duur(1) > 0,
+                });
               }}
             >
-              {aantal === 1 ? (
-                <Pin kleur={v.kleur} icoon={v.kaartIcoon} groot={v.groot} vers={isVers(eerste.timestamp)} vlammen={v.kaartVlammen} brandend={v.kaartBrandend} botsing={v.kaartBotsing} />
-              ) : (
-                <View style={styles.groep}>
-                  <Text style={styles.groepTekst}>{aantal}</Text>
-                </View>
-              )}
+              <GroepBol aantal={aantal} vulling={vulling} />
             </Marker>
           );
         })}
       </MapView>
-      {(!ingezoomd || kaartStatus) ? (
-        <View pointerEvents="none" style={{ position: 'absolute', top: 16, alignSelf: 'center', maxWidth: '90%', backgroundColor: C.card, borderRadius: 16, padding: 12 }}>
-          <Text style={{ color: C.textPrimary, textAlign: 'center' }}>{!ingezoomd ? 'Zoom in to see incidents' : kaartStatus}</Text>
-        </View>
-      ) : null}
-      <Pressable style={({ pressed }) => [styles.mijnKnop, pressed && { transform: [{ scale: 0.95 }] }]} onPress={naarMij}>
-        <Text style={styles.mijnKnopTekst}>◉ My area</Text>
-      </Pressable>
+      <KnoppenLaag>
+        {(!ingezoomd || kaartStatus) ? (
+          <ZwevendVlak
+            rond={20}
+            pointerEvents="none"
+            accessibilityLiveRegion="polite"
+            style={styles.hint}
+          >
+            <Text style={styles.hintTekst}>{!ingezoomd ? 'Zoom in to see incidents' : kaartStatus}</Text>
+          </ZwevendVlak>
+        ) : null}
+        <MijnPlekKnop aan={!!mijnPlek} onPress={naarMij} />
+      </KnoppenLaag>
     </View>
+  );
+}
+
+/**
+ * De laag met de zwevende bediening boven de kaart: de zoomhint bovenaan,
+ * 'My area' rechtsonder. iOS: de SafeAreaView van react-native-screens, die
+ * de statusbalk (of het Dynamic Island) en de tabbalk met de thuisbalk als
+ * marge meerekent. Android: een gewone View met de bovenrand uit
+ * safe-area-context, want androidLaag houdt de navigatiebalk onderin al vrij
+ * (en een tweede SafeAreaView van screens in dit tabblad zou zijn inzetten
+ * overnemen).
+ */
+function KnoppenLaag({ children }: { children: React.ReactNode }) {
+  const styles = useStijlen(maak_styles);
+  const insets = useSafeAreaInsets();
+  return isIOS ? (
+    <SafeAreaView
+      edges={{ top: true, bottom: true }}
+      pointerEvents="box-none"
+      style={[StyleSheet.absoluteFill, styles.laag]}
+    >
+      {children}
+    </SafeAreaView>
+  ) : (
+    <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, styles.laag, { paddingTop: insets.top + 8 }]}>
+      {children}
+    </View>
+  );
+}
+
+/**
+ * 'My area' brengt de kaart terug naar je eigen buurt. Uitgeschakeld zolang
+ * we die plek nog niet weten (of als je buiten Australië bent).
+ *
+ * iOS: een knop van glas, zoals de knoppen in Apple Kaarten. Interactief
+ * glas reageert zelf op de vinger; alleen op blur of het dichte vlak dimt de
+ * inhoud tijdens het indrukken.
+ *
+ * Android: een uitgebreide M3-FAB in de oppervlakvariant (surface FAB): het
+ * kaartvlak met het accent voor icoon en label, in plaats van de standaard
+ * primaryContainer. Zo staat er geen tweede gekleurde vlek naast de pins.
+ */
+function MijnPlekKnop({ aan, onPress }: { aan: boolean; onPress: () => void }) {
+  const C = useThema();
+  const styles = useStijlen(maak_styles);
+  const glas = useGlas();
+
+  if (isIOS) {
+    return (
+      <ZwevendVlak interactief={aan} rond={22} style={styles.mijnVlak}>
+        <Pressable
+          onPress={onPress}
+          disabled={!aan}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Show my area"
+          accessibilityState={{ disabled: !aan }}
+          style={({ pressed }) => [
+            styles.mijnKnopIOS,
+            // Vaste dekking op de inhoud, niet op het glas (dat mag nooit).
+            !aan ? { opacity: 0.4 } : pressed && !glas ? { opacity: 0.6 } : null,
+          ]}
+        >
+          <Icoon naam="mijnPlek" grootte={17} kleur={C.accentTekst} />
+          <Text style={styles.mijnTekstIOS} maxFontSizeMultiplier={1.5}>My area</Text>
+        </Pressable>
+      </ZwevendVlak>
+    );
+  }
+
+  return (
+    <Drukbaar onPress={onPress} disabled={!aan} label="Show my area" style={styles.mijnFab}>
+      <Icoon naam="mijnPlek" grootte={24} kleur={C.accentTekst} />
+      <Text style={styles.mijnTekstFab}>My area</Text>
+    </Drukbaar>
   );
 }
 
 const maak_styles = (C: Palet) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  pinWrap: { alignItems: 'center', justifyContent: 'flex-end' },
-  halo: { position: 'absolute', top: -8, opacity: 0.22 },
+  // Minstens het tikvlak van het platform. Alleen boven en opzij ruimte, zodat
+  // de punt onderaan op de plek blijft (anchor y: 1); flex-end houdt de bol
+  // onderin als de pin kleiner is dan het vak. De bovenruimte van 8 is ook
+  // waar de gloed van een verse pin in valt, zodat Android die niet afknipt
+  // in de bitmap van de marker.
+  pinWrap: {
+    alignItems: 'center', justifyContent: 'flex-end',
+    minWidth: 44, minHeight: GROEP_AFSTAND, paddingHorizontal: 8, paddingTop: 8,
+  },
+  // top 0 valt binnen de bovenruimte: de gloed (bol + 16) staat zo gecentreerd
+  // om de bol, die op 8 begint.
+  halo: { position: 'absolute', top: 0, opacity: 0.22 },
   bol: {
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2.5, borderColor: '#fff',
@@ -370,17 +576,36 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     borderLeftWidth: 5, borderRightWidth: 5, borderTopWidth: 7,
     borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#fff',
   },
+  groepVak: {
+    minWidth: GROEP_AFSTAND, minHeight: GROEP_AFSTAND,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent',
+  },
   groep: {
-    minWidth: 30, height: 30, borderRadius: 15, paddingHorizontal: 5,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: C.accent, borderWidth: 2, borderColor: '#fff',
+    borderWidth: 2, borderColor: '#fff',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 2, elevation: 3,
   },
-  groepTekst: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  mijnKnop: {
-    position: 'absolute', bottom: 110, right: 16,
-    backgroundColor: C.card, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
+  groepTekst: { fontWeight: F.weightBold, fontSize: 13 },
+  // Insets komen als marge op de SafeAreaView (iOS) of als paddingTop (Android);
+  // dit is de ruimte daarbinnen. Kinderen staan in de flow, niet absoluut,
+  // anders tellen die insets niet mee.
+  laag: { padding: 16, paddingTop: 8 },
+  hint: { alignSelf: 'center', maxWidth: MAX_SMAL, paddingHorizontal: 14, paddingVertical: 10 },
+  hintTekst: { ...T.body, color: C.textPrimary, textAlign: 'center' },
+  // marginTop auto: de knop blijft onderin, ook als de hint erboven weg is.
+  mijnVlak: { alignSelf: 'flex-end', marginTop: 'auto' },
+  mijnKnopIOS: {
+    minHeight: 44, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
   },
-  mijnKnopTekst: { color: C.textPrimary, fontWeight: '600', fontSize: 14 },
+  mijnTekstIOS: { color: C.accentTekst, fontSize: 15, fontWeight: F.weightSemibold },
+  // M3 extended FAB: 56 hoog, hoek 16, icoon 24, 12 tussen icoon en label.
+  mijnFab: {
+    alignSelf: 'flex-end', marginTop: 'auto',
+    minHeight: 56, borderRadius: 16, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: C.card, boxShadow: SCHADUW.fab,
+  },
+  // M3 labelLarge.
+  mijnTekstFab: { color: C.accentTekst, fontSize: 14, fontWeight: F.weightMedium, letterSpacing: 0.1, lineHeight: 20 },
 });

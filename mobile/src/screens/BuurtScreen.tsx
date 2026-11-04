@@ -15,7 +15,6 @@ import {
   View, Text, StyleSheet, SectionList, RefreshControl, AppState, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { haalMeldingenPerVenster, type Melding } from '../api';
@@ -25,15 +24,22 @@ import { MeldingRij } from '../components/MeldingRij';
 import { useLive, type LiveStatus } from '../live';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlek, bepaalPlekSnel } from '../locatie';
-import { T, type Palet } from '../theme';
+import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { DIENSTEN, wisselDienst, straalVoor, straalTekst, LANDELIJK_KM } from '../diensten';
 import { Drukbaar } from '../components/Drukbaar';
+import { Icoon, DienstIcoon } from '../components/Icoon';
+import { tikStap } from '../trilling';
+import { leesbaar, mengKleur } from '../kleur';
+import { useInhoudMaat } from '../inhoudMaat';
 import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 
 type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
 
 interface Rij { m: Melding; km: number | null }
+
+/** iOS: het vlak van een gekozen chip is de dienstkleur op 0x14 (8%). */
+const TINT_IOS = '14';
 
 export default function BuurtScreen() {
   const C = useThema();
@@ -41,8 +47,15 @@ export default function BuurtScreen() {
   const kaartStijl = useKaartStijl();
   const { inst, zet } = useInstellingen();
   const navigation = useNavigation<Nav>();
+  // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
+  const { marge, kolom } = useInhoudMaat();
   const [rijen, setRijen] = useState<Rij[]>([]);
   const [laden, setLaden] = useState(true);
+  // Laatste keer laden mislukt: dan zegt een lege lijst dat, niet 'All quiet'.
+  const [fout, setFout] = useState(false);
+  // Alleen voor het trekken aan de lijst: live- en voorgrondverversingen
+  // horen geen draaiertje bovenin te geven.
+  const [verversen, setVerversen] = useState(false);
   const [plaatsLabel, setPlaatsLabel] = useState<string | null>(null);
   // Outside Australia the list shows Melbourne; the header then says so.
   const [buitenAu, setBuitenAu] = useState(false);
@@ -63,20 +76,44 @@ export default function BuurtScreen() {
       plekRef.current = plek;
       // Geen tijdvenster in de lijst (keuze Chris 16-08): het venster is er om
       // de kaart behapbaar te houden, hier wil je gewoon terug kunnen scrollen.
+      // strikt: zonder dat wordt een mislukt verzoek stilletjes een lege
+      // lijst, en dan stond er 'All quiet nearby' terwijl het netwerk weg
+      // was. Zonder venster delen alle diensten één feedverzoek, dus het
+      // lukt of mislukt in zijn geheel.
       const ms = await haalMeldingenPerVenster({
         lat: plek.lat, lon: plek.lon, radiusKm: inst.straalKm,
         disciplines: inst.lijstDiensten,
         straalPerDienst: inst.straalPerDienst,
         zonderVenster: true,
         limietPerVenster: 60,
+        strikt: true,
       });
       const metAfstand = ms.map((m) => ({ m, km: afstandKm(plek.lat, plek.lon, m) }));
       metAfstand.sort((a, b) => +new Date(b.m.timestamp) - +new Date(a.m.timestamp));
       setRijen(metAfstand);
       setEindeBereikt(ms.length === 0);
-    } catch { /* netwerkfout: oude lijst laten staan */ }
+      setFout(false);
+    } catch {
+      // Netwerkfout: de oude lijst blijft staan. Is er geen, dan toont de
+      // lege lijst de foutkaart met 'Try again'.
+      setFout(true);
+    }
     setLaden(false);
   }, [inst]);
+
+  /** Trekken aan de lijst: het draaiertje staat tot de herlading klaar is. */
+  const ververs = useCallback(async () => {
+    setVerversen(true);
+    await laad();
+    setVerversen(false);
+  }, [laad]);
+
+  /** 'Try again' op de foutkaart: het skelet als teken dat er iets gebeurt. */
+  const opnieuw = useCallback(() => {
+    setFout(false);
+    setLaden(true);
+    laad();
+  }, [laad]);
 
   /** Onderaan aangekomen: oudere meldingen erbij halen. */
   const laadMeer = useCallback(async () => {
@@ -92,6 +129,8 @@ export default function BuurtScreen() {
         zonderVenster: true,
         voor: new Date(new Date(oudste).getTime() - 1000),
         limietPerVenster: 60,
+        // Een netwerkfout is geen 'einde bereikt': die blijft dan staan.
+        strikt: true,
       });
       if (ms.length === 0) { setEindeBereikt(true); return; }
       setRijen((oud) => {
@@ -144,6 +183,16 @@ export default function BuurtScreen() {
   }, [inst.lijstDiensten, inst.straalKm, inst.straalPerDienst]);
 
   /**
+   * iOS: de tekst van een gekozen chip blijft in de dienstkleur, maar zo
+   * donker (in het donker: zo licht) dat hij 4.5:1 haalt op het getinte vlak
+   * eronder. Puur amber op lichtgrijs was zo'n 2:1. Icoon en rand houden de
+   * echte kleur.
+   */
+  const chipTekstIOS = useMemo(() => Object.fromEntries(DIENSTEN.map((d) => [
+    d.key, leesbaar(d.kleur, mengKleur(d.kleur, C.bg, parseInt(TINT_IOS, 16) / 255)),
+  ])) as Record<string, string>, [C.bg]);
+
+  /**
    * De lijst volgt de schakelaars METEEN, zonder op het netwerk te wachten.
    *
    * Melding Wilbert 24-08: ambulance uitzetten en dan blijven de ambulance-
@@ -190,7 +239,7 @@ export default function BuurtScreen() {
   const lijstKop = (
     <>
       {/* Verbonden-status, zoals in de grote app (wens Chris 27-09). Zoeken
-          zit sindsdien onderin de tabbalk. */}
+          is sindsdien een eigen tabblad in de systeemtabbalk. */}
       <View style={styles.bovenRij}>
         <StatusPil status={liveStatus} />
       </View>
@@ -208,22 +257,45 @@ export default function BuurtScreen() {
       >
         {DIENSTEN.map((d) => {
           const aan = inst.lijstDiensten.includes(d.key);
+          // Een keuze die verspringt: selectietik, geen druktik.
+          const wissel = () => {
+            tikStap();
+            zet('lijstDiensten', wisselDienst(inst.lijstDiensten, d.key));
+          };
+          if (isIOS) {
+            return (
+              <Drukbaar
+                key={d.key}
+                schaal={0.94}
+                geselecteerd={aan}
+                style={[styles.chip, aan && { backgroundColor: `${d.kleur}${TINT_IOS}`, borderColor: d.kleur }]}
+                onPress={wissel}
+              >
+                <View style={styles.chipInhoud}>
+                  <DienstIcoon dienst={d} grootte={15} kleur={aan ? d.kleur : C.textMuted} />
+                  <Text style={[styles.chipTekst, aan && { color: chipTekstIOS[d.key], fontWeight: F.weightSemibold }]}>
+                    {d.label}
+                  </Text>
+                </View>
+              </Drukbaar>
+            );
+          }
+          // Android: M3-filterchip. Gekozen is een getint vlak met een vinkje
+          // vooraan, niet gekozen alleen een rand met het vakicoon. TalkBack
+          // leest hem als aangevinkt of niet.
           return (
             <Drukbaar
               key={d.key}
-              schaal={0.94}
-              style={[styles.chip, aan && { backgroundColor: `${d.kleur}14`, borderColor: d.kleur }]}
-              onPress={() => zet('lijstDiensten', wisselDienst(inst.lijstDiensten, d.key))}
+              rol="checkbox"
+              aan={aan}
+              style={[styles.chip, aan && { backgroundColor: `${d.kleur}29`, borderColor: 'transparent' }]}
+              onPress={wissel}
             >
               <View style={styles.chipInhoud}>
-                <MaterialCommunityIcons
-                  name={d.icoon as never}
-                  size={15}
-                  color={aan ? d.kleur : C.textMuted}
-                />
-                <Text style={[styles.chipTekst, aan && { color: d.kleur, fontWeight: '600' }]}>
-                  {d.label}
-                </Text>
+                {aan
+                  ? <Icoon naam="gekozen" grootte={18} kleur={C.textPrimary} />
+                  : <DienstIcoon dienst={d} grootte={18} kleur={d.kleur} />}
+                <Text style={[styles.chipTekst, aan && { color: C.textPrimary }]}>{d.label}</Text>
               </View>
             </Drukbaar>
           );
@@ -246,11 +318,24 @@ export default function BuurtScreen() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <SectionList
+        // iOS: de lijst loopt onder de tabbalk door en houdt er zelf ruimte
+        // voor vrij. Android: de tabcontainer houdt de balk al vrij.
+        contentInsetAdjustmentBehavior="automatic"
         ListHeaderComponent={lijstKop}
         sections={secties}
         keyExtractor={(r) => r.m.id}
         stickySectionHeadersEnabled={false}
-        refreshControl={<RefreshControl refreshing={laden} onRefresh={laad} tintColor={C.textMuted} />}
+        refreshControl={(
+          <RefreshControl
+            refreshing={verversen}
+            onRefresh={ververs}
+            tintColor={C.textMuted}
+            // Android: rood draaiend op een schijf in de kaartkleur. Zonder
+            // deze twee is de schijf in het donker wit.
+            colors={[C.accent]}
+            progressBackgroundColor={C.card}
+          />
+        )}
         onEndReached={laadMeer}
         onEndReachedThreshold={0.6}
         ListFooterComponent={meerBezig ? (
@@ -258,9 +343,25 @@ export default function BuurtScreen() {
         ) : eindeBereikt && rijen.length > 0 ? (
           <Text style={styles.eindeTekst}>That's everything we have for this area.</Text>
         ) : null}
-        contentContainerStyle={styles.lijst}
-        renderSectionHeader={({ section }) => <Text style={styles.sectieKop}>{section.title}</Text>}
-        ListEmptyComponent={!laden ? (
+        contentContainerStyle={[styles.lijst, kolom, { paddingHorizontal: marge }]}
+        // Kopjes per periode als kop: de koppenrotor van VoiceOver en de
+        // koppennavigatie van TalkBack springen er dan van dag naar dag.
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectieKop} accessibilityRole="header">{section.title}</Text>
+        )}
+        // Drie lege staten, en 'All quiet' alleen als het echt stil is: de
+        // eerste keer laden een skelet in de vorm van de lijst, bij een
+        // mislukte herlading zonder oude lijst de foutkaart.
+        ListEmptyComponent={laden ? <Skelet /> : fout ? (
+          <View style={[kaartStijl, styles.leeg]}>
+            {/* Selecteerbaar: een foutmelding wil je kunnen doorsturen. */}
+            <Text style={styles.leegTitel} accessibilityRole="header" selectable>Could not load incidents</Text>
+            <Text style={styles.leegTekst} selectable>Check your connection and try again.</Text>
+            <Drukbaar style={styles.opnieuw} onPress={opnieuw}>
+              <Text style={styles.opnieuwTekst}>Try again</Text>
+            </Drukbaar>
+          </View>
+        ) : (
           <View style={[kaartStijl, styles.leeg]}>
             <Text style={styles.leegTitel}>All quiet nearby</Text>
             <Text style={styles.leegTekst}>
@@ -268,12 +369,33 @@ export default function BuurtScreen() {
               to look further.
             </Text>
           </View>
-        ) : null}
+        )}
         renderItem={({ item }) => (
           <MeldingRij m={item.m} km={item.km} onPress={() => navigation.navigate('Detail', { melding: item.m })} />
         )}
       />
     </SafeAreaView>
+  );
+}
+
+/**
+ * Eerste keer laden: vijf kaarten in de vorm van een meldingsrij, met twee
+ * grijze balkjes waar titel en plaats komen. Stil, zonder glinstering: die
+ * trekt de aandacht naar iets dat nog niets zegt. Voor een schermlezer één
+ * element.
+ */
+function Skelet() {
+  const styles = useStijlen(maak_styles);
+  const kaartStijl = useKaartStijl();
+  return (
+    <View accessible accessibilityRole="progressbar" accessibilityLabel="Loading incidents">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <View key={i} style={[kaartStijl, styles.skeletRij]}>
+          <View style={[styles.skeletBalk, styles.skeletLang]} />
+          <View style={[styles.skeletBalk, styles.skeletKort]} />
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -307,26 +429,43 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     paddingHorizontal: 11, paddingVertical: 6,
   },
   pilStip: { width: 8, height: 8, borderRadius: 4 },
-  pilTekst: { ...T.klein, fontWeight: '600', color: C.textPrimary },
+  pilTekst: { ...T.klein, fontWeight: F.weightSemibold, color: C.textPrimary },
   kop: { ...T.display, color: C.textPrimary, paddingHorizontal: 20, paddingTop: 8 },
-  subkop: { ...T.klein, color: C.textSecondary, paddingHorizontal: 20, marginTop: 10, marginBottom: 10 },
+  // marginBottom 2 + de 8 bovenin de chiprij = dezelfde 10 als voorheen.
+  subkop: { ...T.klein, color: C.textSecondary, paddingHorizontal: 20, marginTop: 10, marginBottom: 2 },
 
   // flexGrow: 0, anders eist de schuifrij alle resterende hoogte op en blijft
   // er niets over voor de lijst eronder.
   chipsRij: { flexGrow: 0, flexShrink: 0 },
-  filterHint: { ...T.klein, color: C.textMuted, paddingHorizontal: 20, marginTop: -4, marginBottom: 10 },
-  eindeTekst: { ...T.klein, color: C.textMuted, textAlign: 'center', marginVertical: 18 },
-  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
-  chip: {
+  filterHint: { ...T.klein, color: C.textSecondary, paddingHorizontal: 20, marginTop: -4, marginBottom: 10 },
+  eindeTekst: { ...T.klein, color: C.textSecondary, textAlign: 'center', marginVertical: 18 },
+  // paddingTop 8: een ScrollView neemt geen aanrakingen buiten zijn eigen
+  // rand aan, dus zonder die ruimte viel de bovenste 8 van de hitSlop weg.
+  // Zo is elke chip minstens 48 hoog te raken.
+  chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
+  chip: isIOS ? {
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
     backgroundColor: C.card, borderWidth: 1, borderColor: C.border,
+  } : {
+    // M3-filterchip: 32 hoog (48 met de hitSlop), hoek 8, vooraan 8 voor
+    // het icoon en achteraan 16. De rand is M3's outlineVariant: 25% van de
+    // tekstkleur over de grond. In Android-donker is dat precies C.border
+    // (#474747); in licht haalt C.border op de grijze grond maar 1.1:1 en
+    // viel de chip weg.
+    minHeight: 32, paddingVertical: 0, justifyContent: 'center',
+    borderRadius: 8, paddingLeft: 8, paddingRight: 16,
+    backgroundColor: 'transparent', borderWidth: 1,
+    borderColor: mengKleur(C.textPrimary, C.bg, 0.25),
   },
-  chipInhoud: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  chipTekst: { ...T.klein, color: C.textSecondary },
+  chipInhoud: { flexDirection: 'row', alignItems: 'center', gap: isIOS ? 5 : 8 },
+  chipTekst: isIOS
+    ? { ...T.klein, color: C.textSecondary }
+    // M3 labelLarge: 14/500 met letterafstand 0.1.
+    : { fontSize: 14, fontWeight: F.weightMedium, letterSpacing: 0.1, lineHeight: 20, color: C.textSecondary },
 
-  lijst: { paddingHorizontal: 16, paddingBottom: 96 },
+  lijst: { paddingHorizontal: 16, paddingBottom: 24 },
   sectieKop: {
-    ...T.sectie, color: C.textSecondary, textTransform: 'uppercase',
+    ...T.sectie, color: C.textSecondary,
     marginTop: 18, marginBottom: 8, marginLeft: 4,
   },
 
@@ -334,4 +473,15 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   leeg: { padding: 24, alignItems: 'center', marginTop: 12 },
   leegTitel: { ...T.kop, color: C.textPrimary },
   leegTekst: { ...T.body, color: C.textSecondary, textAlign: 'center', marginTop: 6 },
+  // Tekstknop in de accentkleur; de ronding staat op de Drukbaar zelf, zodat
+  // de Android-drukstaat dezelfde vorm heeft.
+  opnieuw: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: 22, marginTop: 12 },
+  opnieuwTekst: { ...T.kop, color: C.accentTekst },
+
+  // Zelfde maat als een meldingsrij; de balkjes beginnen waar de titel staat
+  // (4 kleurbalk + 44 icoonvak).
+  skeletRij: { height: 72, marginBottom: 8, paddingLeft: 48, paddingRight: 16, justifyContent: 'center' },
+  skeletBalk: { height: 12, borderRadius: 6, backgroundColor: C.chipBg },
+  skeletLang: { width: '60%' },
+  skeletKort: { width: '35%', height: 10, marginTop: 10 },
 });

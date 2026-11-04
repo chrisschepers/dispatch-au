@@ -10,18 +10,23 @@
  */
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { PALET_LICHT } from '../../theme';
+import { PALET_LICHT, isIOS } from '../../theme';
 import { VastThema } from '../../thema';
+import { Icoon } from '../Icoon';
 
 export const SCHERM_B = 320;
 export const SCHERM_H = 693;
 const RAND = 7;
 
-/** Hoe breed mag het toestel zijn in een vak van b×h punten. */
+/**
+ * Hoe breed mag het toestel zijn in een vak van b×h punten. Nooit hoger dan
+ * het vak: de oude ondergrens van 120 breed maakte hem in een laag vak
+ * hoger dan dat vak, en dan schoof hij over de titel. IntroSchil toont hem
+ * pas vanaf een vak van 140 hoog.
+ */
 export function toestelBreedte(b: number, h: number): number {
   const opHoogte = (h - 2 * RAND) * (SCHERM_B / SCHERM_H) + 2 * RAND;
-  return Math.max(120, Math.min(b * 0.72, opHoogte, 340));
+  return Math.min(b * 0.72, opHoogte, 340);
 }
 
 export function Toestel({ breedte, children, donker = false }: {
@@ -41,7 +46,15 @@ export function Toestel({ breedte, children, donker = false }: {
       accessibilityLabel="Preview of the app"
     >
       <View style={[styles.scherm, { borderRadius: 42 * schaal, backgroundColor: donker ? '#000' : PALET_LICHT.bg }]}>
-        <View style={[styles.vast, { transform: [{ scale: schaal }] }]} pointerEvents="none">
+        {/* De nepschermen bevatten echte Pressables (MeldingRij). Een
+            accessible ouder verbergt die niet voor TalkBack; zo blijft alleen
+            het plaatje hierboven over. */}
+        <View
+          style={[styles.vast, { transform: [{ scale: schaal }] }]}
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
           <VastThema palet={PALET_LICHT}>
             {children}
             <StatusBalk wit={donker} />
@@ -52,17 +65,25 @@ export function Toestel({ breedte, children, donker = false }: {
   );
 }
 
-/** Tijd, eiland en de drie icoontjes rechts, zoals op elke iPhone. */
+/**
+ * De statusbalk van het platform. iOS: de tijd vet, het eiland in het midden
+ * en rechts bereik, wifi en batterij, zoals op elke iPhone. Android: de tijd
+ * in gewoon gewicht, een cameragaatje van 12 in het midden en rechts wifi,
+ * bereik en batterij, zoals op een Pixel.
+ */
 function StatusBalk({ wit }: { wit: boolean }) {
   const kleur = wit ? '#fff' : '#000';
+  const bereik = <Icoon naam="signaal" grootte={14} kleur={kleur} />;
+  const wifi = <Icoon naam="wifi" grootte={14} kleur={kleur} />;
   return (
-    <View style={styles.statusBalk} pointerEvents="none">
-      <Text style={[styles.klok, { color: kleur }]}>9:41</Text>
-      <View style={styles.eiland} />
+    <View style={[styles.statusBalk, !isIOS && styles.statusBalkAndroid]} pointerEvents="none">
+      <Text style={[styles.klok, !isIOS && styles.klokAndroid, { color: kleur }]}>9:41</Text>
+      <View style={isIOS ? styles.eiland : styles.gaatje} />
       <View style={styles.icoontjes}>
-        <MaterialCommunityIcons name="signal-cellular-3" size={14} color={kleur} />
-        <MaterialCommunityIcons name="wifi" size={14} color={kleur} />
-        <MaterialCommunityIcons name="battery-high" size={17} color={kleur} style={{ transform: [{ rotate: '90deg' }] }} />
+        {isIOS ? bereik : wifi}
+        {isIOS ? wifi : bereik}
+        {/* De MDI-batterij staat rechtop; SF battery.100 ligt al. */}
+        <Icoon naam="batterij" grootte={17} kleur={kleur} style={isIOS ? undefined : { transform: [{ rotate: '90deg' }] }} />
       </View>
     </View>
   );
@@ -85,10 +106,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 26, paddingTop: 6,
   },
+  statusBalkAndroid: { paddingHorizontal: 22 },
   klok: { fontSize: 14, fontWeight: '600', width: 60 },
+  klokAndroid: { fontWeight: '400' },
   eiland: {
     position: 'absolute', top: 11, left: SCHERM_B / 2 - 44,
     width: 88, height: 25, borderRadius: 13, backgroundColor: '#000',
+  },
+  // Op de hoogte van de klok: de balk is 46 hoog met 6 bovenin, dus het
+  // midden ligt op 26.
+  gaatje: {
+    position: 'absolute', top: 20, left: SCHERM_B / 2 - 6,
+    width: 12, height: 12, borderRadius: 6, backgroundColor: '#000',
   },
   icoontjes: { flexDirection: 'row', alignItems: 'center', gap: 4, width: 60, justifyContent: 'flex-end' },
 });
