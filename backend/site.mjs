@@ -397,6 +397,10 @@ ${list}</section>`;
 function terms() {
   const parts = [
     [
+      'Who we are',
+      'Emergencies Near Me is provided by Schepers Digital, a sole proprietorship of Chris Schepers, registered with the Netherlands Chamber of Commerce (KvK) under number 42107874.',
+    ],
+    [
       'The app',
       'Emergencies Near Me shows incident information published by Australian state emergency services. It is an independent app, not an official warning service, and is not affiliated with any government or emergency service. Information can be delayed, incomplete or wrong. In an emergency call 000, and always follow the advice of official emergency services.',
     ],
@@ -418,7 +422,7 @@ function terms() {
     ],
   ];
   const body = `<section class="prose"><h1 style="font-size:40px;letter-spacing:-.03em;margin:20px 0 8px">Terms of Use</h1>
-<p class="m" style="color:var(--muted)">Last updated 20 October 2026</p>
+<p class="m" style="color:var(--muted)">Last updated 5 November 2026</p>
 ${parts.map(([h, p]) => `<h2>${esc(h)}</h2><p>${esc(p)}</p>`).join('')}
 <h2>App Store</h2><p>For purchases through the App Store, Apple's <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Standard End User License Agreement</a> also applies.</p>
 <h2>Contact</h2><p><a href="mailto:${CONTACT}">${CONTACT}</a></p></section>`;
