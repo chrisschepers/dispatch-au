@@ -8,6 +8,7 @@ import { appConfig } from './app-config.mjs';
 import { IncidentStore } from './store.mjs';
 import { PushService } from './push.mjs';
 import { renderSite } from './site.mjs';
+import { AircraftService } from './aircraft.mjs';
 
 // Device routes for push alerts (docs/PUSH-API.md). Small JSON bodies only.
 function readJson(req, limit = 8192) {
@@ -53,7 +54,7 @@ async function deviceRoute(req, url, push, send) {
   return send(404, { error: 'Not found' });
 }
 
-export function createServer(store, push = null) {
+export function createServer(store, push = null, aircraft = null) {
   return http.createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -91,6 +92,13 @@ export function createServer(store, push = null) {
       return send(405, { error: 'Method not allowed' });
     try {
       if (url.pathname === '/health') return send(200, { ok: true });
+      // Firefighting and rescue aircraft (aircraft.mjs). Every call counts as
+      // someone looking at the layer, so never cached.
+      if (url.pathname === '/v1/aircraft') {
+        res.setHeader('Cache-Control', 'no-store');
+        if (!aircraft) return send(503, { error: 'Aircraft layer unavailable' });
+        return send(200, aircraft.request());
+      }
       if (url.pathname === '/v1/config') {
         res.setHeader('Cache-Control', 'public, max-age=300');
         return send(200, appConfig());
@@ -143,7 +151,13 @@ async function main() {
   mkdirSync(dirname(path), { recursive: true });
   const store = new IncidentStore(path);
   const push = new PushService(store.db);
-  const server = createServer(store, push);
+  const aircraft = new AircraftService({
+    db: store.db,
+    activeFires: () => (store.feed('au', 24)?.incidents ?? []).filter((i) => i.listed),
+  });
+  const server = createServer(store, push, aircraft);
+  // Keeps the 3-minute rhythm while someone has the layer open.
+  setInterval(() => void aircraft.tick(), 30_000).unref();
   let stopping = false;
   const timers = new Set();
   const collect = async (region) => {
