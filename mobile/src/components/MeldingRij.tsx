@@ -38,7 +38,8 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
   const v = vertaalMelding(m);
   const km = afstandTekst(afstand);
   const plek = plaatsRegel(m.location, m.city);
-  const urgentie = urgentieTekst(m.priority);
+  // Ended: that is the whole status now, not the last "Responding".
+  const urgentie = v.afgelopen ? 'Ended' : urgentieTekst(m.priority);
   const tijd = metDatum ? datumTekst(m.timestamp) : klokTekst(m.timestamp);
   // Grote tekst (vanaf 150%): de titel mag dan doorlopen tot vier regels en
   // plaats en urgentie tot twee, anders staat er bij AX5 vooral '…'.
@@ -55,7 +56,10 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
     : plek;
   return (
     <Drukbaar
-      style={[kaartStijl, styles.rij]}
+      // Afgelopen: geen kaart erachter, wel dezelfde tekst (keuze Chris
+      // 08-11: niet grijs, de achtergrond verdwijnt). Wat nog loopt springt
+      // er zo uit, en de geschiedenis blijft leesbaar.
+      style={[kaartStijl, styles.rij, v.afgelopen && styles.afgelopen]}
       // Oplichten in plaats van inzakken, zoals een rij in een iOS-lijst, en
       // geen tik bij elke rij. Android houdt zijn drukstaat.
       markeer
@@ -71,7 +75,7 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
       {/* Gekleurde balk per dienst: kleur alleen als accent, niet als
           vlak. Zo blijft de lijst rustig maar zie je in één oogopslag
           welke dienst het betreft. */}
-      <View style={[styles.balk, { backgroundColor: v.kleur }]} />
+      <View style={[styles.balk, { backgroundColor: v.afgelopen ? 'transparent' : v.kleur }]} />
 
       <View style={styles.icoonVak}>
         <MaterialCommunityIcons name={v.icoon as never} size={22} color={v.kleur} />
@@ -109,6 +113,7 @@ export function MeldingRij({ m, km: afstand, onPress, metDatum }: Props) {
 
 const maak_styles = (C: Palet) => StyleSheet.create({
   rij: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, paddingRight: 12 },
+  afgelopen: { backgroundColor: 'transparent' },
   balk: { width: 4, alignSelf: 'stretch' },
   icoonVak: { width: 44, alignItems: 'center', justifyContent: 'center', paddingVertical: 14 },
   midden: { flex: 1, paddingVertical: 12 },

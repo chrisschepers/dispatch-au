@@ -25,6 +25,7 @@ import {
 import { SafeAreaView } from 'react-native-screens/experimental';
 
 import type { Melding } from './api';
+import type { Vliegtuig } from './vliegtuigData';
 import { ICONEN, type IcoonNaam } from './iconen';
 import { PALET_LICHT, PALET_DONKER, isIOS, isIOS26, type Palet } from './theme';
 import { useThema, useMinderBeweging } from './thema';
@@ -34,20 +35,29 @@ import ZoekScreen from './screens/ZoekScreen';
 import InstellingenScreen from './screens/InstellingenScreen';
 import DetailScreen from './screens/DetailScreen';
 import GroepScreen from './screens/GroepScreen';
+import KaartFiltersScreen from './screens/KaartFiltersScreen';
+import KaartLagenScreen from './screens/KaartLagenScreen';
+import VliegtuigScreen from './screens/VliegtuigScreen';
 
 /**
  * Alle schermen van de vier stapels. Kaart kan een plek meekrijgen (vanuit
  * het kaartje in Detail); `t` is een volgnummer, zodat de kaart ook opnieuw
- * inzoomt als je twee keer dezelfde plek kiest. Groep is het blad met de
- * meldingen die op de kaart één plek delen (alleen in de kaartstapel).
+ * inzoomt als je twee keer dezelfde plek kiest, en `overzicht` (ook een
+ * volgnummer) zet heel Australië in beeld. Groep is het blad met de
+ * meldingen die op de kaart één plek delen; KaartFilters, KaartLagen en
+ * Vliegtuig zijn de bladen van de kaart (08-11). Allemaal alleen in de
+ * kaartstapel.
  */
 export type StapelParams = {
   Buurt: undefined;
-  Kaart: { lat?: number; lon?: number; id?: string; t?: number } | undefined;
+  Kaart: { lat?: number; lon?: number; id?: string; t?: number; overzicht?: number } | undefined;
   Zoeken: undefined;
   Instellingen: undefined;
   Detail: { melding: Melding };
   Groep: { leden: Melding[] };
+  KaartFilters: undefined;
+  KaartLagen: undefined;
+  Vliegtuig: { vliegtuig: Vliegtuig };
 };
 
 export type TabParams = {
@@ -162,25 +172,26 @@ function BuurtStapel() {
 function KaartStapel() {
   const C = useThema();
   const kop = useKop();
+  const blad: NativeStackNavigationOptions = {
+    presentation: 'formSheet',
+    headerShown: false,
+    sheetGrabberVisible: true,
+    // Android: de M3-bovenhoek van 28 dp; zonder waarde maakt
+    // react-native-screens de hoeken vierkant. iOS houdt die van het
+    // systeem.
+    sheetCornerRadius: isIOS ? undefined : 28,
+    contentStyle: { backgroundColor: isIOS26 ? 'transparent' : C.bg },
+  };
   return (
     <Stapel.Navigator screenOptions={kop}>
       <Stapel.Screen name="Kaart" component={KaartScreen} options={{ title: 'Map', headerShown: false }} />
       <Stapel.Screen name="Detail" component={DetailScreen} getId={detailId} options={detailOpties} />
-      <Stapel.Screen
-        name="Groep"
-        component={GroepScreen}
-        options={{
-          presentation: 'formSheet',
-          headerShown: false,
-          sheetAllowedDetents: [0.5, 1],
-          sheetGrabberVisible: true,
-          // Android: de M3-bovenhoek van 28 dp; zonder waarde maakt
-          // react-native-screens de hoeken vierkant. iOS houdt die van het
-          // systeem.
-          sheetCornerRadius: isIOS ? undefined : 28,
-          contentStyle: { backgroundColor: isIOS26 ? 'transparent' : C.bg },
-        }}
-      />
+      <Stapel.Screen name="Groep" component={GroepScreen} options={{ ...blad, sheetAllowedDetents: [0.5, 1] }} />
+      {/* Filters en Kaartlagen: zo hoog als hun inhoud, zoals de panelen
+          van de grote app. Het toestel ook: een paar regels. */}
+      <Stapel.Screen name="KaartFilters" component={KaartFiltersScreen} options={{ ...blad, sheetAllowedDetents: 'fitToContents' }} />
+      <Stapel.Screen name="KaartLagen" component={KaartLagenScreen} options={{ ...blad, sheetAllowedDetents: 'fitToContents' }} />
+      <Stapel.Screen name="Vliegtuig" component={VliegtuigScreen} options={{ ...blad, sheetAllowedDetents: 'fitToContents' }} />
     </Stapel.Navigator>
   );
 }

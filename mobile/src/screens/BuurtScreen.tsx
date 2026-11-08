@@ -24,22 +24,17 @@ import { MeldingRij } from '../components/MeldingRij';
 import { useLive, type LiveStatus } from '../live';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlek, bepaalPlekSnel } from '../locatie';
-import { T, F, isIOS, type Palet } from '../theme';
+import { T, F, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { DIENSTEN, wisselDienst, straalVoor, straalTekst, LANDELIJK_KM } from '../diensten';
 import { Drukbaar } from '../components/Drukbaar';
-import { Icoon, DienstIcoon } from '../components/Icoon';
-import { tikStap } from '../trilling';
-import { leesbaar, mengKleur } from '../kleur';
+import { DienstChip } from '../components/DienstChip';
 import { useInhoudMaat } from '../inhoudMaat';
 import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 
 type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
 
 interface Rij { m: Melding; km: number | null }
-
-/** iOS: het vlak van een gekozen chip is de dienstkleur op 0x14 (8%). */
-const TINT_IOS = '14';
 
 export default function BuurtScreen() {
   const C = useThema();
@@ -182,15 +177,6 @@ export default function BuurtScreen() {
     return max >= LANDELIJK_KM ? `${min} km to anywhere in Australia` : `${min} to ${max} km`;
   }, [inst.lijstDiensten, inst.straalKm, inst.straalPerDienst]);
 
-  /**
-   * iOS: de tekst van een gekozen chip blijft in de dienstkleur, maar zo
-   * donker (in het donker: zo licht) dat hij 4.5:1 haalt op het getinte vlak
-   * eronder. Puur amber op lichtgrijs was zo'n 2:1. Icoon en rand houden de
-   * echte kleur.
-   */
-  const chipTekstIOS = useMemo(() => Object.fromEntries(DIENSTEN.map((d) => [
-    d.key, leesbaar(d.kleur, mengKleur(d.kleur, C.bg, parseInt(TINT_IOS, 16) / 255)),
-  ])) as Record<string, string>, [C.bg]);
 
   /**
    * De lijst volgt de schakelaars METEEN, zonder op het netwerk te wachten.
@@ -255,51 +241,14 @@ export default function BuurtScreen() {
         style={styles.chipsRij}
         contentContainerStyle={styles.chips}
       >
-        {DIENSTEN.map((d) => {
-          const aan = inst.lijstDiensten.includes(d.key);
-          // Een keuze die verspringt: selectietik, geen druktik.
-          const wissel = () => {
-            tikStap();
-            zet('lijstDiensten', wisselDienst(inst.lijstDiensten, d.key));
-          };
-          if (isIOS) {
-            return (
-              <Drukbaar
-                key={d.key}
-                schaal={0.94}
-                geselecteerd={aan}
-                style={[styles.chip, aan && { backgroundColor: `${d.kleur}${TINT_IOS}`, borderColor: d.kleur }]}
-                onPress={wissel}
-              >
-                <View style={styles.chipInhoud}>
-                  <DienstIcoon dienst={d} grootte={15} kleur={aan ? d.kleur : C.textMuted} />
-                  <Text style={[styles.chipTekst, aan && { color: chipTekstIOS[d.key], fontWeight: F.weightSemibold }]}>
-                    {d.label}
-                  </Text>
-                </View>
-              </Drukbaar>
-            );
-          }
-          // Android: M3-filterchip. Gekozen is een getint vlak met een vinkje
-          // vooraan, niet gekozen alleen een rand met het vakicoon. TalkBack
-          // leest hem als aangevinkt of niet.
-          return (
-            <Drukbaar
-              key={d.key}
-              rol="checkbox"
-              aan={aan}
-              style={[styles.chip, aan && { backgroundColor: `${d.kleur}29`, borderColor: 'transparent' }]}
-              onPress={wissel}
-            >
-              <View style={styles.chipInhoud}>
-                {aan
-                  ? <Icoon naam="gekozen" grootte={18} kleur={C.textPrimary} />
-                  : <DienstIcoon dienst={d} grootte={18} kleur={d.kleur} />}
-                <Text style={[styles.chipTekst, aan && { color: C.textPrimary }]}>{d.label}</Text>
-              </View>
-            </Drukbaar>
-          );
-        })}
+        {DIENSTEN.map((d) => (
+          <DienstChip
+            key={d.key}
+            dienst={d}
+            aan={inst.lijstDiensten.includes(d.key)}
+            onWissel={() => zet('lijstDiensten', wisselDienst(inst.lijstDiensten, d.key))}
+          />
+        ))}
       </ScrollView>
 
       {/* Zonder deze regel denk je dat je met de chips ook je meldingen
@@ -443,25 +392,6 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   // rand aan, dus zonder die ruimte viel de bovenste 8 van de hitSlop weg.
   // Zo is elke chip minstens 48 hoog te raken.
   chips: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
-  chip: isIOS ? {
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999,
-    backgroundColor: C.card, borderWidth: 1, borderColor: C.border,
-  } : {
-    // M3-filterchip: 32 hoog (48 met de hitSlop), hoek 8, vooraan 8 voor
-    // het icoon en achteraan 16. De rand is M3's outlineVariant: 25% van de
-    // tekstkleur over de grond. In Android-donker is dat precies C.border
-    // (#474747); in licht haalt C.border op de grijze grond maar 1.1:1 en
-    // viel de chip weg.
-    minHeight: 32, paddingVertical: 0, justifyContent: 'center',
-    borderRadius: 8, paddingLeft: 8, paddingRight: 16,
-    backgroundColor: 'transparent', borderWidth: 1,
-    borderColor: mengKleur(C.textPrimary, C.bg, 0.25),
-  },
-  chipInhoud: { flexDirection: 'row', alignItems: 'center', gap: isIOS ? 5 : 8 },
-  chipTekst: isIOS
-    ? { ...T.klein, color: C.textSecondary }
-    // M3 labelLarge: 14/500 met letterafstand 0.1.
-    : { fontSize: 14, fontWeight: F.weightMedium, letterSpacing: 0.1, lineHeight: 20, color: C.textSecondary },
 
   lijst: { paddingHorizontal: 16, paddingBottom: 24 },
   sectieKop: {

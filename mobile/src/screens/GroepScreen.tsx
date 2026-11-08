@@ -5,11 +5,13 @@
  * navigatie.tsx voor het blad zelf).
  */
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { StapelParams } from '../navigatie';
 import { plaatsOnnauwkeurig } from '../vertaal';
+import { herhalingTekst } from '../kaartFilter';
+import { BladGreep } from '../components/BladGreep';
 import { MeldingRij } from '../components/MeldingRij';
 import { T, isIOS, type Palet } from '../theme';
 import { useStijlen } from '../thema';
@@ -26,6 +28,8 @@ export default function GroepScreen() {
     [leden],
   );
   const allemaalOnnauwkeurig = lijst.length > 0 && lijst.every(plaatsOnnauwkeurig);
+  // Allemaal hetzelfde adres: dan is dat het verhaal (plan 08-11).
+  const herhaling = allemaalOnnauwkeurig ? null : herhalingTekst(lijst);
 
   const inhoud = (
     <ScrollView
@@ -36,7 +40,7 @@ export default function GroepScreen() {
       nestedScrollEnabled
     >
       <View style={styles.kop}>
-        <Text style={styles.titel} accessibilityRole="header">{`${lijst.length} incidents here`}</Text>
+        <Text style={styles.titel} accessibilityRole="header">{herhaling ?? `${lijst.length} incidents here`}</Text>
         {allemaalOnnauwkeurig && (
           <Text style={styles.sub}>
             The agencies did not publish exact addresses, so these share one pin.
@@ -63,29 +67,9 @@ export default function GroepScreen() {
   if (isIOS) return inhoud;
   return (
     <View style={styles.android}>
-      <Greep onPress={() => navigation.goBack()} />
+      <BladGreep onPress={() => navigation.goBack()} />
       {inhoud}
     </View>
-  );
-}
-
-/**
- * M3-sleepgreep (32 × 4 dp, 22 dp van de bovenrand). Ook een knop: TalkBack
- * kan niet slepen, en zo is er een manier om het blad te sluiten zonder
- * gebaar. Het tikvlak is 48 × 48.
- */
-function Greep({ onPress }: { onPress: () => void }) {
-  const styles = useStijlen(maak_styles);
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel="Close"
-      hitSlop={8}
-      style={styles.greepVak}
-    >
-      <View style={styles.greep} />
-    </Pressable>
   );
 }
 
@@ -96,6 +80,4 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   kop: { gap: 4, marginBottom: 12 },
   titel: { ...T.kop, color: C.textPrimary },
   sub: { ...T.klein, color: C.textSecondary },
-  greepVak: { alignSelf: 'center', width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  greep: { width: 32, height: 4, borderRadius: 2, backgroundColor: C.textSecondary, opacity: 0.4 },
 });

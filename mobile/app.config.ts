@@ -12,7 +12,7 @@ if (
 const config: ExpoConfig = {
   name: 'Dispatch Australia',
   slug: 'dispatch-australia',
-  version: '1.0.4',
+  version: '1.1.0',
   scheme: 'dispatchau',
   platforms: ['ios', 'android'],
   orientation: 'portrait',
@@ -24,7 +24,7 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
-    buildNumber: '12',
+    buildNumber: '13',
     // iPhone only: App Review tests on an iPad, and an iPhone-only app runs
     // there in compatibility mode without needing an iPad layout or screenshots.
     supportsTablet: false,

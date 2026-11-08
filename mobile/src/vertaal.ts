@@ -5,6 +5,7 @@
  */
 import type { Melding } from './api';
 import { C } from './theme';
+import { isAfgelopen } from './kaartFilter';
 
 /**
  * Australian Warning System levels, highest first. The feed publishes them as
@@ -34,8 +35,13 @@ export interface VertaaldeMelding {
   kaartVlammen?: 1 | 2 | 3;
   kaartBrandend?: 'woning' | 'gebouw' | 'voertuig' | 'container' | 'natuur' | 'schip' | 'buiten';
   kaartBotsing?: boolean;
-  /** "Emergency Warning", "Watch and Act" — null when there is none. */
+  /** "Emergency Warning", "Watch and Act" — null when there is none, or when it ended. */
   opschaling: string | null;
+  /**
+   * Off the agency's list (kaartFilter.ts). Not grey (keuze Chris 08-11): the
+   * row loses its card and the pin its coloured fill, the text stays as it is.
+   */
+  afgelopen: boolean;
 }
 
 /** The warning level, if the agency issued one for this incident. */
@@ -82,10 +88,13 @@ const REGELS: Array<{
 export function vertaalMelding(m: Melding): VertaaldeMelding {
   const d = DIENST[m.discipline] ?? DIENST.Other;
   const tekst = `${m.title ?? ''} ${m.rawMessage ?? ''}`;
-  const opschaling = opschalingLabel(m);
-  const groot = opschaling === 'Emergency Warning' || opschaling === 'Watch and Act'
-    || (m.resources ?? 0) >= 10;
-  const symbool = { icoon: d.icoon, emoji: d.emoji };
+  const afgelopen = isAfgelopen(m);
+  // An ended incident has no warning level any more: "Advice: stay informed"
+  // above a fire that is out would say the opposite of what is true.
+  const opschaling = afgelopen ? null : opschalingLabel(m);
+  const groot = !afgelopen && (opschaling === 'Emergency Warning' || opschaling === 'Watch and Act'
+    || (m.resources ?? 0) >= 10);
+  const symbool = { icoon: d.icoon, emoji: d.emoji, afgelopen };
   // Bare agency titles ("Fire incident", "Other") say nothing; the list then
   // leads with the street and suburb, which is what differs per row.
   if (/^\s*((fire|rescue|storm|flood|ses|ambulance|medical)\s+)?(incident|call)?\s*$|^\s*other\s*$/i.test(m.title ?? '')) {
