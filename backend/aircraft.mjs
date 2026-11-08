@@ -20,7 +20,9 @@ export const CADENCE_MS = 3 * 60_000;
 export const KEEP_MS = 30 * 60_000;
 export const NEAR_FIRE_KM = 50;
 
-export function loadFleet(path = new URL('./aircraft-fleet.json', import.meta.url)) {
+export function loadFleet(
+  path = new URL('./aircraft-fleet.json', import.meta.url),
+) {
   return JSON.parse(readFileSync(path, 'utf8')).fleet;
 }
 
@@ -34,7 +36,10 @@ export class Budget {
   }
   #fill(now) {
     // A clock that jumps back (or a test clock) never drains the bucket.
-    this.tokens = Math.min(this.max, this.tokens + (Math.max(0, now - this.at) / 86_400_000) * this.perDay);
+    this.tokens = Math.min(
+      this.max,
+      this.tokens + (Math.max(0, now - this.at) / 86_400_000) * this.perDay,
+    );
     this.at = now;
   }
   level(now = Date.now()) {
@@ -52,20 +57,28 @@ export class Budget {
 /** Pause after n 429s in a row: 1 min, 5, 15, 30 min, 1 h, 2 h, then 6 h. Never shorter than Retry-After. */
 export function pauseAfter429(n, retryAfterS = 0) {
   const steps = [60, 300, 900, 1800, 3600, 7200, 21600];
-  return Math.max(steps[Math.min(Math.max(n, 1), steps.length) - 1], retryAfterS || 0) * 1000;
+  return (
+    Math.max(
+      steps[Math.min(Math.max(n, 1), steps.length) - 1],
+      retryAfterS || 0,
+    ) * 1000
+  );
 }
 
 export function distanceKm([lat1, lon1], [lat2, lon2]) {
   const r = Math.PI / 180;
   const a =
     Math.sin(((lat2 - lat1) * r) / 2) ** 2 +
-    Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(((lon2 - lon1) * r) / 2) ** 2;
+    Math.cos(lat1 * r) *
+      Math.cos(lat2 * r) *
+      Math.sin(((lon2 - lon1) * r) / 2) ** 2;
   return 12742 * Math.asin(Math.sqrt(a));
 }
 
 /** Bush, grass, scrub and forest fires; not a house, car or alarm in town. */
 export function isLandscapeFire(incident) {
-  if (incident?.category !== 'fire' || !Array.isArray(incident.point)) return false;
+  if (incident?.category !== 'fire' || !Array.isArray(incident.point))
+    return false;
   return !/structure|building|house|residential|vehicle|car fire|truck|rubbish|chimney|alarm|smoke|electrical|non[- ]structure/i.test(
     incident.title || '',
   );
@@ -78,12 +91,14 @@ export function nearestFire(point, fires, maxKm = NEAR_FIRE_KM) {
     const km = distanceKm(point, f.point);
     if (km <= maxKm && (!best || km < best.km)) best = { km, fire: f };
   }
-  return best && {
-    id: best.fire.id,
-    title: best.fire.title,
-    location: best.fire.location,
-    distanceKm: Math.round(best.km * 10) / 10,
-  };
+  return (
+    best && {
+      id: best.fire.id,
+      title: best.fire.title,
+      location: best.fire.location,
+      distanceKm: Math.round(best.km * 10) / 10,
+    }
+  );
 }
 
 export class AircraftService {
@@ -112,15 +127,21 @@ export class AircraftService {
     this.pausedUntil = 0;
     this.lastError = null;
     if (db) {
-      db.exec('CREATE TABLE IF NOT EXISTS aircraft_state(key TEXT PRIMARY KEY, value TEXT NOT NULL)');
-      const row = db.prepare("SELECT value FROM aircraft_state WHERE key='pausedUntil'").get();
+      db.exec(
+        'CREATE TABLE IF NOT EXISTS aircraft_state(key TEXT PRIMARY KEY, value TEXT NOT NULL)',
+      );
+      const row = db
+        .prepare("SELECT value FROM aircraft_state WHERE key='pausedUntil'")
+        .get();
       this.pausedUntil = Number(row?.value) || 0;
     }
   }
 
   #savePause() {
     this.db
-      ?.prepare("INSERT INTO aircraft_state VALUES('pausedUntil', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
+      ?.prepare(
+        "INSERT INTO aircraft_state VALUES('pausedUntil', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+      )
       .run(String(this.pausedUntil));
   }
 
@@ -137,7 +158,8 @@ export class AircraftService {
     if (now - this.lastPoll < CADENCE_MS || now < this.pausedUntil) return;
     const hexes = [...this.fleet.keys()];
     const chunks = [];
-    for (let i = 0; i < hexes.length; i += CHUNK) chunks.push(hexes.slice(i, i + CHUNK));
+    for (let i = 0; i < hexes.length; i += CHUNK)
+      chunks.push(hexes.slice(i, i + CHUNK));
     if (!this.budget.take(chunks.length, now)) return;
     this.polling = true;
     this.lastPoll = now;
@@ -149,11 +171,18 @@ export class AircraftService {
         });
         if (res.status === 429) {
           this.tooMany += 1;
-          const wait = pauseAfter429(this.tooMany, Number(res.headers.get('retry-after')) || 0);
+          const wait = pauseAfter429(
+            this.tooMany,
+            Number(res.headers.get('retry-after')) || 0,
+          );
           this.pausedUntil = now + wait;
           this.#savePause();
           this.lastError = `429, pause ${Math.round(wait / 60_000)} min`;
-          this.log({ status: 429, pauseMin: Math.round(wait / 60_000), inARow: this.tooMany });
+          this.log({
+            status: 429,
+            pauseMin: Math.round(wait / 60_000),
+            inARow: this.tooMany,
+          });
           return;
         }
         if (!res.ok) {
@@ -164,8 +193,14 @@ export class AircraftService {
         const body = await res.json();
         for (const a of body.ac ?? []) {
           const hex = String(a.hex || '').toLowerCase();
-          if (!this.fleet.has(hex) || typeof a.lat !== 'number' || typeof a.lon !== 'number') continue;
-          const seenAt = now - Math.round((Number(a.seen_pos ?? a.seen) || 0) * 1000);
+          if (
+            !this.fleet.has(hex) ||
+            typeof a.lat !== 'number' ||
+            typeof a.lon !== 'number'
+          )
+            continue;
+          const seenAt =
+            now - Math.round((Number(a.seen_pos ?? a.seen) || 0) * 1000);
           const old = this.positions.get(hex);
           if (old && old.seenAt >= seenAt) continue;
           this.positions.set(hex, {
@@ -218,11 +253,16 @@ export class AircraftService {
     }
     return {
       aircraft,
-      updatedAt: this.lastSuccess ? new Date(this.lastSuccess).toISOString() : null,
+      updatedAt: this.lastSuccess
+        ? new Date(this.lastSuccess).toISOString()
+        : null,
       attribution: 'Aircraft positions: adsb.lol (ODbL). Call signs: NAFC.',
       status: {
         enabled: Boolean(this.key),
-        pausedUntil: this.pausedUntil > now ? new Date(this.pausedUntil).toISOString() : null,
+        pausedUntil:
+          this.pausedUntil > now
+            ? new Date(this.pausedUntil).toISOString()
+            : null,
         error: this.lastError,
       },
     };

@@ -36,15 +36,26 @@ const decode = (s) =>
     .trim();
 
 async function nafcRows() {
-  const page = await (await fetch(NAFC, { headers: { 'User-Agent': 'EmergenciesNearMe/1.0' } })).text();
+  const page = await (
+    await fetch(NAFC, { headers: { 'User-Agent': 'EmergenciesNearMe/1.0' } })
+  ).text();
   const rows = [];
   for (const tr of page.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
-    const cells = [...tr[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => decode(m[1]));
+    const cells = [...tr[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(
+      (m) => decode(m[1]),
+    );
     if (cells.length < 5 || cells[0] === 'callsign') continue;
     const [callsign, registration, category, make, model] = cells;
     const m = callsign.match(/^([A-Z]+) (\d+)$/);
     if (!m || !ROLES[m[1]] || !registration) continue;
-    rows.push({ callsign, prefix: m[1], registration: registration.toUpperCase(), category, make, model });
+    rows.push({
+      callsign,
+      prefix: m[1],
+      registration: registration.toUpperCase(),
+      category,
+      make,
+      model,
+    });
   }
   return rows;
 }
@@ -54,7 +65,11 @@ async function hexByRegistration() {
   const map = new Map();
   for (const line of gunzipSync(buf).toString('utf8').split('\n')) {
     const f = line.split(';');
-    if (f.length >= 3 && f[1]) map.set(f[1].toUpperCase(), { hex: f[0].toLowerCase(), type: f[2] || null });
+    if (f.length >= 3 && f[1])
+      map.set(f[1].toUpperCase(), {
+        hex: f[0].toLowerCase(),
+        type: f[2] || null,
+      });
   }
   return map;
 }
@@ -65,7 +80,10 @@ const fleet = [];
 let missing = 0;
 for (const r of rows) {
   const hit = db.get(r.registration);
-  if (!hit) { missing++; continue; }
+  if (!hit) {
+    missing++;
+    continue;
+  }
   if (seen.has(hit.hex)) continue;
   seen.add(hit.hex);
   fleet.push({
@@ -73,16 +91,31 @@ for (const r of rows) {
     registration: r.registration,
     callsign: r.callsign,
     role: ROLES[r.prefix],
-    rotor: /^RW/.test(r.category) || r.prefix === 'HELITAK' || r.prefix === 'GUARDIAN',
+    rotor:
+      r.category.startsWith('RW') ||
+      r.prefix === 'HELITAK' ||
+      r.prefix === 'GUARDIAN',
     // Type 1 = large air tanker / heavy helicopter; type 4 SEAT = single engine.
     class: r.category,
     type: hit.type,
     model: [r.make, r.model].filter(Boolean).join(' '),
   });
 }
-fleet.sort((a, b) => a.callsign.localeCompare(b.callsign, 'en', { numeric: true }));
+fleet.sort((a, b) =>
+  a.callsign.localeCompare(b.callsign, 'en', { numeric: true }),
+);
 writeFileSync(
   new URL('../backend/aircraft-fleet.json', import.meta.url),
-  JSON.stringify({ built: new Date().toISOString().slice(0, 10), sources: [NAFC, 'tar1090-db'], fleet }, null, 1) + '\n',
+  JSON.stringify(
+    {
+      built: new Date().toISOString().slice(0, 10),
+      sources: [NAFC, 'tar1090-db'],
+      fleet,
+    },
+    null,
+    1,
+  ) + '\n',
 );
-console.log(`fleet: ${fleet.length} aircraft (${missing} registrations without a hex code)`);
+console.log(
+  `fleet: ${fleet.length} aircraft (${missing} registrations without a hex code)`,
+);
