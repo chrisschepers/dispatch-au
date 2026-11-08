@@ -92,8 +92,8 @@ export function createServer(store, push = null, aircraft = null) {
       return send(405, { error: 'Method not allowed' });
     try {
       if (url.pathname === '/health') return send(200, { ok: true });
-      // Firefighting and rescue aircraft (aircraft.mjs). Every call counts as
-      // someone looking at the layer, so never cached.
+      // Firefighting, rescue, police and medical aircraft (aircraft.mjs).
+      // Every call counts as someone looking at the layer, so never cached.
       if (url.pathname === '/v1/aircraft') {
         res.setHeader('Cache-Control', 'no-store');
         if (!aircraft) return send(503, { error: 'Aircraft layer unavailable' });
@@ -158,6 +158,8 @@ async function main() {
   const server = createServer(store, push, aircraft);
   // Keeps the 3-minute rhythm while someone has the layer open.
   setInterval(() => void aircraft.tick(), 30_000).unref();
+  // Rebuilds the fleet from NAFC and the aircraft lists once a day.
+  setInterval(() => void aircraft.refreshFleetIfDue(), 15 * 60_000).unref();
   let stopping = false;
   const timers = new Set();
   const collect = async (region) => {

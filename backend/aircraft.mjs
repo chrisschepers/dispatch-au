@@ -1,29 +1,49 @@
-// Firefighting and rescue aircraft over Australia (wish Chris 08-11-2026).
+// Firefighting, rescue, police and flying doctor aircraft over Australia (wish
+// Chris 08-11-2026).
 //
 // Positions come from adsb.lol (/v2/hex/{list}, several aircraft per request)
 // with HELI_ADSB_API_KEY. That key allows 10,000 requests a month, so:
 // - only poll while someone has the aircraft layer open (last 5 minutes);
-// - every 3 minutes, two requests for the whole fleet;
+// - every 3 minutes, one request per 150 aircraft (#hexes leaves out what
+//   cannot show);
 // - a budget bucket of 300 a day on top, and after a 429 a growing pause that
 //   survives a restart ("Repeated rate-limit hits can revoke a free key").
 //
-// Which aircraft: aircraft-fleet.json (scripts/aircraft-fleet.mjs, NAFC call
-// signs). Rescue helicopters always show. Bombers and helitaks only near an
-// active bush or grass fire: many of them fly other jobs too (crop spraying,
-// lifting), and a spray run must not look like a water bomber at work.
+// Which aircraft: fleet.mjs (NAFC call signs, plane-alert-db, tar1090-db),
+// rebuilt once a day. The last good list is kept in SQLite, so a restart needs
+// no download; aircraft-fleet.json is the fallback. Rescue, police and medical
+// aircraft always show. Bombers and helitaks only near an active bush or grass
+// fire: many of them fly other jobs too (crop spraying, lifting), and a spray
+// run must not look like a water bomber at work.
 import { readFileSync } from 'node:fs';
+import { fetchFleet } from './fleet.mjs';
 
 const API = 'https://api.adsb.lol/v2/hex/';
+// adsb.lol documents no limit on the hex list, so this stays at a modest 150.
 const CHUNK = 150;
 export const VIEW_WINDOW_MS = 5 * 60_000;
 export const CADENCE_MS = 3 * 60_000;
 export const KEEP_MS = 30 * 60_000;
 export const NEAR_FIRE_KM = 50;
+export const FLEET_REFRESH_MS = 24 * 3_600_000;
+export const FLEET_RETRY_MS = 3_600_000;
+export const MIN_FLEET = 100;
+// Shown wherever they are; the firefighting roles only near a fire.
+export const ALWAYS_SHOWN = new Set(['rescue', 'police', 'medical']);
 
-export function loadFleet(
-  path = new URL('./aircraft-fleet.json', import.meta.url),
-) {
+const BUNDLED = new URL('./aircraft-fleet.json', import.meta.url);
+
+export function loadFleet(path = BUNDLED) {
   return JSON.parse(readFileSync(path, 'utf8')).fleet;
+}
+
+/** Entries with a hex code and a role; anything else in a stored list is dropped. */
+export function validFleet(list) {
+  return Array.isArray(list)
+    ? list.filter(
+        (a) => /^[0-9a-f]{6}$/.test(a?.hex) && typeof a.role === 'string',
+      )
+    : [];
 }
 
 /** Token bucket: at most `max` in a row, refilled with `perDay` per 24 hours. */
@@ -84,7 +104,7 @@ export function isLandscapeFire(incident) {
   );
 }
 
-/** The fire an aircraft is working near, or null. Rescue helicopters need none. */
+/** The fire an aircraft is working near, or null. Rescue, police and medical aircraft need none. */
 export function nearestFire(point, fires, maxKm = NEAR_FIRE_KM) {
   let best = null;
   for (const f of fires) {
@@ -106,7 +126,8 @@ export class AircraftService {
     db = null,
     key = process.env.HELI_ADSB_API_KEY || '',
     fetcher = fetch,
-    fleet = loadFleet(),
+    fleet = null,
+    fleetSource = () => fetchFleet(),
     activeFires = () => [],
     budget = new Budget(),
     log = (o) => console.log(JSON.stringify({ aircraft: true, ...o })),
@@ -114,7 +135,7 @@ export class AircraftService {
     this.db = db;
     this.key = key;
     this.fetcher = fetcher;
-    this.fleet = new Map(fleet.map((a) => [a.hex, a]));
+    this.fleetSource = fleetSource;
     this.activeFires = activeFires;
     this.budget = budget;
     this.log = log;
@@ -123,9 +144,12 @@ export class AircraftService {
     this.lastPoll = -Infinity;
     this.lastSuccess = 0;
     this.polling = false;
+    this.round = 0;
     this.tooMany = 0;
     this.pausedUntil = 0;
     this.lastError = null;
+    this.fleetCheckedAt = -Infinity;
+    this.refreshingFleet = false;
     if (db) {
       db.exec(
         'CREATE TABLE IF NOT EXISTS aircraft_state(key TEXT PRIMARY KEY, value TEXT NOT NULL)',
@@ -134,6 +158,52 @@ export class AircraftService {
         .prepare("SELECT value FROM aircraft_state WHERE key='pausedUntil'")
         .get();
       this.pausedUntil = Number(row?.value) || 0;
+    }
+    if (fleet) this.#useFleet(fleet, 0);
+    else {
+      // The newest of the last good rebuild and the bundled file.
+      let bundled = { fleet: [], builtAt: 0 };
+      try {
+        const raw = JSON.parse(readFileSync(BUNDLED, 'utf8'));
+        bundled = {
+          fleet: validFleet(raw.fleet),
+          builtAt: Date.parse(raw.built) || 0,
+        };
+      } catch (error) {
+        this.log({
+          fleet: 'no bundled list',
+          error: String(error).slice(0, 80),
+        });
+      }
+      const stored = this.#storedFleet();
+      const pick =
+        stored && stored.builtAt >= bundled.builtAt ? stored : bundled;
+      this.#useFleet(pick.fleet, pick.builtAt);
+    }
+  }
+
+  #useFleet(list, builtAt) {
+    this.fleet = new Map(list.map((a) => [a.hex, a]));
+    // Which layers exist, so the app only offers those.
+    this.roles = [...new Set(list.map((a) => a.role))].sort((a, b) =>
+      a.localeCompare(b),
+    );
+    this.fleetBuiltAt = builtAt;
+  }
+
+  #storedFleet() {
+    const row = this.db
+      ?.prepare("SELECT value FROM aircraft_state WHERE key='fleet'")
+      .get();
+    if (!row) return null;
+    try {
+      const { built, fleet } = JSON.parse(String(row.value));
+      const list = validFleet(fleet);
+      return list.length >= MIN_FLEET
+        ? { fleet: list, builtAt: Date.parse(built) || 0 }
+        : null;
+    } catch {
+      return null;
     }
   }
 
@@ -145,6 +215,60 @@ export class AircraftService {
       .run(String(this.pausedUntil));
   }
 
+  /**
+   * Rebuilds the fleet (fleet.mjs). A source that half fails, such as an
+   * empty NAFC page or a cut-off download, gives a short list, so the new one
+   * must have MIN_FLEET aircraft and 80% of the current count; otherwise, and
+   * on any error, the current fleet stays. Never throws.
+   */
+  async refreshFleet(now = Date.now()) {
+    if (this.refreshingFleet) return false;
+    this.refreshingFleet = true;
+    this.fleetCheckedAt = now;
+    try {
+      const built = await this.fleetSource();
+      const list = validFleet(built?.fleet);
+      if (list.length < Math.max(MIN_FLEET, 0.8 * this.fleet.size)) {
+        this.log({
+          fleet: 'kept',
+          reason: 'new list too small',
+          size: list.length,
+          current: this.fleet.size,
+        });
+        return false;
+      }
+      this.db
+        ?.prepare(
+          "INSERT INTO aircraft_state VALUES('fleet', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        )
+        .run(
+          JSON.stringify({ built: new Date(now).toISOString(), fleet: list }),
+        );
+      this.#useFleet(list, now);
+      this.log({ fleet: 'refreshed', size: list.length, roles: this.roles });
+      return true;
+    } catch (error) {
+      this.log({
+        fleet: 'kept',
+        reason: String(error?.message || error).slice(0, 160),
+      });
+      return false;
+    } finally {
+      this.refreshingFleet = false;
+    }
+  }
+
+  /** Once a day; after a failed or rejected attempt, again an hour later. */
+  async refreshFleetIfDue(now = Date.now()) {
+    if (!this.key) return false;
+    if (
+      now - this.fleetBuiltAt < FLEET_REFRESH_MS ||
+      now - this.fleetCheckedAt < FLEET_RETRY_MS
+    )
+      return false;
+    return await this.refreshFleet(now);
+  }
+
   /** The app asked for the layer: count it as viewing and poll if it is time. */
   request(now = Date.now()) {
     this.lastView = now;
@@ -152,17 +276,42 @@ export class AircraftService {
     return this.snapshot(now);
   }
 
+  // What one poll asks for. The budget pays per request of CHUNK aircraft, so:
+  // - firefighting aircraft only show near a fire; without any active
+  //   landscape fire they are not asked for at all;
+  // - the medical group (Flying Doctor planes on long transfer flights) rides
+  //   along in the free room of the last request and gets a request of its own
+  //   only every second round. With the 08-11-2026 fleet that is 2.5 requests a
+  //   round in the fire season instead of 3, and 1 without fires.
+  #hexes() {
+    let fires = true;
+    try {
+      fires = this.activeFires().some(isLandscapeFire);
+    } catch {
+      // Unknown, so ask for everything as before.
+    }
+    const fast = [];
+    const slow = [];
+    for (const a of this.fleet.values()) {
+      if (a.role === 'medical') slow.push(a.hex);
+      else if (ALWAYS_SHOWN.has(a.role) || fires) fast.push(a.hex);
+    }
+    const room = (CHUNK - (fast.length % CHUNK)) % CHUNK;
+    return fast.concat(this.round % 2 === 0 ? slow : slow.slice(0, room));
+  }
+
   async tick(now = Date.now()) {
     if (!this.key || this.polling) return;
     if (now - this.lastView > VIEW_WINDOW_MS) return;
     if (now - this.lastPoll < CADENCE_MS || now < this.pausedUntil) return;
-    const hexes = [...this.fleet.keys()];
+    const hexes = this.#hexes();
     const chunks = [];
     for (let i = 0; i < hexes.length; i += CHUNK)
       chunks.push(hexes.slice(i, i + CHUNK));
-    if (!this.budget.take(chunks.length, now)) return;
+    if (!chunks.length || !this.budget.take(chunks.length, now)) return;
     this.polling = true;
     this.lastPoll = now;
+    this.round += 1;
     try {
       for (const chunk of chunks) {
         const res = await this.fetcher(API + chunk.join(','), {
@@ -230,18 +379,20 @@ export class AircraftService {
     const fires = this.activeFires().filter(isLandscapeFire);
     const aircraft = [];
     for (const [hex, p] of this.positions) {
-      if (now - p.seenAt > KEEP_MS) {
+      const a = this.fleet.get(hex);
+      // Gone from a rebuilt fleet, or not seen for too long.
+      if (!a || now - p.seenAt > KEEP_MS) {
         this.positions.delete(hex);
         continue;
       }
-      const a = this.fleet.get(hex);
       const nearFire = nearestFire([p.lat, p.lon], fires);
-      if (a.role !== 'rescue' && !nearFire) continue;
+      if (!ALWAYS_SHOWN.has(a.role) && !nearFire) continue;
       aircraft.push({
         hex,
         registration: a.registration,
         callsign: a.callsign,
         role: a.role,
+        operator: a.operator ?? null,
         rotor: a.rotor,
         class: a.class,
         type: a.type,
@@ -253,10 +404,12 @@ export class AircraftService {
     }
     return {
       aircraft,
+      roles: this.roles,
       updatedAt: this.lastSuccess
         ? new Date(this.lastSuccess).toISOString()
         : null,
-      attribution: 'Aircraft positions: adsb.lol (ODbL). Call signs: NAFC.',
+      attribution:
+        'Aircraft positions: adsb.lol (ODbL). Call signs: NAFC. Aircraft lists: plane-alert-db (ODbL), tar1090-db.',
       status: {
         enabled: Boolean(this.key),
         pausedUntil:
@@ -264,6 +417,10 @@ export class AircraftService {
             ? new Date(this.pausedUntil).toISOString()
             : null,
         error: this.lastError,
+        fleetSize: this.fleet.size,
+        fleetBuiltAt: this.fleetBuiltAt
+          ? new Date(this.fleetBuiltAt).toISOString()
+          : null,
       },
     };
   }
