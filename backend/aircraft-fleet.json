@@ -1,0 +1,2579 @@
+{
+ "built": "2026-11-08",
+ "sources": [
+  "https://www.nafc.org.au/call-signs/",
+  "tar1090-db"
+ ],
+ "fleet": [
+  {
+   "hex": "a2fd4d",
+   "registration": "N292EA",
+   "callsign": "BOMBER 102",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "MD87",
+   "model": "MCDONNELL DOUGLAS CORP. MD-87"
+  },
+  {
+   "hex": "a30104",
+   "registration": "N293EA",
+   "callsign": "BOMBER 103",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "MD87",
+   "model": "MCDONNELL DOUGLAS CORP. MD-87"
+  },
+  {
+   "hex": "a07f21",
+   "registration": "N131CG",
+   "callsign": "BOMBER 131",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "C130",
+   "model": "LOCKHEED AIRCRAFT CORP C130Q"
+  },
+  {
+   "hex": "a082d8",
+   "registration": "N132CG",
+   "callsign": "BOMBER 132",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "C130",
+   "model": "LOCKHEED AIRCRAFT CORP C130H"
+  },
+  {
+   "hex": "a0a2e9",
+   "registration": "N140CG",
+   "callsign": "BOMBER 133",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "C130",
+   "model": "LOCKHEED AIRCRAFT CORP C130H"
+  },
+  {
+   "hex": "a091b4",
+   "registration": "N136CG",
+   "callsign": "BOMBER 136",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "C130",
+   "model": "LOCKHEED AIRCRAFT CORP C130H"
+  },
+  {
+   "hex": "a462f1",
+   "registration": "N382CG",
+   "callsign": "BOMBER 138",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "C130",
+   "model": "LOCKHEED AIRCRAFT CORP C130H"
+  },
+  {
+   "hex": "a07b6a",
+   "registration": "N130CG",
+   "callsign": "BOMBER 140",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "C130",
+   "model": "LOCKHEED AIRCRAFT CORP C130H"
+  },
+  {
+   "hex": "c00ed9",
+   "registration": "C-FFQE",
+   "callsign": "BOMBER 141",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "DH8D",
+   "model": "BOMBARDIER INC DHC-8-402"
+  },
+  {
+   "hex": "c07ca9",
+   "registration": "C-GVFK",
+   "callsign": "BOMBER 164",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "RJ85",
+   "model": "BRITISH AEROSPACE REGIONAL AIRCRAFT LIMITED AVRO 146-RJ85"
+  },
+  {
+   "hex": "c07cb2",
+   "registration": "C-GVFT",
+   "callsign": "BOMBER 166",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "RJ85",
+   "model": "BRITISH AEROSPACE REGIONAL AIRCRAFT LIMITED AVRO 146-RJ85"
+  },
+  {
+   "hex": "a09922",
+   "registration": "N138CG",
+   "callsign": "BOMBER 210",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "B733",
+   "model": "THE BOEING COMPANY 737-3H4"
+  },
+  {
+   "hex": "7c38d7",
+   "registration": "VH-LIH",
+   "callsign": "BOMBER 218",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c1b24",
+   "registration": "VH-FNA",
+   "callsign": "BOMBER 219",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7caeee",
+   "registration": "VH-8T8",
+   "callsign": "BOMBER 220",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c198c",
+   "registration": "VH-FBY",
+   "callsign": "BOMBER 221",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c19ef",
+   "registration": "VH-FEP",
+   "callsign": "BOMBER 222",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c0d19",
+   "registration": "VH-CVF",
+   "callsign": "BOMBER 223",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c1a4c",
+   "registration": "VH-FHA",
+   "callsign": "BOMBER 225",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT6T",
+   "model": "AIR TRACTOR INC AT-602"
+  },
+  {
+   "hex": "7c38e2",
+   "registration": "VH-LIS",
+   "callsign": "BOMBER 227",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c38d8",
+   "registration": "VH-LII",
+   "callsign": "BOMBER 228",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c42ff",
+   "registration": "VH-NIP",
+   "callsign": "BOMBER 230",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c79fe",
+   "registration": "VH-YDS",
+   "callsign": "BOMBER 233",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c4c3b",
+   "registration": "VH-PCD",
+   "callsign": "BOMBER 241",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c006a",
+   "registration": "VH-AC8",
+   "callsign": "BOMBER 250",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c7215",
+   "registration": "VH-WTJ",
+   "callsign": "BOMBER 251",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c72a1",
+   "registration": "VH-WXF",
+   "callsign": "BOMBER 252",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c72a3",
+   "registration": "VH-WXH",
+   "callsign": "BOMBER 253",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c38d2",
+   "registration": "VH-LIC",
+   "callsign": "BOMBER 254",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c778f",
+   "registration": "VH-XWH",
+   "callsign": "BOMBER 256",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c7f23",
+   "registration": "VH-ZED",
+   "callsign": "BOMBER 261",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c7485",
+   "registration": "VH-XAV",
+   "callsign": "BOMBER 266",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c1a18",
+   "registration": "VH-FFU",
+   "callsign": "BOMBER 273",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c14b2",
+   "registration": "VH-EDG",
+   "callsign": "BOMBER 274",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c7486",
+   "registration": "VH-XAW",
+   "callsign": "BOMBER 277",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c7483",
+   "registration": "VH-XAT",
+   "callsign": "BOMBER 288",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c7488",
+   "registration": "VH-XAY",
+   "callsign": "BOMBER 299",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c7bfc",
+   "registration": "VH-YRY",
+   "callsign": "BOMBER 350",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c0264",
+   "registration": "VH-ARA",
+   "callsign": "BOMBER 351",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7cac2c",
+   "registration": "VH-8AM",
+   "callsign": "BOMBER 352",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "B350",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c1ceb",
+   "registration": "VH-FZX",
+   "callsign": "BOMBER 353",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c1ce8",
+   "registration": "VH-FZU",
+   "callsign": "BOMBER 354",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7cacd4",
+   "registration": "VH-8FA",
+   "callsign": "BOMBER 355",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7c5d72",
+   "registration": "VH-SQS",
+   "callsign": "BOMBER 356",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c0757",
+   "registration": "VH-BQH",
+   "callsign": "BOMBER 357",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c6a89",
+   "registration": "VH-VBV",
+   "callsign": "BOMBER 358",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c6d6d",
+   "registration": "VH-VWF",
+   "callsign": "BOMBER 359",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "M18",
+   "model": "PZL \"WARSZAWA-OKECIE\" M-18T"
+  },
+  {
+   "hex": "7c198b",
+   "registration": "VH-FBX",
+   "callsign": "BOMBER 360",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c1a54",
+   "registration": "VH-FHI",
+   "callsign": "BOMBER 361",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7c023e",
+   "registration": "VH-AP8",
+   "callsign": "BOMBER 362",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c3001",
+   "registration": "VH-JRN",
+   "callsign": "BOMBER 363",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "M18",
+   "model": "PZL \"WARSZAWA-OKECIE\" M-18T"
+  },
+  {
+   "hex": "7c56d0",
+   "registration": "VH-RFM",
+   "callsign": "BOMBER 364",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "c00eda",
+   "registration": "C-FFQF",
+   "callsign": "BOMBER 391",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "DH8D",
+   "model": "BOMBARDIER INC DHC-8-402"
+  },
+  {
+   "hex": "7c4491",
+   "registration": "VH-NTV",
+   "callsign": "BOMBER 400",
+   "role": "bomber",
+   "rotor": false,
+   "class": "Unspecified",
+   "type": "ZZZZ",
+   "model": "THRUSH AIRCRAFT, INC. S2R-H80"
+  },
+  {
+   "hex": "7c38e1",
+   "registration": "VH-LIR",
+   "callsign": "BOMBER 401",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c3d3d",
+   "registration": "VH-MDR",
+   "callsign": "BOMBER 402",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "M18",
+   "model": "PZL \"WARSZAWA-OKECIE\" M-18B"
+  },
+  {
+   "hex": "7c2698",
+   "registration": "VH-HWQ",
+   "callsign": "BOMBER 404",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "A660",
+   "model": "THRUSH AIRCRAFT, INC. S2R-T660"
+  },
+  {
+   "hex": "7c42d7",
+   "registration": "VH-NHL",
+   "callsign": "BOMBER 405",
+   "role": "bomber",
+   "rotor": false,
+   "class": "Unspecified",
+   "type": "A660",
+   "model": "THRUSH AIRCRAFT, LLC. S2R-T660"
+  },
+  {
+   "hex": "7c4289",
+   "registration": "VH-NFF",
+   "callsign": "BOMBER 407",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "SS2T",
+   "model": "AYRES CORPORATION S2R-G10"
+  },
+  {
+   "hex": "7c7fbd",
+   "registration": "VH-ZIN",
+   "callsign": "BOMBER 409",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c1c52",
+   "registration": "VH-FVO",
+   "callsign": "BOMBER 411",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "A660",
+   "model": "THRUSH AIRCRAFT, INC. S2R-T660"
+  },
+  {
+   "hex": "7c1b39",
+   "registration": "VH-FNV",
+   "callsign": "BOMBER 412",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "A660",
+   "model": "THRUSH AIRCRAFT, INC. S2R-T660"
+  },
+  {
+   "hex": "7c4221",
+   "registration": "VH-NCJ",
+   "callsign": "BOMBER 413",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "SS2T",
+   "model": "AYRES CORPORATION S2R-T34"
+  },
+  {
+   "hex": "7c485e",
+   "registration": "VH-OKW",
+   "callsign": "BOMBER 414",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "SS2T",
+   "model": "AYRES CORPORATION S2R-T34"
+  },
+  {
+   "hex": "7c4296",
+   "registration": "VH-NFS",
+   "callsign": "BOMBER 415",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "SS2T",
+   "model": "AYRES CORPORATION S2R-G1"
+  },
+  {
+   "hex": "7c04d6",
+   "registration": "VH-A8O",
+   "callsign": "BOMBER 416",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "A660",
+   "model": "THRUSH AIRCRAFT, INC. S2R-T660"
+  },
+  {
+   "hex": "7caf4c",
+   "registration": "VH-8WU",
+   "callsign": "BOMBER 420",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c5b95",
+   "registration": "VH-SDJ",
+   "callsign": "BOMBER 424",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c8102",
+   "registration": "VH-ZRO",
+   "callsign": "BOMBER 425",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c429c",
+   "registration": "VH-NFY",
+   "callsign": "BOMBER 426",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c0754",
+   "registration": "VH-BQE",
+   "callsign": "BOMBER 427",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c38c2",
+   "registration": "VH-LHW",
+   "callsign": "BOMBER 428",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c4287",
+   "registration": "VH-NFD",
+   "callsign": "BOMBER 429",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c5789",
+   "registration": "VH-RKR",
+   "callsign": "BOMBER 432",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c0f64",
+   "registration": "VH-DBQ",
+   "callsign": "BOMBER 433",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c49c8",
+   "registration": "VH-OUY",
+   "callsign": "BOMBER 434",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "A660",
+   "model": "THRUSH AIRCRAFT, INC. S2R-T660"
+  },
+  {
+   "hex": "7c1ce9",
+   "registration": "VH-FZV",
+   "callsign": "BOMBER 435",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c2fe6",
+   "registration": "VH-JQW",
+   "callsign": "BOMBER 436",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c1a10",
+   "registration": "VH-FFM",
+   "callsign": "BOMBER 437",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c1a16",
+   "registration": "VH-FFS",
+   "callsign": "BOMBER 439",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT5T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c7479",
+   "registration": "VH-XAJ",
+   "callsign": "BOMBER 455",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7cae34",
+   "registration": "VH-8O2",
+   "callsign": "BOMBER 477",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7cace5",
+   "registration": "VH-8FR",
+   "callsign": "BOMBER 580",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802"
+  },
+  {
+   "hex": "7c49b5",
+   "registration": "VH-OUF",
+   "callsign": "BOMBER 581",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c49b6",
+   "registration": "VH-OUG",
+   "callsign": "BOMBER 582",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7c4762",
+   "registration": "VH-ODW",
+   "callsign": "BOMBER 583",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c4765",
+   "registration": "VH-ODZ",
+   "callsign": "BOMBER 584",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c4761",
+   "registration": "VH-ODV",
+   "callsign": "BOMBER 585",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7caf6a",
+   "registration": "VH-8XO",
+   "callsign": "BOMBER 587",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c768d",
+   "registration": "VH-XPB",
+   "callsign": "BOMBER 588",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c49b2",
+   "registration": "VH-OUC",
+   "callsign": "BOMBER 589",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c49b4",
+   "registration": "VH-OUE",
+   "callsign": "BOMBER 590",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c49b1",
+   "registration": "VH-OUB",
+   "callsign": "BOMBER 591",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c49bd",
+   "registration": "VH-OUN",
+   "callsign": "BOMBER 592",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7caeb4",
+   "registration": "VH-8SM",
+   "callsign": "BOMBER 593",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c4753",
+   "registration": "VH-ODH",
+   "callsign": "BOMBER 594",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c49bc",
+   "registration": "VH-OUM",
+   "callsign": "BOMBER 595",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c49b9",
+   "registration": "VH-OUJ",
+   "callsign": "BOMBER 597",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c475b",
+   "registration": "VH-ODP",
+   "callsign": "BOMBER 598",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c1210",
+   "registration": "VH-DUQ",
+   "callsign": "BOMBER 601",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c1a36",
+   "registration": "VH-FGO",
+   "callsign": "BOMBER 602",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c4c8a",
+   "registration": "VH-PEK",
+   "callsign": "BOMBER 603",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7c120d",
+   "registration": "VH-DUN",
+   "callsign": "BOMBER 604",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c19e3",
+   "registration": "VH-FED",
+   "callsign": "BOMBER 605",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802"
+  },
+  {
+   "hex": "7c19a6",
+   "registration": "VH-FCO",
+   "callsign": "BOMBER 606",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c1209",
+   "registration": "VH-DUJ",
+   "callsign": "BOMBER 607",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c1200",
+   "registration": "VH-DUA",
+   "callsign": "BOMBER 608",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c2eb3",
+   "registration": "VH-JID",
+   "callsign": "BOMBER 610",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c573c",
+   "registration": "VH-RIM",
+   "callsign": "BOMBER 611",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7c42f3",
+   "registration": "VH-NID",
+   "callsign": "BOMBER 612",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7cac8c",
+   "registration": "VH-8DA",
+   "callsign": "BOMBER 614",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7cac8d",
+   "registration": "VH-8DB",
+   "callsign": "BOMBER 615",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7c4275",
+   "registration": "VH-NEV",
+   "callsign": "BOMBER 616",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "TOUR",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "a5c247",
+   "registration": "N470NA",
+   "callsign": "BOMBER 626",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 1 MEAT",
+   "type": "B462",
+   "model": "BRITISH AEROSPACE PLC BAE 146-200A"
+  },
+  {
+   "hex": "7c2bac",
+   "registration": "VH-IWU",
+   "callsign": "BOMBER 716",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c44fc",
+   "registration": "VH-NWU",
+   "callsign": "BOMBER 717",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7c032c",
+   "registration": "VH-AWU",
+   "callsign": "BOMBER 718",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c1216",
+   "registration": "VH-DUW",
+   "callsign": "BOMBER 733",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7cae48",
+   "registration": "VH-8PM",
+   "callsign": "BOMBER 751",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802"
+  },
+  {
+   "hex": "7c0181",
+   "registration": "VH-AKZ",
+   "callsign": "BOMBER 799",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7c0b9a",
+   "registration": "VH-CKS",
+   "callsign": "BOMBER 833",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7c7074",
+   "registration": "VH-WHY",
+   "callsign": "BOMBER 853",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR, INC. AT-802A"
+  },
+  {
+   "hex": "7c1ce2",
+   "registration": "VH-FZO",
+   "callsign": "BOMBER 858",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7cad89",
+   "registration": "VH-8KB",
+   "callsign": "BOMBER 883",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802A"
+  },
+  {
+   "hex": "7caddf",
+   "registration": "VH-8MP",
+   "callsign": "BOMBER 884",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7c7ebc",
+   "registration": "VH-ZBI",
+   "callsign": "BOMBER 885",
+   "role": "bomber",
+   "rotor": false,
+   "class": "FW - Type 4 SEAT",
+   "type": "AT8T",
+   "model": "AIR TRACTOR INC AT-802"
+  },
+  {
+   "hex": "7cadd8",
+   "registration": "VH-8MI",
+   "callsign": "FIRESCAN 398",
+   "role": "scanner",
+   "rotor": false,
+   "class": "Unspecified",
+   "type": "PC12",
+   "model": "PILATUS AIRCRAFT LTD PC-12/47E"
+  },
+  {
+   "hex": "7cadd5",
+   "registration": "VH-8MF",
+   "callsign": "FIRESCAN 399",
+   "role": "scanner",
+   "rotor": false,
+   "class": "Unspecified",
+   "type": "PC12",
+   "model": "PILATUS AIRCRAFT LTD. PC-12/47E"
+  },
+  {
+   "hex": "7c70a4",
+   "registration": "VH-WJA",
+   "callsign": "FIRESCAN 600",
+   "role": "scanner",
+   "rotor": false,
+   "class": "Unspecified",
+   "type": "PC12",
+   "model": "PILATUS AIRCRAFT LTD PC-12/47E"
+  },
+  {
+   "hex": "7c7590",
+   "registration": "VH-XIA",
+   "callsign": "GUARDIAN 1",
+   "role": "transport",
+   "rotor": true,
+   "class": "Unspecified",
+   "type": "A139",
+   "model": "LEONARDO S.P.A. HELICOPTERS AW139"
+  },
+  {
+   "hex": "7c7591",
+   "registration": "VH-XIB",
+   "callsign": "GUARDIAN 2",
+   "role": "transport",
+   "rotor": true,
+   "class": "Unspecified",
+   "type": "A139",
+   "model": "LEONARDO S.P.A. HELICOPTERS AW139"
+  },
+  {
+   "hex": "7c75a4",
+   "registration": "VH-XIU",
+   "callsign": "GUARDIAN 3",
+   "role": "transport",
+   "rotor": true,
+   "class": "Unspecified",
+   "type": "A139",
+   "model": "LEONARDO S.P.A. HELICOPTERS AW139"
+  },
+  {
+   "hex": "7c7655",
+   "registration": "VH-XNR",
+   "callsign": "GUARDIAN 4",
+   "role": "transport",
+   "rotor": true,
+   "class": "Unspecified",
+   "type": "A109",
+   "model": "AGUSTA, SPA, CONSTRUZIONI AERONAUTICHE A109SP"
+  },
+  {
+   "hex": "7c74c2",
+   "registration": "VH-XCK",
+   "callsign": "GUARDIAN 5",
+   "role": "transport",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412EP"
+  },
+  {
+   "hex": "7c7549",
+   "registration": "VH-XGB",
+   "callsign": "GUARDIAN 50",
+   "role": "transport",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER TEXTRON CANADA LIMITED 412EP"
+  },
+  {
+   "hex": "7c1663",
+   "registration": "VH-EPH",
+   "callsign": "HELITAK 101",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412EP"
+  },
+  {
+   "hex": "7c32db",
+   "registration": "VH-KBX",
+   "callsign": "HELITAK 102",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "F70",
+   "model": "BELL HELICOPTER CO 412EP"
+  },
+  {
+   "hex": "7c6c91",
+   "registration": "VH-VQB",
+   "callsign": "HELITAK 201",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER TEXTRON CANADA LIMITED 412EP"
+  },
+  {
+   "hex": "7c6a85",
+   "registration": "VH-VBR",
+   "callsign": "HELITAK 202",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "R22",
+   "model": "BELL HELICOPTER TEXTRON CANADA LIMITED 412EP"
+  },
+  {
+   "hex": "7c6b97",
+   "registration": "VH-VJD",
+   "callsign": "HELITAK 203",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER TEXTRON CANADA LIMITED 412EP"
+  },
+  {
+   "hex": "7c6b99",
+   "registration": "VH-VJF",
+   "callsign": "HELITAK 204",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER TEXTRON CANADA LIMITED 412EP"
+  },
+  {
+   "hex": "7c4401",
+   "registration": "VH-NPV",
+   "callsign": "HELITAK 205",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER TEXTRON CANADA LIMITED 412EP"
+  },
+  {
+   "hex": "7c658f",
+   "registration": "VH-UCH",
+   "callsign": "HELITAK 206",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER TEXTRON CANADA LIMITED 412EP"
+  },
+  {
+   "hex": "a5bf06",
+   "registration": "N47CU",
+   "callsign": "HELITAK 211",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H47",
+   "model": "UNICAL - BOEING CH-47D"
+  },
+  {
+   "hex": "7c4201",
+   "registration": "VH-NBN",
+   "callsign": "HELITAK 212",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "c03d27",
+   "registration": "C-FXEC",
+   "callsign": "HELITAK 215",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "S61",
+   "model": "SIKORSKY AIRCRAFT S61N"
+  },
+  {
+   "hex": "7c6557",
+   "registration": "VH-UAX",
+   "callsign": "HELITAK 220",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "BK17",
+   "model": "KAWASAKI HEAVY INDUSTRIES BK117 B-2"
+  },
+  {
+   "hex": "7cb0ab",
+   "registration": "VH-86L",
+   "callsign": "HELITAK 221",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "PICKERING AVIATION, INC. UH-60L"
+  },
+  {
+   "hex": "7c4a20",
+   "registration": "VH-OXE",
+   "callsign": "HELITAK 223",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "OAS PARTS LLC UH-1H"
+  },
+  {
+   "hex": "7c619b",
+   "registration": "VH-TKD",
+   "callsign": "HELITAK 224",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "BK17",
+   "model": "KAWASAKI HEAVY INDUSTRIES, LTD. BK117 B-2"
+  },
+  {
+   "hex": "7c1a4d",
+   "registration": "VH-FHB",
+   "callsign": "HELITAK 225",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "BK17",
+   "model": "KAWASAKI HEAVY INDUSTRIES BK117 B-2"
+  },
+  {
+   "hex": "7c1a51",
+   "registration": "VH-FHF",
+   "callsign": "HELITAK 226",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "BK17",
+   "model": "KAWASAKI HEAVY INDUSTRIES BK117 B-2"
+  },
+  {
+   "hex": "7c1a4f",
+   "registration": "VH-FHD",
+   "callsign": "HELITAK 227",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "BK17",
+   "model": "KAWASAKI HEAVY INDUSTRIES BK117 B-2"
+  },
+  {
+   "hex": "7c2eec",
+   "registration": "VH-JJY",
+   "callsign": "HELITAK 231",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "a97fe3",
+   "registration": "N711BF",
+   "callsign": "HELITAK 237",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60L"
+  },
+  {
+   "hex": "c05be0",
+   "registration": "C-GIUP",
+   "callsign": "HELITAK 251",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "c0298a",
+   "registration": "C-FPSZ",
+   "callsign": "HELITAK 252",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "BELL HELICOPTER CO 205 A1++"
+  },
+  {
+   "hex": "c0624a",
+   "registration": "C-GLFT",
+   "callsign": "HELITAK 254",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "7c1a65",
+   "registration": "VH-FHZ",
+   "callsign": "HELITAK 257",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "BK17",
+   "model": "KAWASAKI HEAVY INDUSTRIES, LTD. BK117 B-2"
+  },
+  {
+   "hex": "7c4a30",
+   "registration": "VH-OXU",
+   "callsign": "HELITAK 258",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "OAS PARTS LLC UH-1H"
+  },
+  {
+   "hex": "7c6dc0",
+   "registration": "VH-CPO",
+   "callsign": "HELITAK 263",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "GARLICK HELICOPTERS INC UH-1H"
+  },
+  {
+   "hex": "7c654d",
+   "registration": "VH-UAN",
+   "callsign": "HELITAK 267",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "BK17",
+   "model": "KAWASAKI HEAVY INDUSTRIES BK117 B-2"
+  },
+  {
+   "hex": "7c445a",
+   "registration": "VH-NSC",
+   "callsign": "HELITAK 270",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412 SP"
+  },
+  {
+   "hex": "7c2644",
+   "registration": "VH-HUE",
+   "callsign": "HELITAK 271",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "BELL HELICOPTER CO 205 A1"
+  },
+  {
+   "hex": "7c3a84",
+   "registration": "VH-LUE",
+   "callsign": "HELITAK 272",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "WILLIAMS HELICOPTER CORPORATION UH-1H"
+  },
+  {
+   "hex": "c03c17",
+   "registration": "C-FWTQ",
+   "callsign": "HELITAK 274",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412EP"
+  },
+  {
+   "hex": "c03c1f",
+   "registration": "C-FWTY",
+   "callsign": "HELITAK 275",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412 SP"
+  },
+  {
+   "hex": "7c44d6",
+   "registration": "VH-NVS",
+   "callsign": "HELITAK 276",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412 SP"
+  },
+  {
+   "hex": "7c3a4d",
+   "registration": "VH-LSV",
+   "callsign": "HELITAK 277",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "AGUSTA, SPA, CONSTRUZIONI AERONAUTICHE AB412"
+  },
+  {
+   "hex": "ad2b1a",
+   "registration": "N948CH",
+   "callsign": "HELITAK 279",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H47",
+   "model": "TANDEM ROTOR CH47D"
+  },
+  {
+   "hex": "a817ef",
+   "registration": "N620TJ",
+   "callsign": "HELITAK 280",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT UH-60A"
+  },
+  {
+   "hex": "7c1044",
+   "registration": "VH-DHY",
+   "callsign": "HELITAK 281",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "GARLICK HELICOPTERS INC UH-1B"
+  },
+  {
+   "hex": "7c58a3",
+   "registration": "VH-RSL",
+   "callsign": "HELITAK 282",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "GARLICK HELICOPTERS INC UH-1H"
+  },
+  {
+   "hex": "c828d2",
+   "registration": "ZK-HKU",
+   "callsign": "HELITAK 285",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT EH-60A"
+  },
+  {
+   "hex": "7c620a",
+   "registration": "VH-TNG",
+   "callsign": "HELITAK 294",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "EC45",
+   "model": "EUROCOPTER DEUTSCLAND GMBH MBB-BK 117 C-2"
+  },
+  {
+   "hex": "7c65d2",
+   "registration": "VH-UEC",
+   "callsign": "HELITAK 296",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "7c6cb6",
+   "registration": "VH-VRC",
+   "callsign": "HELITAK 297",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "BELL HELICOPTER CO 204B"
+  },
+  {
+   "hex": "7c2fe1",
+   "registration": "VH-JQR",
+   "callsign": "HELITAK 330",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER TEXTRON CANADA LIMITED 412EP"
+  },
+  {
+   "hex": "7c32a2",
+   "registration": "VH-KAC",
+   "callsign": "HELITAK 331",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412"
+  },
+  {
+   "hex": "7c33a1",
+   "registration": "VH-KHF",
+   "callsign": "HELITAK 332",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "PA38",
+   "model": "BELL HELICOPTER CO 412EP"
+  },
+  {
+   "hex": "7c33b2",
+   "registration": "VH-KHW",
+   "callsign": "HELITAK 333",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412EP"
+  },
+  {
+   "hex": "7c16c9",
+   "registration": "VH-ESB",
+   "callsign": "HELITAK 334",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412EP"
+  },
+  {
+   "hex": "a1d4d1",
+   "registration": "N217PJ",
+   "callsign": "HELITAK 335",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "7c158f",
+   "registration": "VH-EJL",
+   "callsign": "HELITAK 336",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "BELL HELICOPTER CO 204B"
+  },
+  {
+   "hex": "7c30bd",
+   "registration": "VH-JWV",
+   "callsign": "HELITAK 337",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "7c2ee5",
+   "registration": "VH-JJR",
+   "callsign": "HELITAK 338",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "7c5eb9",
+   "registration": "VH-SZV",
+   "callsign": "HELITAK 339",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "ab3caf",
+   "registration": "N823H",
+   "callsign": "HELITAK 340",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "ab441d",
+   "registration": "N825H",
+   "callsign": "HELITAK 341",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "a8a012",
+   "registration": "N655HX",
+   "callsign": "HELITAK 342",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "S64",
+   "model": "SIKORSKY AIRCRAFT S64E"
+  },
+  {
+   "hex": "ac1766",
+   "registration": "N8787L",
+   "callsign": "HELITAK 343",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60L"
+  },
+  {
+   "hex": "a7ec66",
+   "registration": "N61AA",
+   "callsign": "HELITAK 344",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT EH-60A"
+  },
+  {
+   "hex": "a605a2",
+   "registration": "N4875A",
+   "callsign": "HELITAK 345",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": null,
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60L"
+  },
+  {
+   "hex": "a280c7",
+   "registration": "N260UH",
+   "callsign": "HELITAK 346",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT UH-60A"
+  },
+  {
+   "hex": "aa05cc",
+   "registration": "N745H",
+   "callsign": "HELITAK 347",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "a8b603",
+   "registration": "N660UH",
+   "callsign": "HELITAK 348",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": null,
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60L"
+  },
+  {
+   "hex": "a7c52b",
+   "registration": "N60CU",
+   "callsign": "HELITAK 349",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60A"
+  },
+  {
+   "hex": "7c4470",
+   "registration": "VH-NSY",
+   "callsign": "HELITAK 366",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "7c43b1",
+   "registration": "VH-NNN",
+   "callsign": "HELITAK 367",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "c029b1",
+   "registration": "C-FPUM",
+   "callsign": "HELITAK 368",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "GLEX",
+   "model": "EUROCOPTER AS 332 L1"
+  },
+  {
+   "hex": "c017ab",
+   "registration": "C-FIZA",
+   "callsign": "HELITAK 369",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "S61",
+   "model": "SIKORSKY AIRCRAFT S61N"
+  },
+  {
+   "hex": "7c33b4",
+   "registration": "VH-KHY",
+   "callsign": "HELITAK 370",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "7c74c5",
+   "registration": "VH-XCN",
+   "callsign": "HELITAK 371",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412"
+  },
+  {
+   "hex": "a2b709",
+   "registration": "N274TH",
+   "callsign": "HELITAK 382",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT UH-60A"
+  },
+  {
+   "hex": "a282d2",
+   "registration": "N261BE",
+   "callsign": "HELITAK 383",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60L"
+  },
+  {
+   "hex": "7cae8e",
+   "registration": "VH-8RK",
+   "callsign": "HELITAK 386",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60L"
+  },
+  {
+   "hex": "a066ca",
+   "registration": "N125FH",
+   "callsign": "HELITAK 387",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT UH-60A"
+  },
+  {
+   "hex": "a9b6e0",
+   "registration": "N725HT",
+   "callsign": "HELITAK 416",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "7c5df7",
+   "registration": "VH-SUH",
+   "callsign": "HELITAK 417",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "7c5cd8",
+   "registration": "VH-SMI",
+   "callsign": "HELITAK 418",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "7c76db",
+   "registration": "VH-XRH",
+   "callsign": "HELITAK 419",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "A119",
+   "model": "AGUSTAWESTLAND PHILADELPHIA CORPORATION AW119MKII"
+  },
+  {
+   "hex": "7c715a",
+   "registration": "VH-WOC",
+   "callsign": "HELITAK 420",
+   "role": "helitak",
+   "rotor": true,
+   "class": "Unspecified",
+   "type": "UH1",
+   "model": "BELL HELICOPTER CO 205A-1"
+  },
+  {
+   "hex": "7c8193",
+   "registration": "VH-ZVP",
+   "callsign": "HELITAK 421",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER TEXTRON 412"
+  },
+  {
+   "hex": "7c6640",
+   "registration": "VH-UHE",
+   "callsign": "HELITAK 423",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "UH1",
+   "model": "BELL HELICOPTER CO UH-1H"
+  },
+  {
+   "hex": "7c5df5",
+   "registration": "VH-SUF",
+   "callsign": "HELITAK 424",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "a1c871",
+   "registration": "N214AU",
+   "callsign": "HELITAK 426",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "aa0983",
+   "registration": "N746H",
+   "callsign": "HELITAK 427",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "aaac27",
+   "registration": "N787SR",
+   "callsign": "HELITAK 428",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "a9b329",
+   "registration": "N724HT",
+   "callsign": "HELITAK 429",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "7c5bba",
+   "registration": "VH-SEK",
+   "callsign": "HELITAK 430",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "a4868b",
+   "registration": "N391AL",
+   "callsign": "HELITAK 431",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "a9ba97",
+   "registration": "N726HT",
+   "callsign": "HELITAK 435",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "B214",
+   "model": "BELL HELICOPTER TEXTRON 214ST"
+  },
+  {
+   "hex": "7c426d",
+   "registration": "VH-NEN",
+   "callsign": "HELITAK 450",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "a10851",
+   "registration": "N166DP",
+   "callsign": "HELITAK 460",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60A"
+  },
+  {
+   "hex": "7c4e13",
+   "registration": "VH-PPH",
+   "callsign": "HELITAK 462",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "AS50",
+   "model": "BELL HELICOPTER CO 412"
+  },
+  {
+   "hex": "7c2454",
+   "registration": "VH-HGM",
+   "callsign": "HELITAK 477",
+   "role": "helitak",
+   "rotor": true,
+   "class": "Unspecified",
+   "type": "BALL",
+   "model": "AIRBUS HELICOPTERS EC 225 LP"
+  },
+  {
+   "hex": "7c2bf2",
+   "registration": "VH-IYS",
+   "callsign": "HELITAK 482",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "AS65",
+   "model": "EUROCOPTER FRANCE AS.365N2"
+  },
+  {
+   "hex": "7c664d",
+   "registration": "VH-UHR",
+   "callsign": "HELITAK 513",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "PICKERING AVIATION, INC. UH-60A"
+  },
+  {
+   "hex": "7c6642",
+   "registration": "VH-UHG",
+   "callsign": "HELITAK 514",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "PICKERING AVIATION, INC. UH-60A"
+  },
+  {
+   "hex": "7caef7",
+   "registration": "VH-8UH",
+   "callsign": "HELITAK 515",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "PICKERING AVIATION, INC. UH-60A"
+  },
+  {
+   "hex": "7c664e",
+   "registration": "VH-UHS",
+   "callsign": "HELITAK 516",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "PICKERING AVIATION, INC. UH-60A"
+  },
+  {
+   "hex": "7c3c37",
+   "registration": "VH-L6H",
+   "callsign": "HELITAK 517",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "PICKERING AVIATION, INC. UH-60L"
+  },
+  {
+   "hex": "7cad27",
+   "registration": "VH-8HL",
+   "callsign": "HELITAK 518",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "PICKERING AVIATION, INC. UH-60L"
+  },
+  {
+   "hex": "7caefb",
+   "registration": "VH-8UL",
+   "callsign": "HELITAK 519",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "PICKERING AVIATION, INC. UH-60L"
+  },
+  {
+   "hex": "a728b4",
+   "registration": "N560UH",
+   "callsign": "HELITAK 668",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60L"
+  },
+  {
+   "hex": "a1c961",
+   "registration": "N214LJ",
+   "callsign": "HELITAK 671",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "a267f6",
+   "registration": "N254SM",
+   "callsign": "HELITAK 672",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "a1c919",
+   "registration": "N214HM",
+   "callsign": "HELITAK 673",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "a62cf5",
+   "registration": "N49732",
+   "callsign": "HELITAK 674",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "a0218b",
+   "registration": "N1073W",
+   "callsign": "HELITAK 676",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "a218a9",
+   "registration": "N234PH",
+   "callsign": "HELITAK 677",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B214",
+   "model": "BELL HELICOPTER CO 214B-1"
+  },
+  {
+   "hex": "a59b65",
+   "registration": "N460UH",
+   "callsign": "HELITAK 678",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT UH-60A"
+  },
+  {
+   "hex": "a40e16",
+   "registration": "N360UH",
+   "callsign": "HELITAK 679",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT UH-60A"
+  },
+  {
+   "hex": "7c44d1",
+   "registration": "VH-NVN",
+   "callsign": "HELITAK 747",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER TEXTRON 212"
+  },
+  {
+   "hex": "7c78f8",
+   "registration": "VH-X6I",
+   "callsign": "HELITAK 752",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 3 Light",
+   "type": "A119",
+   "model": "AGUSTA AEROSPACE CORPORATION A119"
+  },
+  {
+   "hex": "7c7f72",
+   "registration": "VH-ZGK",
+   "callsign": "HELITAK 757",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "7c8103",
+   "registration": "VH-ZRP",
+   "callsign": "HELITAK 767",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B212",
+   "model": "BELL HELICOPTER CO 212"
+  },
+  {
+   "hex": "a0973e",
+   "registration": "N137WZ",
+   "callsign": "HELITAK 777",
+   "role": "helitak",
+   "rotor": true,
+   "class": "RW - Type 1 Heavy",
+   "type": "H60",
+   "model": "SIKORSKY AIRCRAFT CORPORATION UH-60L"
+  },
+  {
+   "hex": "7c5d89",
+   "registration": "VH-SRF",
+   "callsign": "LIFESAVER 21",
+   "role": "rescue",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "BK17",
+   "model": "KAWASAKI HEAVY INDUSTRIES, LTD. BK117 C-1"
+  },
+  {
+   "hex": "7c5c21",
+   "registration": "VH-SHF",
+   "callsign": "LIFESAVER 23",
+   "role": "rescue",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "BK17",
+   "model": "KAWASAKI HEAVY INDUSTRIES, LTD. BK117 C-1"
+  },
+  {
+   "hex": "7c6b95",
+   "registration": "VH-VJB",
+   "callsign": "LIFESAVER 30",
+   "role": "rescue",
+   "rotor": true,
+   "class": "RW - Type 3 Light",
+   "type": "EC35",
+   "model": "EUROCOPTER DEUTSCHLAND GMBH EC135 P2+"
+  },
+  {
+   "hex": "7c77bd",
+   "registration": "VH-XXR",
+   "callsign": "LIFESAVER 31",
+   "role": "rescue",
+   "rotor": true,
+   "class": "RW - Type 3 Light",
+   "type": "EC20",
+   "model": "EUROCOPTER EC120B"
+  },
+  {
+   "hex": "7c5e99",
+   "registration": "VH-SYZ",
+   "callsign": "RESCUE 22",
+   "role": "rescue",
+   "rotor": false,
+   "class": "Unspecified",
+   "type": "A139",
+   "model": "AGUSTA, SPA, CONSTRUZIONI AERONAUTICHE AW139"
+  },
+  {
+   "hex": "7c44c8",
+   "registration": "VH-NVE",
+   "callsign": "RESCUE 26",
+   "role": "rescue",
+   "rotor": false,
+   "class": "Unspecified",
+   "type": "A139",
+   "model": "AGUSTAWESTLAND S.P.A. AW139"
+  },
+  {
+   "hex": "7c5868",
+   "registration": "VH-RQY",
+   "callsign": "RESCUE 41",
+   "role": "rescue",
+   "rotor": false,
+   "class": "Unspecified",
+   "type": "A139",
+   "model": "AGUSTA S.P.A. AW 139"
+  },
+  {
+   "hex": "7c1758",
+   "registration": "VH-EWA",
+   "callsign": "RESCUE 651",
+   "role": "rescue",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412EP"
+  },
+  {
+   "hex": "7c1666",
+   "registration": "VH-EPK",
+   "callsign": "RESCUE 652",
+   "role": "rescue",
+   "rotor": true,
+   "class": "RW - Type 2 Medium",
+   "type": "B412",
+   "model": "BELL HELICOPTER CO 412EP"
+  }
+ ]
+}
