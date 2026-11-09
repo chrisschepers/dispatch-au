@@ -23,12 +23,15 @@ export interface StaatSchets {
 export interface MeldingDoel {
   tab: DetailTab;
   /**
-   * De key van de stapel van dat tabblad als daar het groepsblad (Groep)
-   * bovenop ligt, anders null. Dat blad moet eerst dicht: een Detail die
-   * erbovenop komt, opent anders ín het halve blad.
+   * De key van de stapel van dat tabblad als daar een blad van de kaart
+   * bovenop ligt (BLADEN), anders null. Dat blad moet eerst dicht: een
+   * Detail die erbovenop komt, opent anders ín het halve blad.
    */
   sluitBladIn: string | null;
 }
+
+/** De bladen van de kaartstapel (navigatie.tsx): formSheets boven de kaart. */
+export const BLADEN: ReadonlySet<string> = new Set(['Groep', 'KaartFilters', 'KaartLagen', 'Vliegtuig']);
 
 /** Het tabblad waarin Detail voor een push-tik moet openen. */
 export function tabVoorMelding(staat: StaatSchets | null | undefined): DetailTab {
@@ -43,5 +46,5 @@ export function doelVoorMelding(staat: StaatSchets | null | undefined): MeldingD
   // Een stapel heeft het bovenste scherm in focus; zonder index het laatste.
   const stapel = huidig === tab ? route?.state : undefined;
   const boven = stapel?.routes[stapel.index ?? stapel.routes.length - 1]?.name;
-  return { tab, sluitBladIn: boven === 'Groep' ? stapel?.key ?? null : null };
+  return { tab, sluitBladIn: boven && BLADEN.has(boven) ? stapel?.key ?? null : null };
 }

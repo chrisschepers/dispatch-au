@@ -192,14 +192,25 @@ export default function DetailScreen() {
   // Rijen van het blok "From the agency" hieronder.
   const vanDeDienst: Array<{ icoon: IcoonNaam; titel: string; sub: string | null }> = [
     { icoon: 'bron', titel: melding.agency || 'Emergency services', sub: bron ? `Source: ${bron.naam}` : melding.sourceRegion ? melding.sourceRegion.toUpperCase() : null },
-    { icoon: 'status', titel: melding.status || 'Status not published', sub: melding.updated ? `updated ${tijdTekst(melding.updated)}` : null },
+    // Ended (off the agency's list): say so, with the last status as context.
+    // "Responding" on a fire that ended days ago made the map look on fire
+    // (melding Chris 08-11).
+    v.afgelopen
+      ? {
+        icoon: 'afgerond' as const, titel: 'Ended',
+        sub: [
+          melding.status ? `Last status: ${melding.status}` : null,
+          (melding.lastSeen ?? melding.updated) ? tijdTekst((melding.lastSeen ?? melding.updated)!) : null,
+        ].filter(Boolean).join(' · ') || null,
+      }
+      : { icoon: 'status' as const, titel: melding.status || 'Status not published', sub: melding.updated ? `updated ${tijdTekst(melding.updated)}` : null },
     ...(melding.resources ? [{ icoon: 'eenheden' as const, titel: `${melding.resources} ${melding.resources === 1 ? 'resource' : 'resources'} assigned`, sub: null }] : []),
   ];
 
   async function deel() {
     const plek = plaatsRegel(melding.location, melding.city);
     await Share.share({
-      message: `${v.emoji} ${v.titel}${plek ? ` · ${plek}` : ''}${melding.status ? ` · ${melding.status}` : ''}${melding.officialUrl ? `\n${melding.officialUrl}` : ''}`,
+      message: `${v.emoji} ${v.titel}${plek ? ` · ${plek}` : ''}${v.afgelopen ? ' · Ended' : melding.status ? ` · ${melding.status}` : ''}${melding.officialUrl ? `\n${melding.officialUrl}` : ''}`,
     });
   }
 

@@ -45,6 +45,14 @@ export interface Melding {
   level?: string | null;
   action?: string | null;
   sourceRegion?: string;
+  /**
+   * Still on the agency's official list? False = ended (kaartFilter.ts): the
+   * list shows it without a card behind it, the map only with a longer period.
+   */
+  listed?: boolean;
+  /** First and last time the feed service saw it in the source. */
+  firstSeen?: string;
+  lastSeen?: string;
   /** Kept for screen compatibility; Australian feeds have no escalation ladder. */
   escalationLevel?: number | null;
   escalationCategory?: string | null;
@@ -128,6 +136,9 @@ function naarMelding(i: Incident, region: string): Melding {
     level: i.level,
     action: i.action,
     sourceRegion: region,
+    listed: i.listed,
+    firstSeen: i.firstSeen,
+    lastSeen: i.lastSeen,
   };
 }
 
@@ -278,6 +289,13 @@ export async function haalVerloop(id: string): Promise<VerloopRegel[]> {
     regels.push({
       at: m.updated, soort: klaar ? 'afsluiting' : 'opschaling', kop: m.status || 'Update',
       tekst: m.action ? m.action : `Status: ${m.status || 'updated'}${m.resources ? ` · ${m.resources} resources assigned` : ''}.`,
+    });
+  }
+  // Off the official list: that is when it ended, whatever the last status said.
+  if (m.listed === false && m.lastSeen && m.lastSeen !== m.updated) {
+    regels.push({
+      at: m.lastSeen, soort: 'afsluiting', kop: 'Ended',
+      tekst: 'No longer on the agency\'s list of current incidents.',
     });
   }
   return regels;

@@ -69,6 +69,10 @@ test('a push tap with the group sheet open on the map closes the sheet first', (
   });
   assert.deepEqual(doelVoorMelding(kaartMetBlad('Groep')), { tab: 'KaartTab', sluitBladIn: 'stapel-kaart' });
   assert.deepEqual(doelVoorMelding(kaartMetBlad('Detail')), { tab: 'KaartTab', sluitBladIn: null });
+  // De bladen van de kaart sinds 08-11: filters, kaartlagen en een toestel.
+  for (const blad of ['KaartFilters', 'KaartLagen', 'Vliegtuig']) {
+    assert.deepEqual(doelVoorMelding(kaartMetBlad(blad)), { tab: 'KaartTab', sluitBladIn: 'stapel-kaart' });
+  }
   // Gedeeltelijke staat zonder index: het laatste scherm van de stapel telt.
   assert.deepEqual(
     doelVoorMelding({ routes: [{ name: 'KaartTab', state: { key: 'k', routes: [{ name: 'Kaart' }, { name: 'Groep' }] } }] }),

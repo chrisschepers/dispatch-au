@@ -72,6 +72,15 @@ export const ICONEN = {
   tabKaartActief: { ios: 'map.fill', android: 'map' },
   tabInstellingen: { ios: 'gearshape', android: 'cog-outline' },
   tabInstellingenActief: { ios: 'gearshape.fill', android: 'cog' },
+  // Kaart (08-11): filterpil, kaartlagen en het blad van een toestel.
+  filter: { ios: 'line.3.horizontal.decrease.circle', android: 'filter-variant' },
+  lagen: { ios: 'square.3.layers.3d', android: 'layers-outline' },
+  hoogte: { ios: 'arrow.up.and.down', android: 'arrow-expand-vertical' },
+  snelheid: { ios: 'speedometer', android: 'speedometer' },
+  registratie: { ios: 'tag', android: 'tag-outline' },
+  positie: { ios: 'antenna.radiowaves.left.and.right', android: 'access-point' },
+  geenSignaal: { ios: 'antenna.radiowaves.left.and.right.slash', android: 'access-point-off' },
+  brand: { ios: 'flame.fill', android: 'fire' },
 } as const satisfies Record<string, { ios: SFSymbol; android: MciNaam }>;
 
 export type IcoonNaam = keyof typeof ICONEN;

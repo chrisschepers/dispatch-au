@@ -1,13 +1,12 @@
 import { API_BASE } from './api';
-import { KAART_TERUGBLIK_UREN } from './diensten';
-import { geldigeUren } from './kaartTijden';
 
 /**
- * Instellingen uit de backend (30-10-2026, wens Chris: niet-brandmeldingen
- * langer op de kaart, en dat voortaan zonder app-update kunnen aanpassen).
- * Eén keer bij het starten; lukt dat niet, dan gelden de ingebouwde waarden.
+ * Instellingen uit de backend, één keer bij het starten; lukt dat niet, dan
+ * gelden de ingebouwde waarden. Tot 08-11-2026 kwamen hier ook de
+ * kaarttijden per dienst vandaan (kaartTerugblikUren); sindsdien kiest de
+ * kaart zelf een periode in zijn filterblad (kaartFilter.ts). De backend
+ * stuurt ze nog mee voor oudere versies van de app.
  */
-let kaart: Record<string, number> = { ...KAART_TERUGBLIK_UREN };
 
 /**
  * De RevenueCat-paywall als sheet over onze eigen betaalmuur (iOS). Standaard
@@ -22,10 +21,6 @@ let kaart: Record<string, number> = { ...KAART_TERUGBLIK_UREN };
 let revenueCatPaywall = false;
 let laden: Promise<void> | null = null;
 
-export function kaartTerugblikUren(): Record<string, number> {
-  return kaart;
-}
-
 export function laadAppConfig(): Promise<void> {
   if (!laden) laden = haalAppConfig();
   return laden;
@@ -36,8 +31,7 @@ async function haalAppConfig(): Promise<void> {
   try {
     const res = await fetch(`${API_BASE}/v1/config?region=au`, { headers: { Accept: 'application/json' } });
     if (!res.ok) return;
-    const j = (await res.json()) as { kaartTerugblikUren?: unknown; revenueCatPaywall?: unknown };
-    kaart = geldigeUren(j?.kaartTerugblikUren, KAART_TERUGBLIK_UREN);
+    const j = (await res.json()) as { revenueCatPaywall?: unknown };
     // Alleen een echte true zet hem aan.
     revenueCatPaywall = j?.revenueCatPaywall === true;
   } catch {
