@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { gzipSync, brotliCompressSync, constants as zlib } from 'node:zlib';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -7,8 +8,11 @@ import { skippedByRegion } from './skipped.mjs';
 import { appConfig } from './app-config.mjs';
 import { IncidentStore } from './store.mjs';
 import { PushService } from './push.mjs';
-import { renderSite } from './site.mjs';
+import { renderSite, STATES } from './site.mjs';
 import { AircraftService } from './aircraft.mjs';
+import { Articles } from './articles.mjs';
+import { mapData } from './site-map.mjs';
+import { places } from './places.mjs';
 
 // Device routes for push alerts (docs/PUSH-API.md). Small JSON bodies only.
 function readJson(req, limit = 8192) {
@@ -54,14 +58,74 @@ async function deviceRoute(req, url, push, send) {
   return send(404, { error: 'Not found' });
 }
 
-export function createServer(store, push = null, aircraft = null) {
+/**
+ * The encoding a client accepts: Brotli, gzip or none. "br;q=0" means not
+ * acceptable, so the q-values count.
+ */
+export function chooseEncoding(header) {
+  const accepted = new Map();
+  for (const part of String(header || '').split(',')) {
+    const [name, ...params] = part.trim().toLowerCase().split(';');
+    if (!name) continue;
+    const q = params.map((p) => p.trim()).find((p) => p.startsWith('q='));
+    accepted.set(name, q ? Number(q.slice(2)) : 1);
+  }
+  const ok = (n) => (accepted.get(n) ?? accepted.get('*') ?? 0) > 0;
+  return ok('br') ? 'br' : ok('gzip') ? 'gzip' : null;
+}
+
+const encoders = {
+  br: (buf) =>
+    brotliCompressSync(buf, { params: { [zlib.BROTLI_PARAM_QUALITY]: 5 } }),
+  gzip: (buf) => gzipSync(buf, { level: 6 }),
+};
+
+/**
+ * gzip or Brotli for text responses over 1 KB when the client accepts it.
+ * The app's feed is up to 3 MB of JSON, the pages tens of KB of HTML; both
+ * shrink to about a tenth to a fifth. Brotli at quality 5 keeps it fast.
+ * Sets the headers also for HEAD (then without a body). `memo` (optional)
+ * keeps the compressed bytes per encoding for the same body.
+ */
+function encode(req, res, body, memo = null) {
+  res.setHeader('Vary', 'Accept-Encoding');
+  const buf = Buffer.isBuffer(body) ? body : Buffer.from(String(body));
+  const enc =
+    buf.length >= 1024 ? chooseEncoding(req.headers['accept-encoding']) : null;
+  if (enc) res.setHeader('Content-Encoding', enc);
+  if (req.method === 'HEAD') return undefined;
+  if (!enc) return buf;
+  if (!memo) return encoders[enc](buf);
+  memo[enc] ??= encoders[enc](buf);
+  return memo[enc];
+}
+
+/** Rendered pages for a minute, so a crawler going through hundreds of places costs little. */
+const PAGE_CACHE_MS = 60_000;
+/**
+ * The app's feed, serialised and compressed, until the next accepted update
+ * and at most 15 s (its max-age): "stale" in it depends on the clock too.
+ */
+const FEED_CACHE_MS = 15_000;
+
+export function createServer(
+  store,
+  push = null,
+  aircraft = null,
+  articles = null,
+) {
+  const news = articles ?? new Articles(store.db);
+  const pageCache = new Map();
+  const feedCache = new Map();
   return http.createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Access-Control-Allow-Origin', '*');
     const send = (status, body) => {
+      // Encode first: it sets headers, which must happen before writeHead.
+      const out = encode(req, res, JSON.stringify(body));
       res.writeHead(status);
-      res.end(JSON.stringify(body));
+      res.end(out);
     };
     if (req.method === 'OPTIONS') {
       res.setHeader(
@@ -96,19 +160,61 @@ export function createServer(store, push = null, aircraft = null) {
       // Every call counts as someone looking at the layer, so never cached.
       if (url.pathname === '/v1/aircraft') {
         res.setHeader('Cache-Control', 'no-store');
-        if (!aircraft) return send(503, { error: 'Aircraft layer unavailable' });
+        if (!aircraft)
+          return send(503, { error: 'Aircraft layer unavailable' });
         return send(200, aircraft.request());
       }
       if (url.pathname === '/v1/config') {
         res.setHeader('Cache-Control', 'public, max-age=300');
         return send(200, appConfig());
       }
-      const site = renderSite(url.pathname, store);
+      // The website's map (site-map.mjs): active and recently ended incidents.
+      if (url.pathname === '/v1/map') {
+        const hours = Number(url.searchParams.get('hours') || 24);
+        if (![24, 72].includes(hours))
+          return send(400, { error: 'Invalid time window' });
+        res.setHeader('Cache-Control', 'public, max-age=30');
+        return send(200, mapData(store, news, hours));
+      }
+      // One address per page: no trailing slash, lower case, no double
+      // slashes. The last also keeps a path that normalises to "//host"
+      // ("/a/..//evil.com/") from becoming a redirect to another site.
+      if (!url.pathname.startsWith('/v1/') && url.pathname !== '/') {
+        const clean =
+          url.pathname
+            .replace(/\/{2,}/g, '/')
+            .replace(/\/+$/, '')
+            .toLowerCase() || '/';
+        if (clean !== url.pathname) {
+          res.setHeader('Location', clean + url.search);
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+          res.writeHead(301);
+          return res.end();
+        }
+      }
+      const cached = pageCache.get(url.pathname);
+      const site =
+        cached && Date.now() - cached.at < PAGE_CACHE_MS
+          ? cached.site
+          : renderSite(url.pathname, store, news);
       if (site) {
+        if (!cached || cached.site !== site) {
+          pageCache.set(url.pathname, { at: Date.now(), site });
+          if (pageCache.size > 800)
+            pageCache.delete(pageCache.keys().next().value);
+        }
         res.setHeader('Content-Type', site.type);
         res.setHeader('Cache-Control', site.cache);
+        const text = /^(text|application\/(xml|json))/.test(site.type);
+        // Compressed bytes are kept with the cached page.
+        site.encoded ??= {};
+        const body = text
+          ? encode(req, res, site.body, site.encoded)
+          : req.method === 'HEAD'
+            ? undefined
+            : site.body;
         res.writeHead(site.status);
-        return res.end(req.method === 'HEAD' ? undefined : site.body);
+        return res.end(body);
       }
       if (url.pathname === '/v1/status' || url.pathname === '/health/ready') {
         const checkedAt = new Date().toISOString();
@@ -133,13 +239,30 @@ export function createServer(store, push = null, aircraft = null) {
         ![24, 72, 168].includes(hours)
       )
         return send(400, { error: 'Invalid region or time window' });
-      const result = store.feed(region, hours);
-      if (!result)
-        return send(503, {
-          error: 'Waiting for the first valid source update',
-        });
+      const key = `${region}|${hours}`;
+      let hit = feedCache.get(key);
+      if (
+        !hit ||
+        hit.version !== store.version ||
+        Date.now() - hit.at > FEED_CACHE_MS
+      ) {
+        const result = store.feed(region, hours);
+        if (!result)
+          return send(503, {
+            error: 'Waiting for the first valid source update',
+          });
+        hit = {
+          version: store.version,
+          at: Date.now(),
+          json: Buffer.from(JSON.stringify(result)),
+          encoded: {},
+        };
+        feedCache.set(key, hit);
+      }
       res.setHeader('Cache-Control', 'public, max-age=15');
-      return send(200, result);
+      const out = encode(req, res, hit.json, hit.encoded);
+      res.writeHead(200);
+      return res.end(out);
     } catch {
       return send(500, { error: 'Feed temporarily unavailable' });
     }
@@ -151,11 +274,36 @@ async function main() {
   mkdirSync(dirname(path), { recursive: true });
   const store = new IncidentStore(path);
   const push = new PushService(store.db);
+  // News articles for significant incidents (articles.mjs), checked every
+  // five minutes and once at start.
+  const articles = new Articles(store.db);
+  const refreshArticles = () => {
+    try {
+      const created = articles.refresh({
+        placeName: (region, slug) =>
+          (slug ? places().get(region, slug)?.name : null) ?? null,
+        tz: (region) => STATES[region]?.tz ?? 'Australia/Sydney',
+        started: store.history?.started() ?? null,
+      });
+      if (created)
+        console.log(JSON.stringify({ articles: 'created', n: created }));
+    } catch (error) {
+      console.warn(
+        JSON.stringify({
+          articles: 'failed',
+          error: String(error).slice(0, 160),
+        }),
+      );
+    }
+  };
+  refreshArticles();
+  setInterval(refreshArticles, 5 * 60_000).unref();
   const aircraft = new AircraftService({
     db: store.db,
-    activeFires: () => (store.feed('au', 24)?.incidents ?? []).filter((i) => i.listed),
+    activeFires: () =>
+      (store.feed('au', 24)?.incidents ?? []).filter((i) => i.listed),
   });
-  const server = createServer(store, push, aircraft);
+  const server = createServer(store, push, aircraft, articles);
   // Keeps the 3-minute rhythm while someone has the layer open.
   setInterval(() => void aircraft.tick(), 30_000).unref();
   // Rebuilds the fleet from NAFC and the aircraft lists once a day.

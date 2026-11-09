@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { canonicalVIC } from './regional.mjs';
 import { sources } from './feeds.mjs';
 import { sourceHealth } from './health.mjs';
+import { History } from './history.mjs';
 
 export class IncidentStore {
   constructor(path = ':memory:') {
@@ -14,6 +15,21 @@ export class IncidentStore {
     `);
     this.repairLegacyACTText();
     this.mergeVICIdentities();
+    // Compact history for the website (history.mjs); starts with the 7 days
+    // this store still holds.
+    // A broken history must never stop the store (and with it the app API).
+    try {
+      this.history = new History(this.db);
+      this.history.backfill();
+    } catch (error) {
+      console.warn(
+        JSON.stringify({
+          history: 'unavailable',
+          error: String(error).slice(0, 160),
+        }),
+      );
+      this.history ??= null;
+    }
   }
   // Repair carriage-return entities written by the first ACT parser without
   // changing incident status or the observation timestamps.
@@ -102,6 +118,7 @@ export class IncidentStore {
       const put = this.db.prepare(
         `INSERT INTO incidents VALUES(?,?,?,?,?,1) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,last_seen=excluded.last_seen,listed=1`,
       );
+      const rows = [];
       for (const sourceRow of [...feed.incidents, ...feed.warnings]) {
         const row = { ...sourceRow };
         if (region === 'vic') row.id = canonicalVIC(row);
@@ -112,6 +129,24 @@ export class IncidentStore {
         if (created && (!row.created || created < row.created))
           row.created = created;
         put.run(row.id, region, JSON.stringify(row), now, now);
+        rows.push(row);
+      }
+      // The website's history may never cost the app its update: a failure
+      // there (a full disk, a bug) is rolled back on its own and logged.
+      this.db.exec('SAVEPOINT history');
+      try {
+        this.history?.record(region, rows, now);
+        this.db.exec('RELEASE history');
+      } catch (error) {
+        this.db.exec('ROLLBACK TO history');
+        this.db.exec('RELEASE history');
+        console.warn(
+          JSON.stringify({
+            region,
+            history: 'failed',
+            error: String(error).slice(0, 160),
+          }),
+        );
       }
       this.db
         .prepare(
@@ -126,6 +161,9 @@ export class IncidentStore {
         .run(region, cutoff);
       this.recordAttempt(region, now);
       this.db.exec('COMMIT');
+      // Changes with every accepted update; the server caches compressed
+      // feeds until it moves.
+      this.version = (this.version ?? 0) + 1;
       return true;
     } catch (e) {
       this.db.exec('ROLLBACK');
@@ -154,6 +192,7 @@ export class IncidentStore {
     );
   }
   fail(region, message, at = new Date().toISOString()) {
+    this.version = (this.version ?? 0) + 1;
     message = String(message)
       .replace(/[\r\n\t]/g, ' ')
       .slice(0, 300);

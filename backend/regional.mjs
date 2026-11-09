@@ -113,6 +113,10 @@ export function parseNSW(raw, now = new Date().toISOString()) {
         [level, d.STATUS].filter(Boolean).join(' · ') || 'Status not supplied',
       level,
       updated: d.UPDATED ? actDate(d.UPDATED + ':00') : null,
+      // "SIZE: 100 ha": the website shows it and uses it to judge how big a fire is.
+      sizeHa:
+        Number.parseFloat(String(d.SIZE ?? '').match(/([\d.]+)\s*ha/i)?.[1]) ||
+        null,
     };
     // pubDate has no zone and represents an update, not the call time. Do not
     // reinterpret it as a newly reported incident. Preserve first-seen instead.
@@ -183,6 +187,18 @@ export function parseQLD(raw, now = new Date().toISOString()) {
       row.id = `qld:warning:${id}`;
       row.kind = 'warning';
       row.point = null;
+      // For the website (history.mjs, articles.mjs): the warning's own words
+      // and where it applies. The app keeps showing the warning without a pin.
+      row.text = clean(p.Header || p.WarningText) || null;
+      const lat = Number(p.Latitude),
+        lon = Number(p.Longitude);
+      row.areaPoint =
+        Number.isFinite(lat) &&
+        Number.isFinite(lon) &&
+        Math.abs(lat) <= 90 &&
+        Math.abs(lon) <= 180
+          ? [lat, lon]
+          : null;
       warnings.push(row);
     } else {
       row.resources =
