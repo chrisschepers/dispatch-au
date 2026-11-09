@@ -13,6 +13,8 @@ Standalone public read-only API for the native preview. This is separate from th
 
 Deployment: Railway project `Dispatch` (`dac3e80e-868b-491f-99ac-a2869cb171a2`), service `incident-feed` (`b0d3c424-2010-4f58-b8ba-80e0a37f9683`), volume `incident-feed-volume` at `/data`. Endpoint: https://incident-feed-production.up.railway.app . Deploy from repository root using `railway up --service incident-feed --detach`; inspect deployment state and `/v1/status` after deploying.
 
+Service settings (Dockerfile build, `/health` probe, restart policy, the volume at `/data`, domains) live in `../.railway/railway.ts` (Railway IaC; it replaced `railway.json`, which Railway stops reading on 1 December 2026). Railway does not read `.railway/` during deploys: after changing it, run `railway config plan` from the repository root, check that nothing is destroyed (above all the volume mount), then `railway config apply`. Variables are not managed there and stay as they are on Railway.
+
 See `../docs/CFSSCAN-EN-MEER-MELDINGEN-2026-09-11.md` for source provenance, limitations and the next Victoria road-data integration. CFSScan is not a source in this service. The native mobile preview consumes this endpoint; the existing Sites web preview is unchanged.
 
 
