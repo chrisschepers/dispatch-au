@@ -154,10 +154,16 @@ export function createServer(
         res.setHeader('Cache-Control', 'public, max-age=30');
         return send(200, mapData(store, news, hours));
       }
-      // One address per page: no trailing slash, lower case.
+      // One address per page: no trailing slash, lower case, no double
+      // slashes. The last also keeps a path that normalises to "//host"
+      // ("/a/..//evil.com/") from becoming a redirect to another site.
       if (!url.pathname.startsWith('/v1/') && url.pathname !== '/') {
-        const clean = url.pathname.replace(/\/+$/, '').toLowerCase();
-        if (clean && clean !== url.pathname) {
+        const clean =
+          url.pathname
+            .replace(/\/{2,}/g, '/')
+            .replace(/\/+$/, '')
+            .toLowerCase() || '/';
+        if (clean !== url.pathname) {
           res.setHeader('Location', clean + url.search);
           res.setHeader('Cache-Control', 'public, max-age=3600');
           res.writeHead(301);

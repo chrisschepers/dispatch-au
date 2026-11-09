@@ -152,6 +152,12 @@ void test('compression, one address per page, HEAD and a 404 page', async () => 
     const slash = await fetch(`${base}/Incidents/NSW/`, { redirect: 'manual' });
     assert.equal(slash.status, 301);
     assert.equal(slash.headers.get('location'), '/incidents/nsw');
+    // A path that normalises to "//host" stays on this site.
+    for (const path of ['/a/..//evil.example/', '//evil.example//']) {
+      const r = await fetch(base + path, { redirect: 'manual' });
+      if (r.status === 301)
+        assert.match(r.headers.get('location'), /^\/(?!\/)/, path);
+    }
     const head = await fetch(`${base}/map`, { method: 'HEAD' });
     assert.equal(head.status, 200);
     assert.equal((await head.text()).length, 0);
