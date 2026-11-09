@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { canonicalVIC } from './regional.mjs';
 import { sources } from './feeds.mjs';
 import { sourceHealth } from './health.mjs';
+import { History } from './history.mjs';
 
 export class IncidentStore {
   constructor(path = ':memory:') {
@@ -14,6 +15,10 @@ export class IncidentStore {
     `);
     this.repairLegacyACTText();
     this.mergeVICIdentities();
+    // Compact history for the website (history.mjs); starts with the 7 days
+    // this store still holds.
+    this.history = new History(this.db);
+    this.history.backfill();
   }
   // Repair carriage-return entities written by the first ACT parser without
   // changing incident status or the observation timestamps.
@@ -102,6 +107,7 @@ export class IncidentStore {
       const put = this.db.prepare(
         `INSERT INTO incidents VALUES(?,?,?,?,?,1) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,last_seen=excluded.last_seen,listed=1`,
       );
+      const rows = [];
       for (const sourceRow of [...feed.incidents, ...feed.warnings]) {
         const row = { ...sourceRow };
         if (region === 'vic') row.id = canonicalVIC(row);
@@ -112,7 +118,9 @@ export class IncidentStore {
         if (created && (!row.created || created < row.created))
           row.created = created;
         put.run(row.id, region, JSON.stringify(row), now, now);
+        rows.push(row);
       }
+      this.history.record(region, rows, now);
       this.db
         .prepare(
           'UPDATE sources SET fetched_at=?,updated_at=?,stale=0,error=NULL WHERE region=?',

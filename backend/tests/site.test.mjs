@@ -40,9 +40,14 @@ void test('the website serves its pages, sitemap and assets next to the API', as
       );
     assert.match(bronnen, /does not represent any government/);
     assert.equal((await fetch(base + '/incidents/xx')).status, 404);
+    // A sitemap index with the pages, places per state and news.
     assert.match(
       await (await fetch(base + '/sitemap.xml')).text(),
-      /\/incidents\/nsw/,
+      /\/sitemaps\/places-nsw\.xml/,
+    );
+    assert.match(
+      await (await fetch(base + '/sitemaps/pages.xml')).text(),
+      /\/incidents\/nsw</,
     );
     assert.match(
       await (await fetch(base + '/robots.txt')).text(),

@@ -32,3 +32,13 @@ The Australia response reports partial/missing source health. SA CFS now uses th
 - Review the Actions pages for stopped/disabled schedules (public GitHub repositories can have schedules disabled after prolonged repository inactivity). GitHub Actions itself is a monitoring dependency; a missing run is not evidence of healthy feeds.
 - Manual checks: `node scripts/check-feed-health.mjs` (read-only, no GitHub issues unless `NOTIFY_GITHUB=1`); `node --experimental-strip-types scripts/check-live-sources.mjs` after installing backend dependencies. Inspect `monitor-output/health.json` and `contracts.json`.
 - Mobile source now names delayed regions and the age of their last successful collection in Nearby/Map, preserving the last received incidents. Each source ages independently even if another region keeps refreshing the Australia response. These additional messages and the restored SA map require a new native build; the collector watchdog works with the already installed app. Existing clients retain their general delayed-source indication.
+
+## Website (9 November 2026)
+
+The same service renders emergenciesnearme.online (`site*.mjs`), server-side so search engines see the content:
+
+- `/map` and `/map/{state}`: live map (MapLibre with OpenFreeMap tiles) from `/v1/map`, a compact list of active and recently ended incidents. Ambulance calls are left out of everything public.
+- `/incidents/{state}`, `/incidents/{state}/places` and `/incidents/{state}/{place}`: what is happening now and the last 90 days per suburb. A place is matched from the agency's location text with `au-places.json` (GeoNames, CC BY 4.0; rebuild with `node scripts/au-places.mjs`). Place pages are `noindex` unless the place had two incidents in 90 days or one in 14.
+- `/news`: articles for significant incidents and a weekly overview per state (`articles.mjs`): Watch and Act or Emergency Warning, Queensland warnings, NSW bush and grass fires with an Advice level for 6 hours or 100 ha or more. Only states whose licence allows commercial adaptation: `ARTICLE_REGIONS` (default `nsw,qld,act`; add `vic`, `sa` once EMV and the CFS confirm).
+- History (`history.mjs`): compact rows and status events for 400 days, next to the live store that keeps an ended incident for 7 days.
+- Sitemap index at `/sitemap.xml`; pages are compressed (Brotli or gzip) and cached for a minute.
