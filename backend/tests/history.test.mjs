@@ -10,6 +10,7 @@ import {
   articleSlug,
   isoWeek,
   weekRange,
+  weekTitle,
 } from '../articles.mjs';
 import { STATES } from '../site-layout.mjs';
 
@@ -278,6 +279,181 @@ void test('article refresh: one article per incident, a fresh title, and the wee
       week.title,
       'NSW fires and emergencies, 2 November to 8 November 2026',
     );
+  } finally {
+    s.close();
+  }
+});
+
+void test('review 09-11: resource counts make no events, medical calls are private, the index is used', () => {
+  const s = new IncidentStore();
+  try {
+    for (const [k, n] of [
+      [0, 5],
+      [1, 3],
+      [2, 3],
+      [3, 4],
+    ])
+      s.ingest(
+        'nsw',
+        feed([fire({ resources: n })], `2026-11-09T0${k}:00:00.000Z`),
+      );
+    const events = s.db
+      .prepare('SELECT COUNT(*) AS n FROM history_events WHERE id=?')
+      .get('nsw:incident:1').n;
+    assert.equal(events, 1, 'only the first sighting');
+    const row = s.db
+      .prepare('SELECT resources, max_resources FROM history WHERE id=?')
+      .get('nsw:incident:1');
+    assert.deepEqual({ ...row }, { resources: 4, max_resources: 5 });
+    s.ingest(
+      'nsw',
+      feed(
+        [
+          fire({
+            id: 'nsw:incident:2',
+            sourceId: '2',
+            title: 'Medical',
+            category: 'other',
+            level: null,
+          }),
+        ],
+        '2026-11-09T04:00:00.000Z',
+      ),
+    );
+    assert.equal(
+      s.db
+        .prepare('SELECT private FROM history WHERE id=?')
+        .get('nsw:incident:2').private,
+      1,
+    );
+    const plan = s.db
+      .prepare(
+        "EXPLAIN QUERY PLAN SELECT id FROM history INDEXED BY history_listed WHERE region='nsw' AND listed=1",
+      )
+      .all()
+      .map((r) => r.detail)
+      .join(' ');
+    assert.match(plan, /history_listed/);
+  } finally {
+    s.close();
+  }
+});
+
+void test('review 09-11: a failing history never stops the app feed update', () => {
+  const s = new IncidentStore();
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    s.history.record = () => {
+      throw new Error('disk full');
+    };
+    assert.equal(
+      s.ingest('nsw', feed([fire()], '2026-11-09T01:00:00.000Z')),
+      true,
+    );
+    assert.equal(
+      s.feed('nsw', 24, Date.parse('2026-11-09T01:01:00.000Z')).incidents
+        .length,
+      1,
+    );
+  } finally {
+    console.warn = warn;
+    s.close();
+  }
+});
+
+void test('review 09-11: no second article for the NSW mirror warning or Queensland smoke notices', () => {
+  const base = {
+    kind: 'warning',
+    category: 'fire',
+    title: 'Bush Fire',
+    max_level: 3,
+    first_seen: '2026-11-09T00:00:00Z',
+    last_seen: '2026-11-09T02:00:00Z',
+  };
+  assert.equal(
+    newsworthy({ ...base, region: 'nsw' }),
+    false,
+    'NSW mirrors its incident',
+  );
+  assert.equal(
+    newsworthy({ ...base, region: 'qld', max_level: 1, action: 'Avoid Smoke' }),
+    false,
+  );
+  assert.equal(
+    newsworthy({
+      ...base,
+      region: 'qld',
+      max_level: 1,
+      action: 'Stay Informed',
+    }),
+    true,
+  );
+  assert.equal(
+    newsworthy({ ...base, region: 'qld', max_level: 2, action: 'Avoid Smoke' }),
+    true,
+    'a Watch and Act always',
+  );
+  assert.equal(
+    newsworthy({
+      ...base,
+      region: 'nsw',
+      kind: 'incident',
+      max_level: 2,
+      private: 1,
+    }),
+    false,
+  );
+});
+
+void test('review 09-11: an ended warning gets a dated headline; week titles across New Year', () => {
+  const tz = 'Australia/Brisbane';
+  const w = {
+    region: 'qld',
+    kind: 'warning',
+    location: 'Cloncurry and surrounding areas',
+    level: 'Watch and Act',
+    action: 'Prepare to leave',
+    listed: 0,
+    created: null,
+    first_seen: '2026-11-08T22:50:00Z',
+  };
+  assert.equal(
+    headline(w, null, tz),
+    'Cloncurry: Watch and Act warning, 9 November 2026',
+  );
+  assert.equal(
+    headline({ ...w, listed: 1 }, 'Cloncurry', tz),
+    'Prepare to leave: Watch and Act for Cloncurry',
+  );
+  assert.equal(
+    weekTitle(
+      'nsw',
+      weekRange(2026, 53, 'Australia/Sydney'),
+      'Australia/Sydney',
+    ),
+    'NSW fires and emergencies, 28 December 2026 to 3 January 2027',
+  );
+});
+
+void test('review 09-11: no weekly overview for a week the history only partly covers', () => {
+  const s = new IncidentStore();
+  try {
+    s.ingest('nsw', feed([fire()], '2026-11-05T01:00:00.000Z'));
+    const a = new Articles(s.db);
+    const opts = { placeName: () => null, tz: (r) => STATES[r].tz };
+    a.refresh({
+      ...opts,
+      now: '2026-11-08T20:00:00.000Z',
+      started: '2026-11-05T01:00:00.000Z',
+    });
+    assert.equal(a.get('nsw', 'week-2026-45'), null);
+    a.refresh({
+      ...opts,
+      now: '2026-11-08T20:00:00.000Z',
+      started: '2026-10-01T00:00:00.000Z',
+    });
+    assert.ok(a.get('nsw', 'week-2026-45'));
   } finally {
     s.close();
   }

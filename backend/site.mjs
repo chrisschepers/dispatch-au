@@ -29,6 +29,8 @@ import {
   activePlaces,
   placeIndexable,
   regionsLive,
+  credits,
+  isPrivate,
   memo,
 } from './site-data.mjs';
 import {
@@ -54,9 +56,7 @@ function home(store, articles) {
   const total = per.reduce((n, p) => n + p.incidents.length, 0);
   const latest = per
     .flatMap((p) =>
-      p.incidents
-        .filter((i) => i.category !== 'ambulance')
-        .map((i) => ({ i, r: p.r })),
+      p.incidents.filter((i) => !isPrivate(i)).map((i) => ({ i, r: p.r })),
     )
     .sort(
       (a, b) =>
@@ -137,6 +137,7 @@ ${
       'Emergencies Near Me: live bushfire, flood and crash alerts in Australia',
     description: `Live emergency incidents across Australia on one map: bushfires, floods, road crashes and ambulance calls, with alerts for your area. ${total} incidents right now.`,
     body,
+    credits: credits(store, regionsLive(STATES)),
     jsonld: [
       { '@context': 'https://schema.org', ...ORG },
       {
@@ -146,15 +147,6 @@ ${
         name: 'Emergencies Near Me',
         url: `${SITE}/`,
         inLanguage: 'en-AU',
-        publisher: { '@id': ORG['@id'] },
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'MobileApplication',
-        name: 'Emergencies Near Me',
-        operatingSystem: 'iOS',
-        applicationCategory: 'NewsApplication',
-        installUrl: 'https://apps.apple.com/app/id6811057872',
         publisher: { '@id': ORG['@id'] },
       },
     ],
@@ -195,10 +187,11 @@ ${
 ${appCta()}`;
   return page({
     path: '/incidents',
-    title: 'Emergency incidents in Australia right now | Emergencies Near Me',
+    title: 'Emergency incidents in Australia right now',
     description:
       'Live emergency incidents in Victoria, New South Wales, Queensland, South Australia and the ACT, updated every minute, with a page per suburb.',
     body,
+    credits: credits(store, regionsLive(STATES)),
     jsonld: [trail.ld],
     nav: '/incidents',
   });
@@ -340,6 +333,7 @@ function notFound() {
     description: 'Page not found.',
     body,
     robots: 'noindex,follow',
+    canonical: false,
   });
 }
 
@@ -364,16 +358,20 @@ function sitemapIndex() {
     .join('\n')}\n</sitemapindex>\n`;
 }
 
+/**
+ * Live pages change every minute, so they carry no lastmod: a lastmod that is
+ * always "now" teaches Google to ignore the lastmod of the whole site. News
+ * and places carry the time they really changed.
+ */
 function sitemapPages(articles) {
-  const now = new Date().toISOString();
   return xml([
-    ['/', now],
-    ['/map', now],
-    ['/incidents', now],
+    ['/', null],
+    ['/map', null],
+    ['/incidents', null],
     ...regionsLive(STATES).flatMap((r) => [
-      [`/incidents/${r}`, now],
+      [`/incidents/${r}`, null],
       [`/incidents/${r}/places`, null],
-      [`/map/${r}`, now],
+      [`/map/${r}`, null],
     ]),
     ['/news', articles.latest(null, 1)[0]?.modified ?? null],
     ...ARTICLE_REGIONS.filter((r) => STATES[r]).flatMap((r) => [
@@ -390,7 +388,8 @@ function sitemapPages(articles) {
 function sitemapPlaces(store, region) {
   return xml(
     activePlaces(store, region, 90)
-      .filter((p) => p.n >= 2 || p.recent >= 1)
+      // Same rule as the robots meta on the page (placeIndexable).
+      .filter((p) => p.n >= 3 || p.active >= 1)
       .sort((a, b) => b.last.localeCompare(a.last))
       .map((p) => [`/incidents/${region}/${p.place}`, p.last]),
   );
@@ -447,13 +446,13 @@ export function renderSite(pathname, store, articles) {
         };
   }
   if (pathname === '/news')
-    return html(newsIndex(articles), 'public, max-age=120');
+    return html(newsIndex(store, articles), 'public, max-age=120');
   m = pathname.match(/^\/news\/([a-z]{2,3})$/);
   if (m && ARTICLE_REGIONS.includes(m[1]) && STATES[m[1]])
-    return html(newsIndex(articles, m[1]), 'public, max-age=120');
+    return html(newsIndex(store, articles, m[1]), 'public, max-age=120');
   m = pathname.match(/^\/news\/([a-z]{2,3})\/archive\/(\d{4}-\d{2})$/);
   if (m && STATES[m[1]]) {
-    const body = newsArchive(articles, m[1], m[2]);
+    const body = newsArchive(store, articles, m[1], m[2]);
     if (body) return html(body, 'public, max-age=600');
   }
   m = pathname.match(/^\/news\/([a-z]{2,3})\/([a-z0-9-]{1,120})$/);

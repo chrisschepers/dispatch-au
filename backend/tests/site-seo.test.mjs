@@ -167,3 +167,35 @@ void test('compression, one address per page, HEAD and a 404 page', async () => 
     assert.equal((await fetch(`${base}/v1/nothing`)).status, 404);
   });
 });
+
+void test('review 09-11: encodings honour q=0, HEAD gets the headers, credits and a 404 without canonical', async () => {
+  const { chooseEncoding } = await import('../server.mjs');
+  assert.equal(chooseEncoding('gzip, deflate, br'), 'br');
+  assert.equal(chooseEncoding('br;q=0, gzip'), 'gzip');
+  assert.equal(chooseEncoding('identity'), null);
+  assert.equal(chooseEncoding('*'), 'br');
+  await withSite(async (base) => {
+    const head = await fetch(`${base}/incidents/nsw`, {
+      method: 'HEAD',
+      headers: { 'Accept-Encoding': 'gzip' },
+    });
+    assert.equal(head.headers.get('content-encoding'), 'gzip');
+    assert.match(head.headers.get('vary'), /Accept-Encoding/);
+    const home = await (await fetch(`${base}/`)).text();
+    for (const s of [
+      '© State of New South Wales',
+      'Licence</a>',
+      'Last updated',
+    ])
+      assert.ok(home.includes(s), s);
+    const map = await (await fetch(`${base}/map/act`)).text();
+    assert.match(
+      map,
+      /© State of New South Wales/,
+      'the map shows every state, so it credits every state',
+    );
+    assert.match(map, /integrity="sha384-/);
+    const missing = await (await fetch(`${base}/no-such-page`)).text();
+    assert.doesNotMatch(missing, /rel="canonical"/);
+  });
+});

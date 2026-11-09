@@ -59,31 +59,54 @@ async function deviceRoute(req, url, push, send) {
 }
 
 /**
- * gzip or Brotli for text responses over 1 KB when the client accepts it.
- * The app's feed is up to 1.5 MB of JSON, the pages tens of KB of HTML; both
- * shrink to about a fifth. Brotli at quality 5 keeps it fast.
+ * The encoding a client accepts: Brotli, gzip or none. "br;q=0" means not
+ * acceptable, so the q-values count.
  */
-function compressed(req, res, body) {
-  const buf = Buffer.isBuffer(body) ? body : Buffer.from(String(body));
+export function chooseEncoding(header) {
+  const accepted = new Map();
+  for (const part of String(header || '').split(',')) {
+    const [name, ...params] = part.trim().toLowerCase().split(';');
+    if (!name) continue;
+    const q = params.map((p) => p.trim()).find((p) => p.startsWith('q='));
+    accepted.set(name, q ? Number(q.slice(2)) : 1);
+  }
+  const ok = (n) => (accepted.get(n) ?? accepted.get('*') ?? 0) > 0;
+  return ok('br') ? 'br' : ok('gzip') ? 'gzip' : null;
+}
+
+const encoders = {
+  br: (buf) =>
+    brotliCompressSync(buf, { params: { [zlib.BROTLI_PARAM_QUALITY]: 5 } }),
+  gzip: (buf) => gzipSync(buf, { level: 6 }),
+};
+
+/**
+ * gzip or Brotli for text responses over 1 KB when the client accepts it.
+ * The app's feed is up to 3 MB of JSON, the pages tens of KB of HTML; both
+ * shrink to about a tenth to a fifth. Brotli at quality 5 keeps it fast.
+ * Sets the headers also for HEAD (then without a body). `memo` (optional)
+ * keeps the compressed bytes per encoding for the same body.
+ */
+function encode(req, res, body, memo = null) {
   res.setHeader('Vary', 'Accept-Encoding');
-  if (buf.length < 1024) return buf;
-  const accept = String(req.headers['accept-encoding'] || '');
-  if (/\bbr\b/.test(accept)) {
-    res.setHeader('Content-Encoding', 'br');
-    return brotliCompressSync(buf, {
-      params: { [zlib.BROTLI_PARAM_QUALITY]: 5 },
-    });
-  }
-  if (/\bgzip\b/.test(accept)) {
-    res.setHeader('Content-Encoding', 'gzip');
-    return gzipSync(buf, { level: 6 });
-  }
-  return buf;
+  const buf = Buffer.isBuffer(body) ? body : Buffer.from(String(body));
+  const enc =
+    buf.length >= 1024 ? chooseEncoding(req.headers['accept-encoding']) : null;
+  if (enc) res.setHeader('Content-Encoding', enc);
+  if (req.method === 'HEAD') return undefined;
+  if (!enc) return buf;
+  if (!memo) return encoders[enc](buf);
+  memo[enc] ??= encoders[enc](buf);
+  return memo[enc];
 }
 
 /** Rendered pages for a minute, so a crawler going through hundreds of places costs little. */
-const pageCache = new Map();
 const PAGE_CACHE_MS = 60_000;
+/**
+ * The app's feed, serialised and compressed, until the next accepted update
+ * and at most 15 s (its max-age): "stale" in it depends on the clock too.
+ */
+const FEED_CACHE_MS = 15_000;
 
 export function createServer(
   store,
@@ -92,16 +115,15 @@ export function createServer(
   articles = null,
 ) {
   const news = articles ?? new Articles(store.db);
+  const pageCache = new Map();
+  const feedCache = new Map();
   return http.createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Access-Control-Allow-Origin', '*');
     const send = (status, body) => {
-      // Compress first: it sets headers, which must happen before writeHead.
-      const out =
-        req.method === 'HEAD'
-          ? undefined
-          : compressed(req, res, JSON.stringify(body));
+      // Encode first: it sets headers, which must happen before writeHead.
+      const out = encode(req, res, JSON.stringify(body));
       res.writeHead(status);
       res.end(out);
     };
@@ -184,12 +206,13 @@ export function createServer(
         res.setHeader('Content-Type', site.type);
         res.setHeader('Cache-Control', site.cache);
         const text = /^(text|application\/(xml|json))/.test(site.type);
-        const body =
-          req.method === 'HEAD'
+        // Compressed bytes are kept with the cached page.
+        site.encoded ??= {};
+        const body = text
+          ? encode(req, res, site.body, site.encoded)
+          : req.method === 'HEAD'
             ? undefined
-            : text
-              ? compressed(req, res, site.body)
-              : site.body;
+            : site.body;
         res.writeHead(site.status);
         return res.end(body);
       }
@@ -216,13 +239,30 @@ export function createServer(
         ![24, 72, 168].includes(hours)
       )
         return send(400, { error: 'Invalid region or time window' });
-      const result = store.feed(region, hours);
-      if (!result)
-        return send(503, {
-          error: 'Waiting for the first valid source update',
-        });
+      const key = `${region}|${hours}`;
+      let hit = feedCache.get(key);
+      if (
+        !hit ||
+        hit.version !== store.version ||
+        Date.now() - hit.at > FEED_CACHE_MS
+      ) {
+        const result = store.feed(region, hours);
+        if (!result)
+          return send(503, {
+            error: 'Waiting for the first valid source update',
+          });
+        hit = {
+          version: store.version,
+          at: Date.now(),
+          json: JSON.stringify(result),
+          encoded: {},
+        };
+        feedCache.set(key, hit);
+      }
       res.setHeader('Cache-Control', 'public, max-age=15');
-      return send(200, result);
+      const out = encode(req, res, hit.json, hit.encoded);
+      res.writeHead(200);
+      return res.end(out);
     } catch {
       return send(500, { error: 'Feed temporarily unavailable' });
     }
@@ -243,6 +283,7 @@ async function main() {
         placeName: (region, slug) =>
           (slug ? places().get(region, slug)?.name : null) ?? null,
         tz: (region) => STATES[region]?.tz ?? 'Australia/Sydney',
+        started: store.history.started(),
       });
       if (created)
         console.log(JSON.stringify({ articles: 'created', n: created }));

@@ -239,7 +239,7 @@ article.news{max-width:760px}article.news p{font-size:17px}
 footer{margin-top:56px;padding:28px 0 40px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
 footer a{margin-right:16px}
 @media (max-width:520px){.brand .bn{display:none}nav.main{gap:14px}.row .r{font-size:12px}.facts dt{min-width:104px}}
-.row>div:nth-child(2){min-width:0;overflow-wrap:anywhere}.attr{white-space:pre-line;margin-top:10px}
+.row>div:nth-child(2){min-width:0;overflow-wrap:anywhere}.attr{white-space:pre-line;margin:8px 0 0}
 .maker{margin-top:10px}footer p a{margin-right:0}
 `;
 
@@ -267,15 +267,39 @@ export function appCta(
 }
 
 /**
+ * A title with the brand after it when there is room: Google shows about 60
+ * characters, and the place or incident matters more than the brand.
+ */
+export function titled(base) {
+  return base.length <= 38 ? `${base} | Emergencies Near Me` : base;
+}
+
+/**
+ * The credit for the data on a page (site-data.mjs credits): each source's
+ * licence line, a link to its licence and when we last received its data.
+ * CC BY asks for the credit; VicEmergency also for the update time.
+ */
+export function creditHtml(list) {
+  return list
+    .map((c) => {
+      const tz = STATES[c.region]?.tz ?? 'Australia/Sydney';
+      return `<p class="attr">${esc(c.attribution)}${c.licenseUrl ? ` <a href="${esc(c.licenseUrl)}">Licence</a>.` : ''}${c.fetchedAt ? ` Last updated ${esc(dateTime(c.fetchedAt, tz))}.` : ''}</p>`;
+    })
+    .join('');
+}
+
+/**
  * One page. `robots` is the robots meta ('noindex,follow' for thin pages);
- * `jsonld` a list of schema.org objects; `attribution` the licence lines of
- * the data shown (CC BY requires them on the page).
+ * `jsonld` a list of schema.org objects; `credits` the sources of the data
+ * shown (creditHtml); `canonical` false for pages without an address of
+ * their own (the 404 page).
  */
 export function page({
   path,
   title,
   description,
   body,
+  credits = [],
   attribution = '',
   robots = 'index,follow,max-image-preview:large',
   ogType = 'website',
@@ -283,13 +307,14 @@ export function page({
   jsonld = [],
   head = '',
   nav = '',
+  canonical = true,
 }) {
   return `<!doctype html><html lang="en-AU"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <meta name="robots" content="${esc(robots)}">
-<link rel="canonical" href="${SITE}${path}">
+${canonical ? `<link rel="canonical" href="${SITE}${path}">` : ''}
 <meta property="og:site_name" content="Emergencies Near Me"><meta property="og:locale" content="en_AU">
 <meta property="og:type" content="${esc(ogType)}"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}">
 <meta property="og:image" content="${esc(ogImage)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="${SITE}${path}">
@@ -307,6 +332,6 @@ ${body}
 <a href="/map">Map</a><a href="/incidents">Incidents</a><a href="/news">News</a><a href="/support">Support</a><a href="/sources">Sources</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>
 <p>Emergencies Near Me is an independent app. It does not represent and is not affiliated with any government or emergency service; the information comes from the official <a href="/sources">sources</a> of the state emergency services. In an emergency, call <b>000</b>. Always follow the advice of official emergency services.</p>
 <p class="maker">Also by the maker: <a href="https://alarmeringenp2000.nl/" hreflang="nl">Alarmeringen P2000</a>, emergency alerts in the Netherlands</p>
-${attribution ? `<div class="attr">${esc(attribution)}</div>` : ''}
+${creditHtml(credits)}${attribution ? `<div class="attr">${esc(attribution)}</div>` : ''}
 </footer></div></body></html>`;
 }

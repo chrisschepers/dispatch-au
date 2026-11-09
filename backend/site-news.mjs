@@ -16,8 +16,9 @@ import {
   crumbs,
   page,
   appCta,
+  titled,
 } from './site-layout.mjs';
-import { sourceInfo, activeNear, PRIVATE_CATEGORIES } from './site-data.mjs';
+import { sourceInfo, activeNear, credits } from './site-data.mjs';
 import {
   ARTICLE_REGIONS,
   statusOnly,
@@ -30,6 +31,9 @@ const LEVEL = ['', 'Advice', 'Watch and Act', 'Emergency Warning'];
 /** "an Advice", "a Watch and Act", "an Emergency Warning". */
 const withArticle = (level) =>
   /^[AEIOU]/.test(level) ? `an ${level}` : `a ${level}`;
+/** "an Advice warning", "a Watch and Act warning", "an Emergency Warning" (already a warning). */
+const levelWarning = (level) =>
+  /warning/i.test(level) ? withArticle(level) : `${withArticle(level)} warning`;
 
 function ogImageFor(category) {
   const known = ['fire', 'rescue', 'storm', 'hazmat'];
@@ -67,7 +71,7 @@ function newsLd(article, region, row, headlineText, description, placeObj) {
 }
 
 /** /news and /news/{state}. */
-export function newsIndex(articles, region = '') {
+export function newsIndex(store, articles, region = '') {
   const st = region ? STATES[region] : null;
   const list = articles.latest(region || null, region ? 80 : 50);
   const regions = ARTICLE_REGIONS.filter((r) => STATES[r]);
@@ -112,19 +116,20 @@ ${
   return page({
     path: region ? `/news/${region}` : '/news',
     title: region
-      ? `${st.name} fire and emergency news | Emergencies Near Me`
-      : 'Fire and emergency news from Australia | Emergencies Near Me',
+      ? titled(`${st.name} fire and emergency news`)
+      : 'Australian fire and emergency news | Emergencies Near Me',
     description: region
       ? `Bushfires, warnings and a weekly overview of emergencies in ${st.name}, from the official incident feed.`
       : 'Bushfires, warnings and weekly overviews of emergencies in NSW, Queensland and the ACT, from the official incident feeds.',
     body,
+    credits: credits(store, region ? [region] : ARTICLE_REGIONS),
     jsonld: [trail.ld],
     nav: '/news',
   });
 }
 
 /** /news/{state}/archive/{yyyy-mm}. */
-export function newsArchive(articles, region, month) {
+export function newsArchive(store, articles, region, month) {
   const st = STATES[region];
   const list = articles.inMonth(region, month);
   if (!list.length) return null;
@@ -146,6 +151,7 @@ export function newsArchive(articles, region, month) {
     title: `${st.name} emergency news, ${label} | Emergencies Near Me`,
     description: `${list.length} reports on bushfires and emergencies in ${st.name} in ${label}.`,
     body,
+    credits: credits(store, [region]),
     jsonld: [trail.ld],
     nav: '/news',
   });
@@ -176,7 +182,7 @@ function timeline(store, row, tz) {
 }
 
 /** Sentences about the incident, only from the facts in the feed. */
-function story(row, place, st, info) {
+function story(row, place, st, info, endedAt) {
   const tz = st.tz;
   const ended = !row.listed;
   const type = typeWords(row);
@@ -194,36 +200,40 @@ function story(row, place, st, info) {
   const p = [];
   if (row.kind === 'warning') {
     p.push(
-      `${agency} has issued ${row.level ? `${withArticle(row.level)} warning` : 'a warning'} for ${row.location || place?.name || 'an area'}${area}, ${st.name}${row.action ? `: ${row.action.toLowerCase()}` : ''}.`,
+      `${agency} has issued ${row.level ? levelWarning(row.level) : 'a warning'} for ${row.location || place?.name || 'an area'}${area}, ${st.name}${row.action ? `: ${row.action.toLowerCase()}` : ''}.`,
     );
     p.push(
-      `The warning was issued on ${dateTime(row.created || row.first_seen, tz)}${ended ? ` and is no longer current since ${dateTime(row.last_seen, tz)}` : ''}.`,
+      `The warning was issued on ${dateTime(row.created || row.first_seen, tz)}${ended ? ` and is no longer current since ${dateTime(endedAt, tz)}` : ''}.`,
     );
     return p;
   }
+  // NSW and Queensland publish no call time: then it is when it was first listed.
   const reported = dateTime(row.created || row.first_seen, tz);
   p.push(
-    `${ended ? `${agency} responded to` : `${agency} is responding to`} a ${type}${where ? ` at ${where}` : ''}${area}, ${st.name}. It was reported on ${reported}.`,
+    `${ended ? `${agency} responded to` : `${agency} is responding to`} a ${type}${where ? ` at ${where}` : ''}${area}, ${st.name}. It was ${row.created ? 'reported' : 'first listed'} on ${reported}.`,
   );
   const facts = [];
   if (row.size_ha)
     facts.push(
       `burnt about ${Number(row.size_ha).toLocaleString('en-AU')} hectares`,
     );
-  if (row.resources) facts.push(`${row.resources} resources assigned`);
+  if (!ended && row.resources)
+    facts.push(`${row.resources} resources assigned`);
+  if (ended && row.max_resources)
+    facts.push(`up to ${row.max_resources} resources assigned`);
   if (row.max_level >= 1) {
     const now = levelNow(row);
     p.push(
       ended
-        ? `It had ${withArticle(LEVEL[row.max_level])} warning level.`
+        ? `The highest warning level was ${LEVEL[row.max_level]}.`
         : now
-          ? `It has ${withArticle(LEVEL[now])} warning level${now < row.max_level ? `, after ${withArticle(LEVEL[row.max_level])} earlier` : ''}.`
-          : `It had ${withArticle(LEVEL[row.max_level])} warning level earlier; there is no warning level now.`,
+          ? `The warning level is ${LEVEL[now]}${now < row.max_level ? `, after ${LEVEL[row.max_level]} earlier` : ''}.`
+          : `The warning level was ${LEVEL[row.max_level]} earlier; there is none now.`,
     );
   }
   if (ended) {
     p.push(
-      `The incident ended on ${dateTime(row.last_seen, tz)}, when it left the agency's list of current incidents${statusOnly(row.status) ? `. Its last published status was “${statusOnly(row.status).toLowerCase()}”` : ''}${facts.length ? `, and it had ${facts.join(' and ')}` : ''}.`,
+      `The incident ended on ${dateTime(endedAt, tz)}, when it left the agency's list of current incidents${statusOnly(row.status) ? `. Its last published status was “${statusOnly(row.status).toLowerCase()}”` : ''}${facts.length ? `, and it had ${facts.join(' and ')}` : ''}.`,
     );
   } else {
     p.push(
@@ -255,7 +265,14 @@ export function articlePage(store, articles, region, slug) {
   const place = row.place ? places().get(region, row.place) : null;
   const info = sourceInfo(store, region);
   const title = a.title;
-  const paragraphs = story(row, place, st, info);
+  // When it left the list: the "Ended" event, the same time as in the timeline.
+  const endedAt =
+    store.db
+      .prepare(
+        "SELECT MAX(at) AS at FROM history_events WHERE id=? AND status='Ended'",
+      )
+      .get(row.id)?.at ?? row.last_seen;
+  const paragraphs = story(row, place, st, info, endedAt);
   const description =
     paragraphs
       .join(' ')
@@ -303,9 +320,14 @@ export function articlePage(store, articles, region, slug) {
     ...(row.size_ha
       ? [['Size', `${Number(row.size_ha).toLocaleString('en-AU')} ha`]]
       : []),
-    ...(row.resources ? [['Resources', String(row.resources)]] : []),
-    ['Reported', dateTime(row.created || row.first_seen, st.tz)],
-    [ended ? 'Ended' : 'Last update', dateTime(row.last_seen, st.tz)],
+    ...(!ended && row.resources ? [['Resources', String(row.resources)]] : []),
+    [
+      row.created ? 'Reported' : 'First listed',
+      dateTime(row.created || row.first_seen, st.tz),
+    ],
+    ended
+      ? ['Ended', dateTime(endedAt, st.tz)]
+      : ['Last checked', dateTime(info.fetchedAt || row.last_seen, st.tz)],
     ['Source', row.agency || st.official],
   ];
   const trail = crumbs([
@@ -331,10 +353,10 @@ ${more.length ? `<h2>Earlier news from ${esc(place.name)}</h2><div class="list">
 ${appCta()}`;
   return page({
     path: `/news/${region}/${a.slug}`,
-    title: `${title} | Emergencies Near Me`,
+    title: titled(title),
     description,
     body,
-    attribution: info.attribution,
+    credits: credits(store, [region]),
     ogType: 'article',
     ogImage: ogImageFor(row.category),
     jsonld: [newsLd(a, region, row, title, description, place), trail.ld],
@@ -351,11 +373,11 @@ function weekPage(store, articles, a) {
   const range = weekRange(Number(year), Number(week), st.tz);
   const rows = store.db
     .prepare(
-      `SELECT * FROM history WHERE region=? AND kind='incident'
-         AND COALESCE(created, first_seen)>=? AND COALESCE(created, first_seen)<?`,
+      `SELECT * FROM history INDEXED BY history_start
+       WHERE region=? AND COALESCE(created, first_seen)>=? AND COALESCE(created, first_seen)<?
+         AND kind='incident' AND private=0`,
     )
-    .all(region, range.from, range.to)
-    .filter((r) => !PRIVATE_CATEGORIES.has(r.category));
+    .all(region, range.from, range.to);
   const by = {};
   for (const r of rows) by[r.category] = (by[r.category] || 0) + 1;
   const landscape = rows.filter(
@@ -377,14 +399,8 @@ function weekPage(store, articles, a) {
     .map(([slug, n]) => ({ p: places().get(region, slug), n }))
     .filter((x) => x.p);
   const weekNews = articles
-    .latest(region, 60)
-    .filter(
-      (x) =>
-        x.kind === 'incident' &&
-        x.published >= range.from &&
-        x.published < range.to,
-    );
-  const info = sourceInfo(store, region);
+    .between(region, range.from, range.to)
+    .filter((x) => x.kind === 'incident');
   const counts = Object.entries(by)
     .sort((x, y) => y[1] - x[1])
     .map(
@@ -453,10 +469,10 @@ ${appCta()}`;
   const description = lead.slice(0, 155).replace(/\s+\S*$/, '') + '…';
   return page({
     path: `/news/${region}/${a.slug}`,
-    title: `${a.title} | Emergencies Near Me`,
+    title: titled(a.title),
     description,
     body,
-    attribution: info.attribution,
+    credits: credits(store, [region]),
     ogType: 'article',
     ogImage: ogImageFor('fire'),
     jsonld: [

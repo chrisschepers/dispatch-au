@@ -120,7 +120,23 @@ export class IncidentStore {
         put.run(row.id, region, JSON.stringify(row), now, now);
         rows.push(row);
       }
-      this.history.record(region, rows, now);
+      // The website's history may never cost the app its update: a failure
+      // there (a full disk, a bug) is rolled back on its own and logged.
+      this.db.exec('SAVEPOINT history');
+      try {
+        this.history.record(region, rows, now);
+        this.db.exec('RELEASE history');
+      } catch (error) {
+        this.db.exec('ROLLBACK TO history');
+        this.db.exec('RELEASE history');
+        console.warn(
+          JSON.stringify({
+            region,
+            history: 'failed',
+            error: String(error).slice(0, 160),
+          }),
+        );
+      }
       this.db
         .prepare(
           'UPDATE sources SET fetched_at=?,updated_at=?,stale=0,error=NULL WHERE region=?',
@@ -134,6 +150,9 @@ export class IncidentStore {
         .run(region, cutoff);
       this.recordAttempt(region, now);
       this.db.exec('COMMIT');
+      // Changes with every accepted update; the server caches compressed
+      // feeds until it moves.
+      this.version = (this.version ?? 0) + 1;
       return true;
     } catch (e) {
       this.db.exec('ROLLBACK');

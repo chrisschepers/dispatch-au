@@ -19,6 +19,7 @@ import {
   crumbs,
   page,
   appCta,
+  titled,
 } from './site-layout.mjs';
 import {
   currentIncidents,
@@ -28,7 +29,9 @@ import {
   placeIndexable,
   activeNear,
   sourceInfo,
-  PRIVATE_CATEGORIES,
+  credits,
+  placePrivateCount,
+  isPrivate,
   isOver,
 } from './site-data.mjs';
 import { statusOnly } from './articles.mjs';
@@ -105,7 +108,8 @@ function updatedLine(info, tz) {
 export function statePage(store, region, articles) {
   const st = STATES[region];
   const { incidents, warnings, feed } = currentIncidents(store, region);
-  const visible = incidents.filter((i) => !PRIVATE_CATEGORIES.has(i.category));
+  const visible = incidents.filter((i) => !isPrivate(i));
+  const hidden = incidents.length - visible.length;
   const counts = {};
   for (const i of incidents) counts[i.category] = (counts[i.category] || 0) + 1;
   const summary = Object.entries(counts)
@@ -146,7 +150,7 @@ ${
       .map((i) => incidentRow(i, region, { articles }))
       .join('') || '<div class="row">No current incidents.</div>'
   }</div>
-${counts.ambulance ? `<p class="updated">Plus ${counts.ambulance} ambulance ${counts.ambulance === 1 ? 'call' : 'calls'}, not listed here for privacy.</p>` : ''}
+${hidden ? `<p class="updated">Plus ${hidden} ambulance or medical ${hidden === 1 ? 'call' : 'calls'}, not listed here for privacy.</p>` : ''}
 ${
   busiest.length
     ? `<h2>Busiest places this week</h2><div class="chips">${busiest
@@ -168,10 +172,10 @@ ${appCta()}
 <div class="note">For official advice and warnings, see <a href="${esc(feed?.adviceUrl || info.adviceUrl || '#')}">${esc(st.official)}</a>. In an emergency call <b>000</b>.</div>`;
   return page({
     path: `/incidents/${region}`,
-    title: `${st.name} emergency incidents now (${incidents.length}) | Emergencies Near Me`,
+    title: titled(`${st.name} emergencies now (${incidents.length})`),
     description: `Live emergency incidents in ${st.name}: ${incidents.length} right now${summary ? ` (${summary})` : ''}. Bushfires, crashes, storms and floods, updated every minute.`,
     body,
-    attribution: feed?.attribution || info.attribution,
+    credits: credits(store, [region]),
     jsonld: [trail.ld],
     nav: '/incidents',
   });
@@ -218,9 +222,10 @@ export function placesIndexPage(store, region) {
     .join('')}</div>`;
   return page({
     path: `/incidents/${region}/places`,
-    title: `${st.name} suburbs and towns with emergency incidents | Emergencies Near Me`,
+    title: titled(`Emergencies by suburb in ${st.name}`),
     description: `Fires, crashes, storms and other incidents per suburb in ${st.name}: ${list.length} places with incidents in the last 90 days.`,
     body,
+    credits: credits(store, [region]),
     jsonld: [trail.ld],
     nav: '/incidents',
   });
@@ -243,18 +248,21 @@ export function placePage(store, region, slug, articles) {
   const st = STATES[region];
   const place = places().get(region, slug);
   if (!place) return null;
-  const hist = placeHistory(store, region, slug, 90);
-  const visible = hist.filter((r) => !PRIVATE_CATEGORIES.has(r.category));
-  const ambulance = hist.length - visible.length;
+  const visible = placeHistory(store, region, slug, 90);
+  const ambulance = placePrivateCount(store, region, slug, 90);
   const now = activeNear(store, place.lat, place.lon, 15, region);
   const recent30 = visible.filter(
     (r) => Date.now() - Date.parse(r.last_seen) <= 30 * 86_400_000,
   );
   const older = visible.filter((r) => !recent30.includes(r));
   const year = placeCounts(store, region, slug, 365);
-  const yearTotal = Object.entries(year)
-    .filter(([c]) => !PRIVATE_CATEGORIES.has(c))
-    .reduce((s, [, n]) => s + n, 0);
+  const yearTotal = Object.values(year).reduce((t, n) => t + n, 0);
+  // The history began at the first deploy; until it is a year old, say since when.
+  const started = store.history?.started?.() ?? null;
+  const yearLabel =
+    started && Date.now() - Date.parse(started) < 365 * 86_400_000
+      ? `since ${new Date(started).toLocaleDateString('en-AU', { timeZone: st.tz, day: 'numeric', month: 'short', year: 'numeric' })}`
+      : 'in the last 12 months';
   const fires = (year.fire ?? 0) + (year.planned ?? 0);
   const near = nearbyPlaces(store, place);
   const news = articles.forPlace(region, slug, 6);
@@ -284,7 +292,7 @@ ${updatedLine(info, st.tz)}
 <div class="stat"><b>${nowHere.length}</b><span>active in ${esc(place.name)}</span></div>
 <div class="stat"><b>${now.length}</b><span>active within 15 km</span></div>
 <div class="stat"><b>${recent30.length}</b><span>in the last 30 days</span></div>
-<div class="stat"><b>${yearTotal}</b><span>in the last 12 months${fires ? `, ${fires} fires` : ''}</span></div>
+<div class="stat"><b>${yearTotal}</b><span>${esc(yearLabel)}${fires ? `, ${fires} fires` : ''}</span></div>
 </div>
 <h2>Now in and around ${esc(place.name)}</h2>
 ${
@@ -315,7 +323,7 @@ ${
         .join('')}</div>`
     : ''
 }
-${ambulance ? `<p class="updated">Plus ${ambulance} ambulance ${ambulance === 1 ? 'call' : 'calls'} in this period, not listed for privacy.</p>` : ''}
+${ambulance ? `<p class="updated">Plus ${ambulance} ambulance or medical ${ambulance === 1 ? 'call' : 'calls'} in this period, not listed for privacy.</p>` : ''}
 ${
   news.length
     ? `<h2>News from ${esc(place.name)}</h2><div class="list">${news.map((a) => newsRow(a, region)).join('')}</div>`
@@ -352,10 +360,10 @@ ${appCta(`Get an alert when something happens near ${place.name}, with your own 
   };
   return page({
     path: `/incidents/${region}/${slug}`,
-    title: `${place.name} fires and emergencies now | ${st.short} | Emergencies Near Me`,
+    title: titled(`${place.name} fires and emergencies now | ${st.short}`),
     description: `${place.name}, ${st.short}: ${nowHere.length} active ${nowHere.length === 1 ? 'incident' : 'incidents'} now, ${now.length} within 15 km and ${recent30.length} in the last 30 days. Bushfires, crashes and storms, updated every minute.`,
     body,
-    attribution: info.attribution,
+    credits: credits(store, [region]),
     robots: indexable
       ? 'index,follow,max-image-preview:large'
       : 'noindex,follow',

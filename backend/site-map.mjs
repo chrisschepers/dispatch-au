@@ -12,19 +12,25 @@ import {
   crumbs,
   page,
   appCta,
+  titled,
 } from './site-layout.mjs';
 import {
   currentIncidents,
   activePlaces,
   mapRows,
   regionsLive,
-  sourceInfo,
+  credits,
   isOver,
 } from './site-data.mjs';
 import { statusOnly } from './articles.mjs';
 import { incidentRow } from './site-places.mjs';
 
 const MAPLIBRE = 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist';
+// Subresource integrity: the browser refuses a changed file from the CDN.
+const MAPLIBRE_JS_SRI =
+  'sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj';
+const MAPLIBRE_CSS_SRI =
+  'sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V';
 
 /** [west, south, east, north] per state, and for all of Australia. */
 export const BOUNDS = {
@@ -104,10 +110,6 @@ export function mapPage(store, articles, region = '') {
           ['Map', '/map'],
         ],
   );
-  const attribution = regions
-    .map((r) => sourceInfo(store, r).attribution)
-    .filter(Boolean)
-    .join('\n');
   const body = `${trail.html}
 <h1 class="page">${region ? `${esc(st.name)} fire and emergency map` : 'Live emergency map of Australia'}</h1>
 <div class="chips" id="map-filters" role="group" aria-label="Map filters">
@@ -151,18 +153,21 @@ ${
 }
 ${appCta('The app shows this map with your own radius and sends an alert when something happens near you.')}
 <div class="note">This map is not an official warning service and can be delayed. For official information see the <a href="/sources">agencies' own sites</a>. In an emergency call <b>000</b>.</div>
-<script src="${MAPLIBRE}/maplibre-gl.js" defer></script>
+<script src="${MAPLIBRE}/maplibre-gl.js" integrity="${MAPLIBRE_JS_SRI}" crossorigin="anonymous" defer></script>
 <script src="/assets/map.js?v=${ASSET_VERSION}" defer></script>`;
   return page({
     path: region ? `/map/${region}` : '/map',
     title: region
-      ? `${st.name} fire map: live bushfires and emergencies | Emergencies Near Me`
-      : 'Live bushfire and emergency map of Australia | Emergencies Near Me',
+      ? titled(`${st.name} fire map: live bushfires and emergencies`)
+      : 'Live bushfire and emergency map of Australia',
     description: `Live map of ${total} active bushfires, crashes, floods and other emergencies in ${name}, from the official feeds. Updated every minute.`,
     body,
-    attribution: `${attribution}\nMap: OpenFreeMap © OpenMapTiles, data © OpenStreetMap contributors.`,
+    // The map shows every state, also on /map/act: credit them all.
+    credits: credits(store, regionsLive(STATES)),
+    attribution:
+      'Map: OpenFreeMap © OpenMapTiles, data © OpenStreetMap contributors.',
     jsonld: [trail.ld],
-    head: `<link rel="stylesheet" href="${MAPLIBRE}/maplibre-gl.css"><link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>`,
+    head: `<link rel="stylesheet" href="${MAPLIBRE}/maplibre-gl.css" integrity="${MAPLIBRE_CSS_SRI}" crossorigin="anonymous"><link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>`,
     nav: '/map',
   });
 }

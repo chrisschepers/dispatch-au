@@ -99,7 +99,7 @@
     status.textContent =
       shown +
       (hours ? ' incidents in the last 24 hours' : ' active incidents') +
-      ' on the map. Updated ' +
+      ' on the map, loaded ' +
       new Date().toLocaleTimeString('en-AU', {
         hour: 'numeric',
         minute: '2-digit',
