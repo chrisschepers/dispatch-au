@@ -17,8 +17,19 @@ export class IncidentStore {
     this.mergeVICIdentities();
     // Compact history for the website (history.mjs); starts with the 7 days
     // this store still holds.
-    this.history = new History(this.db);
-    this.history.backfill();
+    // A broken history must never stop the store (and with it the app API).
+    try {
+      this.history = new History(this.db);
+      this.history.backfill();
+    } catch (error) {
+      console.warn(
+        JSON.stringify({
+          history: 'unavailable',
+          error: String(error).slice(0, 160),
+        }),
+      );
+      this.history ??= null;
+    }
   }
   // Repair carriage-return entities written by the first ACT parser without
   // changing incident status or the observation timestamps.
@@ -124,7 +135,7 @@ export class IncidentStore {
       // there (a full disk, a bug) is rolled back on its own and logged.
       this.db.exec('SAVEPOINT history');
       try {
-        this.history.record(region, rows, now);
+        this.history?.record(region, rows, now);
         this.db.exec('RELEASE history');
       } catch (error) {
         this.db.exec('ROLLBACK TO history');
@@ -181,6 +192,7 @@ export class IncidentStore {
     );
   }
   fail(region, message, at = new Date().toISOString()) {
+    this.version = (this.version ?? 0) + 1;
     message = String(message)
       .replace(/[\r\n\t]/g, ' ')
       .slice(0, 300);

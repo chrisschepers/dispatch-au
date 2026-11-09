@@ -122,8 +122,10 @@ export function headline(row, placeName, tz, twin = 0) {
     (placeName || placeFromText(row.location)) + (extra ? ` (${extra})` : '');
   if (row.kind === 'warning') {
     const level = LEVEL_LABEL[Math.max(1, levelRank(row.level))];
+    // "Emergency Warning" is a warning already; "Advice warning" is not.
+    const named = /warning/i.test(level) ? level : `${level} warning`;
     if (!row.listed)
-      return `${place}: ${level} warning, ${dateIn(row.created || row.first_seen, tz)}`;
+      return `${place}: ${named}, ${dateIn(row.created || row.first_seen, tz)}`;
     return `${cap(lower(row.action) || 'stay informed')}: ${level} for ${place}`;
   }
   const type = typeWords(row);

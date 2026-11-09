@@ -297,7 +297,18 @@ export function creditHtml(list) {
   return list
     .map((c) => {
       const tz = STATES[c.region]?.tz ?? 'Australia/Sydney';
-      return `<p class="attr">${esc(c.attribution)}${c.licenseUrl ? ` <a href="${esc(c.licenseUrl)}">Licence</a>.` : ''}${c.fetchedAt ? ` Last updated ${esc(dateTime(c.fetchedAt, tz))}.` : ''}</p>`;
+      // With the zone: one page can show five states in three time zones.
+      const at = c.fetchedAt
+        ? new Date(c.fetchedAt).toLocaleString('en-AU', {
+            timeZone: tz,
+            day: 'numeric',
+            month: 'short',
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZoneName: 'short',
+          })
+        : null;
+      return `<p class="attr">${esc(c.attribution)}${c.licenseUrl ? ` <a href="${esc(c.licenseUrl)}">Licence</a>.` : ''}${at ? ` Last updated ${esc(at)}.` : ''}</p>`;
     })
     .join('');
 }

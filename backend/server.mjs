@@ -254,7 +254,7 @@ export function createServer(
         hit = {
           version: store.version,
           at: Date.now(),
-          json: JSON.stringify(result),
+          json: Buffer.from(JSON.stringify(result)),
           encoded: {},
         };
         feedCache.set(key, hit);
@@ -283,7 +283,7 @@ async function main() {
         placeName: (region, slug) =>
           (slug ? places().get(region, slug)?.name : null) ?? null,
         tz: (region) => STATES[region]?.tz ?? 'Australia/Sydney',
-        started: store.history.started(),
+        started: store.history?.started() ?? null,
       });
       if (created)
         console.log(JSON.stringify({ articles: 'created', n: created }));

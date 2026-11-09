@@ -148,7 +148,7 @@ export function newsArchive(store, articles, region, month) {
 <div class="list">${list.map((a) => newsRow(a, region)).join('')}</div>`;
   return page({
     path: `/news/${region}/archive/${month}`,
-    title: `${st.name} emergency news, ${label} | Emergencies Near Me`,
+    title: titled(`${st.name} emergency news, ${label}`),
     description: `${list.length} reports on bushfires and emergencies in ${st.name} in ${label}.`,
     body,
     credits: credits(store, [region]),
@@ -175,7 +175,7 @@ function timeline(store, row, tz) {
     if (text === last) continue;
     last = text;
     items.push(
-      `<li><b>${esc(dateTime(e.at, tz))}</b><br>${esc(items.length ? text : `Reported. ${text}`)}</li>`,
+      `<li><b>${esc(dateTime(e.at, tz))}</b><br>${esc(items.length ? text : `${row.created ? 'Reported' : 'First listed'}. ${text}`)}</li>`,
     );
   }
   return items;
@@ -203,7 +203,7 @@ function story(row, place, st, info, endedAt) {
       `${agency} has issued ${row.level ? levelWarning(row.level) : 'a warning'} for ${row.location || place?.name || 'an area'}${area}, ${st.name}${row.action ? `: ${row.action.toLowerCase()}` : ''}.`,
     );
     p.push(
-      `The warning was issued on ${dateTime(row.created || row.first_seen, tz)}${ended ? ` and is no longer current since ${dateTime(endedAt, tz)}` : ''}.`,
+      `The warning was ${row.created ? 'issued' : 'first listed'} on ${dateTime(row.created || row.first_seen, tz)}${ended ? ` and is no longer current since ${dateTime(endedAt, tz)}` : ''}.`,
     );
     return p;
   }
@@ -303,7 +303,9 @@ export function articlePage(store, articles, region, slug) {
     [
       'Type',
       row.kind === 'warning'
-        ? `${row.level || ''} warning`.trim()
+        ? /warning/i.test(row.level || '')
+          ? row.level
+          : `${row.level || ''} warning`.trim()
         : nice(row.title) || c.label,
     ],
     [

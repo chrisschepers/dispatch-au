@@ -56,15 +56,17 @@ export class History {
         max_resources INTEGER, size_ha REAL, action TEXT, details TEXT,
         private INTEGER NOT NULL DEFAULT 0, created TEXT,
         first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, listed INTEGER NOT NULL);
-      CREATE INDEX IF NOT EXISTS history_place ON history(region, place, last_seen);
-      CREATE INDEX IF NOT EXISTS history_seen ON history(last_seen);
-      CREATE INDEX IF NOT EXISTS history_region_seen ON history(region, last_seen);
-      CREATE INDEX IF NOT EXISTS history_listed ON history(region) WHERE listed=1;
-      CREATE INDEX IF NOT EXISTS history_start ON history(region, COALESCE(created, first_seen));
       CREATE TABLE IF NOT EXISTS history_events(
         id TEXT NOT NULL, at TEXT NOT NULL, status TEXT, level TEXT,
         resources INTEGER, listed INTEGER NOT NULL, PRIMARY KEY(id, at));
       CREATE TABLE IF NOT EXISTS history_meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
+    // Columns first, then the indexes that use them.
+    this.#migrate();
+    db.exec(`CREATE INDEX IF NOT EXISTS history_place ON history(region, place, last_seen, kind, private, category);
+      CREATE INDEX IF NOT EXISTS history_seen ON history(last_seen);
+      CREATE INDEX IF NOT EXISTS history_region_seen ON history(region, last_seen);
+      CREATE INDEX IF NOT EXISTS history_listed ON history(region) WHERE listed=1;
+      CREATE INDEX IF NOT EXISTS history_start ON history(region, COALESCE(created, first_seen));`);
     this.q = {
       get: db.prepare(
         'SELECT status, level, max_level, max_resources, size_ha, listed FROM history WHERE id=?',
@@ -86,6 +88,26 @@ export class History {
       end: db.prepare('UPDATE history SET listed=0 WHERE id=?'),
     };
     this.lastPrune = 0;
+  }
+
+  /**
+   * Columns added after the first version: a database from before gets them
+   * here, instead of every query failing and the app API going down with it.
+   */
+  #migrate() {
+    const have = new Set(
+      this.db
+        .prepare('PRAGMA table_info(history)')
+        .all()
+        .map((c) => c.name),
+    );
+    for (const [name, type] of [
+      ['max_resources', 'INTEGER'],
+      ['details', 'TEXT'],
+      ['private', 'INTEGER NOT NULL DEFAULT 0'],
+    ])
+      if (!have.has(name))
+        this.db.exec(`ALTER TABLE history ADD COLUMN ${name} ${type}`);
   }
 
   /** When the history began (the first backfill), as ISO time, or null. */
@@ -222,7 +244,12 @@ export class History {
     const rows = this.db
       .prepare('SELECT * FROM incidents ORDER BY first_seen')
       .all();
-    const started = rows[0]?.first_seen ?? new Date().toISOString();
+    // The store keeps ended incidents for 7 days but listed ones as long as
+    // they last, so a fire from weeks ago says nothing about coverage: the
+    // history is complete from 7 days ago at most (review 09-11).
+    const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    const oldest = rows[0]?.first_seen ?? new Date().toISOString();
+    const started = oldest > weekAgo ? oldest : weekAgo;
     this.db.exec('BEGIN IMMEDIATE');
     try {
       for (const rec of rows) {

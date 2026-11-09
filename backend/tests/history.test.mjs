@@ -458,3 +458,60 @@ void test('review 09-11: no weekly overview for a week the history only partly c
     s.close();
   }
 });
+
+void test('review 09-11 (2): an older history table is migrated, and "started" is at most a week back', async () => {
+  const { DatabaseSync } = await import('node:sqlite');
+  const { History } = await import('../history.mjs');
+  const db = new DatabaseSync(':memory:');
+  db.exec(`CREATE TABLE incidents(id TEXT PRIMARY KEY, region TEXT NOT NULL, payload TEXT NOT NULL, first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, listed INTEGER NOT NULL);
+    CREATE TABLE history(id TEXT PRIMARY KEY, region TEXT NOT NULL, kind TEXT NOT NULL, category TEXT NOT NULL, title TEXT NOT NULL, location TEXT NOT NULL,
+      place TEXT, lat REAL, lon REAL, agency TEXT, status TEXT, level TEXT, max_level INTEGER NOT NULL DEFAULT 0, resources INTEGER, size_ha REAL,
+      action TEXT, created TEXT, first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, listed INTEGER NOT NULL);`);
+  const h = new History(db);
+  const cols = db
+    .prepare('PRAGMA table_info(history)')
+    .all()
+    .map((c) => c.name);
+  for (const c of ['max_resources', 'details', 'private'])
+    assert.ok(cols.includes(c), c);
+  // A fire listed for weeks does not make the history weeks old.
+  const db2 = new DatabaseSync(':memory:');
+  db2.exec(
+    'CREATE TABLE incidents(id TEXT PRIMARY KEY, region TEXT NOT NULL, payload TEXT NOT NULL, first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, listed INTEGER NOT NULL)',
+  );
+  db2
+    .prepare('INSERT INTO incidents VALUES(?,?,?,?,?,?)')
+    .run(
+      'nsw:incident:1',
+      'nsw',
+      JSON.stringify(fire()),
+      '2026-01-01T00:00:00.000Z',
+      new Date().toISOString(),
+      1,
+    );
+  const h2 = new History(db2);
+  h2.backfill();
+  assert.ok(Date.now() - Date.parse(h2.started()) <= 7 * 86_400_000 + 60_000);
+  assert.ok(h);
+});
+
+void test('review 09-11 (2): an ended Emergency Warning is not an "Emergency Warning warning"', () => {
+  const w = {
+    region: 'qld',
+    kind: 'warning',
+    location: 'Gayndah',
+    level: 'Emergency Warning',
+    action: 'Leave immediately',
+    listed: 0,
+    created: null,
+    first_seen: '2026-11-08T22:50:00Z',
+  };
+  assert.equal(
+    headline(w, 'Gayndah', 'Australia/Brisbane'),
+    'Gayndah: Emergency Warning, 9 November 2026',
+  );
+  assert.equal(
+    headline({ ...w, level: 'Advice' }, 'Gayndah', 'Australia/Brisbane'),
+    'Gayndah: Advice warning, 9 November 2026',
+  );
+});
