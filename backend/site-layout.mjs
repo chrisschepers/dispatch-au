@@ -9,6 +9,20 @@ export const APP_STORE = 'https://apps.apple.com/app/id6811057872';
 /** Set once the Play listing is public (production access, expected mid November 2026). */
 export const PLAY_STORE = process.env.PLAY_STORE_URL || '';
 export const CONTACT = 'chrisschepers22@gmail.com';
+/**
+ * Search engine ownership checks (Google Search Console "HTML tag", Bing
+ * Webmaster Tools), set in Railway so verifying needs no new code.
+ */
+const VERIFY = [
+  ['google-site-verification', process.env.GOOGLE_SITE_VERIFICATION],
+  ['msvalidate.01', process.env.BING_SITE_VERIFICATION],
+]
+  .filter(([, v]) => v)
+  .map(
+    ([n, v]) =>
+      `<meta name="${n}" content="${String(v).replace(/[^A-Za-z0-9_-]/g, '')}">`,
+  )
+  .join('');
 /** Bumped when site/assets/site.js or site.css change, so browsers fetch the new file. */
 export const ASSET_VERSION = '2026-11-09';
 
@@ -320,7 +334,7 @@ ${canonical ? `<link rel="canonical" href="${SITE}${path}">` : ''}
 <meta property="og:image" content="${esc(ogImage)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="${SITE}${path}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="apple-itunes-app" content="app-id=6811057872">
-<meta name="theme-color" content="#e5372c">
+<meta name="theme-color" content="#e5372c">${VERIFY}
 <link rel="icon" href="/assets/favicon.png"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
