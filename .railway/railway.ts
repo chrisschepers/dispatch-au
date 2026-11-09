@@ -24,7 +24,9 @@ export default defineRailway(() => {
     },
     healthcheck: '/health',
     healthcheckTimeout: 120,
-    deploy: { restartPolicyType: 'ON_FAILURE', restartPolicyMaxRetries: 10 },
+    // Restart policy: Railway's default (on failure, at most 10 restarts),
+    // the same as railway.json had. Railway stores the default as null, so
+    // setting it here would show as a change in every plan.
     replicas: { 'us-west2': 1 },
     domains: ['emergenciesnearme.online', 'www.emergenciesnearme.online'],
     volumeMounts: { '/data': data },
