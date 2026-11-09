@@ -120,7 +120,7 @@ ${
       : 'Australian fire and emergency news | Emergencies Near Me',
     description: region
       ? `Bushfires, warnings and a weekly overview of emergencies in ${st.name}, from the official incident feed.`
-      : 'Bushfires, warnings and weekly overviews of emergencies in NSW, Queensland and the ACT, from the official incident feeds.',
+      : 'Bushfires, warnings and weekly overviews of emergencies in Victoria, NSW, Queensland and the ACT, from the official incident feeds.',
     body,
     credits: credits(store, region ? [region] : ARTICLE_REGIONS),
     jsonld: [trail.ld],

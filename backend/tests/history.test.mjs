@@ -176,9 +176,14 @@ void test('articles: only what matters, in the licensed states', () => {
     'not a landscape fire',
   );
   assert.equal(
-    newsworthy({ ...base, region: 'vic', max_level: 3 }),
+    newsworthy({ ...base, region: 'sa', max_level: 3 }),
     false,
-    'Victoria waits for its licence',
+    'South Australia: its feed is listed as NC-ND',
+  );
+  assert.equal(
+    newsworthy({ ...base, region: 'vic', max_level: 2 }),
+    true,
+    'Victoria: CC BY 3.0 AU allows adaptation',
   );
   assert.equal(
     newsworthy({ ...base, region: 'qld', kind: 'warning' }),

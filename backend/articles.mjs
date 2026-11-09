@@ -8,15 +8,19 @@
 // - ACT incidents with a warning level;
 // plus a weekly overview per state.
 //
-// Only states whose licence allows commercial reuse and adaptation (CC BY):
-// NSW, Queensland and the ACT. Victoria and South Australia join once their
-// agencies confirm it (ARTICLE_REGIONS, see docs). Articles only state what
-// the feed says; no advice of our own, always the official link.
+// Only states whose licence allows commercial reuse and adaptation: NSW,
+// Queensland and the ACT (CC BY 4.0) and Victoria (CC BY 3.0 AU; keuze Chris
+// 09-11, no separate confirmation). Not South Australia: data.sa.gov.au lists
+// its incident feed as CC BY-NC-ND, and an article is an adaptation
+// (ARTICLE_REGIONS). Articles only state what the feed says; no advice of
+// our own, always the official link.
 import { levelRank } from './history.mjs';
 import { slugify, placeText } from './places.mjs';
 import { nice, STATES } from './site-layout.mjs';
 
-export const ARTICLE_REGIONS = (process.env.ARTICLE_REGIONS || 'nsw,qld,act')
+export const ARTICLE_REGIONS = (
+  process.env.ARTICLE_REGIONS || 'nsw,qld,act,vic'
+)
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
