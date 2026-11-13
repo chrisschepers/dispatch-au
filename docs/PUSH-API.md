@@ -36,7 +36,8 @@ Antwoord `200`:
   "emergencyWarningsAnywhere": false,
   "sound": "zacht",
   "notificationsEnabled": true,
-  "critical": false
+  "critical": false,
+  "airTankers": false
 }
 ```
 
@@ -45,6 +46,7 @@ Antwoord `200`:
 - `warningsOnly`: alleen pushen als het incident een waarschuwingsniveau heeft (Advice, Watch and Act, Emergency Warning).
 - `emergencyWarningsAnywhere`: push bij elke Emergency Warning in Australië, los van straal en diensten, en ook als `notificationsEnabled` uit staat.
 - `critical` (24-10-2026): een Emergency Warning voor de eigen plek (in het gebied of binnen de straal) gaat als kritieke melding, die door stil en Focus heen breekt. Nooit voor de meldingen van `emergencyWarningsAnywhere` en nooit voor lagere niveaus. iOS: `sound: { critical: 1 }` en `interruption-level: critical`. Dat werkt pas met Apple's Critical Alerts-entitlement in de app en toestemming van de gebruiker; anders komt hij binnen als gewone melding. Android: kanaal `dispatch_kritiek`, dat de app aanmaakt voordat hij `critical` aanzet.
+- `airTankers` (13-11-2026, boolean, default `false`): alert when a large air tanker takes off towards, or starts working on, a bush or grass fire that fits this device's own filter (`notificationsEnabled`, Fire among the services, within the Fire radius or inside the warning area; `warningsOnly` applies too). One alert per flight at most, never critical. Title "Large air tanker Bomber 210 airborne", body "Heading towards the fire near Kilmore" or "Working on the fire near Kilmore", `data: { "incidentId": "<fire id>", "aircraft": "<hex>" }`. Nothing is sent unless the server has `AIR_TANKER_PUSH=on`; the app can already store the preference.
 - Ontbreken `lat`/`lon`, dan de opgeslagen plek houden.
 - `401` bij een verkeerde of ontbrekende `x-install-token`.
 

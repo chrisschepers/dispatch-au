@@ -2,7 +2,8 @@
 //
 // Three parts:
 //  1. devices: register a device and keep its filter (place, radius per
-//     service, warnings only, Emergency Warnings anywhere);
+//     service, warnings only, Emergency Warnings anywhere, large air
+//     tankers);
 //  2. matching: after every successful ingest, compare the feed rows with
 //     what we saw before. A new incident with a location, or a higher warning
 //     level, is sent to every device whose filter it fits;
@@ -160,6 +161,32 @@ export function messageFor(row, device, { upgrade = false } = {}) {
     .filter(Boolean)
     .join(' · ');
   return { title, body, data: { incidentId: row.id } };
+}
+
+/**
+ * Large air tanker alerts (flights.mjs) are sent only when AIR_TANKER_PUSH is
+ * switched on in Railway. Off by default.
+ */
+export function airTankerPushOn(env = process.env) {
+  return ['aan', 'on', 'true', '1'].includes(
+    String(env.AIR_TANKER_PUSH ?? '')
+      .trim()
+      .toLowerCase(),
+  );
+}
+
+/** "Large air tanker Bomber 210 airborne" / "Heading towards the fire near X". */
+export function airTankerMessage(event) {
+  const place = suburb(event.fire.location);
+  const where = place ? `the fire near ${place}` : 'a fire';
+  return {
+    title: `Large air tanker ${event.name} airborne`,
+    body:
+      event.mode === 'working'
+        ? `Working on ${where}`
+        : `Heading towards ${where}`,
+    data: { incidentId: event.fire.id, aircraft: event.hex },
+  };
 }
 
 // ── APNs ────────────────────────────────────────────────────────────────────
@@ -437,6 +464,8 @@ const DEFAULT_FILTER = {
   notificationsEnabled: false,
   // Emergency Warnings for the device's own place break through silent mode.
   critical: false,
+  // A large air tanker on its way to a fire within the device's Fire radius.
+  airTankers: false,
 };
 
 export class PushService {
@@ -451,6 +480,7 @@ export class PushService {
         app_version TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS push_seen(incident_id TEXT PRIMARY KEY, region TEXT NOT NULL, rank INTEGER NOT NULL, seen_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS push_sent(device TEXT NOT NULL, incident_id TEXT NOT NULL, rank INTEGER NOT NULL, sent_at TEXT NOT NULL, PRIMARY KEY(device, incident_id, rank));
+      CREATE TABLE IF NOT EXISTS push_air(flight_id TEXT PRIMARY KEY, sent_at TEXT NOT NULL);
     `);
   }
 
@@ -548,6 +578,7 @@ export class PushService {
       'emergencyWarningsAnywhere',
       'notificationsEnabled',
       'critical',
+      'airTankers',
     ]) {
       if (typeof body[k] === 'boolean') f[k] = body[k];
     }
@@ -678,6 +709,53 @@ export class PushService {
     return { events: events.length, sent: items.length };
   }
 
+  /**
+   * A large air tanker took off towards a fire (event from flights.mjs). Only
+   * with AIR_TANKER_PUSH on, only to devices that asked for it
+   * (`airTankers`) and whose own filter fits that fire, and once per flight:
+   * the flight is claimed here before anything is sent.
+   */
+  async airTanker(event, now = Date.now()) {
+    if (!airTankerPushOn(this.env)) return { sent: 0, reason: 'off' };
+    if (!event?.flightId || !event.fire?.id)
+      return { sent: 0, reason: 'invalid' };
+    const at = new Date(now).toISOString();
+    this.db
+      .prepare('DELETE FROM push_air WHERE sent_at<?')
+      .run(new Date(now - 7 * 86400_000).toISOString());
+    const claimed = this.db
+      .prepare('INSERT INTO push_air VALUES (?,?) ON CONFLICT DO NOTHING')
+      .run(event.flightId, at);
+    if (claimed.changes === 0) return { sent: 0, reason: 'already sent' };
+    const msg = airTankerMessage(event);
+    const items = [];
+    for (const d of this.devices()) {
+      if (d.filter.airTankers !== true || !fitsPlace(d, event.fire)) continue;
+      items.push({
+        device: d.id,
+        token: d.push_token,
+        sound: d.filter.sound,
+        critical: false,
+        msg,
+      });
+    }
+    if (!items.length) return { sent: 0, reason: 'nobody' };
+    const dead = await this.send(items);
+    const clear = this.db.prepare(
+      'UPDATE devices SET push_token=NULL WHERE push_token=?',
+    );
+    for (const t of dead) clear.run(t);
+    console.log(
+      JSON.stringify({
+        push: 'air tanker',
+        flight: event.flightId,
+        incident: event.fire.id,
+        alerts: items.length,
+        dead: dead.length,
+      }),
+    );
+    return { sent: items.length };
+  }
   async send(items) {
     if (this.sendOverride) return this.sendOverride(items);
     const expo = items.filter((i) => i.token.startsWith('ExponentPushToken'));

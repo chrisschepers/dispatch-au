@@ -11,6 +11,12 @@
 // - tar1090-db aircraft.csv (registration -> ICAO hex and type; its
 //   owner/operator field is only filled for recent registrations).
 // - KNOWN below: rescue helicopters neither list names yet.
+// - CASA's civil aircraft register (CC BY 4.0), only with
+//   FLEET_CASA_REGISTER=on and only for the Royal Flying Doctor Service: the
+//   register names the operator of every aircraft. Off by default until the
+//   licence of the data files is confirmed (backend/README.md). Of a
+//   register row only the mark, the type and the fact that the operator is
+//   the RFDS are used; no holder, no address, and no other operator.
 //
 // Only organisations, never a private owner: names are matched against ORGS,
 // and aircraft whose record asks for privacy (LADD, PIA) or is military are
@@ -24,7 +30,16 @@ export const PLANE_ALERT_URL =
   'https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/main/plane-alert-db.csv';
 export const TAR1090_URL =
   'https://github.com/wiedehopf/tar1090-db/raw/csv/aircraft.csv.gz';
+export const CASA_URL = 'https://services.casa.gov.au/CSV/acrftreg.csv';
 export const SOURCES = [NAFC_URL, 'plane-alert-db (ODbL)', 'tar1090-db'];
+
+export function casaOn(env = process.env) {
+  return ['aan', 'on', 'true', '1'].includes(
+    String(env.FLEET_CASA_REGISTER ?? '')
+      .trim()
+      .toLowerCase(),
+  );
+}
 const HEADERS = { 'User-Agent': 'EmergenciesNearMe/1.0' };
 
 // Only the call signs that stand for firefighting or rescue work. FIREBIRD,
@@ -259,6 +274,58 @@ export function parsePlaneAlert(text) {
 }
 
 /**
+ * The ICAO address of an Australian mark: VH-AAA is 7C0000 and the three
+ * characters count on in base 36, letters before digits. (Checked against
+ * tar1090-db for the 279 VH- aircraft of the 08-11-2026 fleet: 278 agree.)
+ */
+export function hexForMark(mark) {
+  const order = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const m = String(mark).toUpperCase().replace(/^VH-/, '');
+  if (!/^[A-Z0-9]{3}$/.test(m)) return null;
+  const n =
+    order.indexOf(m[0]) * 1296 + order.indexOf(m[1]) * 36 + order.indexOf(m[2]);
+  return (0x7c0000 + n).toString(16);
+}
+
+const RFDS = /royal flying doctor|\bRFDS\b/i;
+
+/**
+ * CASA register (acrftreg.csv): the aircraft the Royal Flying Doctor Service
+ * operates, as mark, type and model. Nothing else of a row is kept, and rows
+ * of any other operator are not read at all.
+ */
+export function parseCasa(text) {
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+  const head = csvFields(lines[0] ?? '').map((h) => h.trim().toLowerCase());
+  const [mark, operator, type, model, manu, suspended] = [
+    'mark',
+    'regopname',
+    'icaotypedesig',
+    'model',
+    'manu',
+    'suspendstatus',
+  ].map((name) => head.indexOf(name));
+  if (mark < 0 || operator < 0 || type < 0) return [];
+  const rows = [];
+  for (const line of lines.slice(1)) {
+    if (!RFDS.test(line)) continue;
+    const f = csvFields(line);
+    if (!RFDS.test(f[operator] ?? '') || (f[suspended] ?? '').trim()) continue;
+    const registration = `VH-${(f[mark] ?? '').trim().toUpperCase()}`;
+    if (!hexForMark(registration) || !(f[type] ?? '').trim()) continue;
+    rows.push({
+      registration,
+      type: f[type].trim().toUpperCase(),
+      model: [f[manu], f[model]]
+        .map((v) => (v ?? '').trim())
+        .filter(Boolean)
+        .join(' '),
+    });
+  }
+  return rows;
+}
+
+/**
  * Streams tar1090-db's gzipped aircraft.csv line by line and keeps Australian
  * hex codes plus the `wanted` registrations (NAFC also lists US and Canadian
  * tankers), so memory stays small: ~17,000 of ~620,000 rows.
@@ -320,7 +387,7 @@ const flagged = (flags) =>
  * in both), then the police, rescue and medical aircraft of ORGS.
  * `doubtful` lists the candidates left out, with the reason.
  */
-export function buildFleet({ nafc, planeAlert, db }) {
+export function buildFleet({ nafc, planeAlert, db, casa = [] }) {
   const fleet = [];
   const seen = new Set();
   let missing = 0;
@@ -380,6 +447,21 @@ export function buildFleet({ nafc, planeAlert, db }) {
     else add(hit, orgByName.get(name), 'known');
   }
 
+  // CASA's register, Royal Flying Doctor Service only. An aircraft tar1090-db
+  // does not know yet gets the address that belongs to its mark.
+  const rfds = orgByName.get('Royal Flying Doctor Service');
+  for (const r of casa) {
+    const hit = db.byReg.get(r.registration) ?? {
+      hex: hexForMark(r.registration),
+      registration: r.registration,
+      type: r.type,
+      flags: '',
+      model: r.model || null,
+      ownOp: null,
+    };
+    add(hit, rfds, 'casa');
+  }
+
   // A plane-alert-db type that differs from the register's means the
   // registration may have moved to another aircraft. Accept it only when the
   // register names the same organisation or it is a type that organisation
@@ -427,6 +509,8 @@ export function buildFleet({ nafc, planeAlert, db }) {
       type: hit.type,
       model: hit.model,
       operator: org.name,
+      // Named in the attribution (CC BY).
+      ...(c.source === 'casa' ? { source: 'casa' } : {}),
     });
   }
   extra.sort((a, b) => a.registration.localeCompare(b.registration));
@@ -470,6 +554,7 @@ async function text(res, maxBytes) {
 export async function fetchFleet({
   fetcher = fetch,
   timeoutMs = 120_000,
+  env = process.env,
 } = {}) {
   const [page, alerts] = await Promise.all([
     get(fetcher, NAFC_URL, 30_000).then((r) => text(r, 4e6)),
@@ -481,7 +566,19 @@ export async function fetchFleet({
     ...nafc.map((r) => r.registration),
     ...KNOWN.map(([r]) => r),
   ]);
+  // Optional and on its own: without the register the fleet is what it was.
+  let casa = [];
+  if (casaOn(env)) {
+    try {
+      casa = parseCasa(
+        await get(fetcher, CASA_URL, 60_000).then((r) => text(r, 32e6)),
+      );
+    } catch {
+      casa = [];
+    }
+  }
+  for (const r of casa) wanted.add(r.registration);
   const res = await get(fetcher, TAR1090_URL, timeoutMs);
   const db = await readTar1090(res.body, wanted);
-  return buildFleet({ nafc, planeAlert, db });
+  return buildFleet({ nafc, planeAlert, db, casa });
 }

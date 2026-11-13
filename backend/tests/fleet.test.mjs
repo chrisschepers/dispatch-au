@@ -14,6 +14,10 @@ import {
   NAFC_URL,
   PLANE_ALERT_URL,
   TAR1090_URL,
+  CASA_URL,
+  parseCasa,
+  hexForMark,
+  casaOn,
 } from '../fleet.mjs';
 
 const nafcPage = `<table>
@@ -223,4 +227,79 @@ void test('fetchFleet downloads every source with its own timeout and our User-A
     }),
     /HTTP 503/,
   );
+});
+
+// ── CASA register (only with FLEET_CASA_REGISTER=on) ────────────────────────
+
+const casaCsv = `﻿Mark,Manu,Type,Model,Serial,regholdname,regholdadd1,regopName,regopadd1,suspendstatus,ICAOtypedesig
+8FD,TEXTRON AVIATION INC.,,B300C,FM-111,ROYAL FLYING DOCTOR SERVICE OF AUSTRALIA (QUEENSLAND SECTION) LIMITED,12 Casuarina St,ROYAL FLYING DOCTOR SERVICE OF AUSTRALIA (QUEENSLAND SECTION) LIMITED,12 Casuarina St,,B350
+FFI,BEECH,,B200,BB-1,"SMITH, JOHN",1 Home St,Royal Flying Doctor Service of Australia Central Operations,1 Tower Rd,,BE20
+ZZA,PILATUS,,PC-12,1,A LEASING COMPANY PTY LTD,2 Bank St,RFDS Western Operations,3 Eagle Dr,Suspended,PC12
+PHB,AIRBUS,,EC135,2,NSW POLICE FORCE,1 Police Rd,NSW POLICE FORCE,1 Police Rd,,EC35
+ABD,CESSNA,,172,3,"ROYAL, FLYING",4 Doctor St,"JONES, MARY",5 Service Rd,,C172
+`;
+
+void test('Australian marks give their ICAO address', () => {
+  assert.equal(hexForMark('VH-AAA'), '7c0000');
+  assert.equal(hexForMark('VH-8FD'), '7cacd7');
+  assert.equal(hexForMark('T3E'), '7c6448');
+  assert.equal(hexForMark('N138CG'), null);
+});
+
+void test('CASA register: only aircraft the Flying Doctor operates, and only mark, type and model', () => {
+  const rows = parseCasa(casaCsv);
+  assert.deepEqual(rows, [
+    {
+      registration: 'VH-8FD',
+      type: 'B350',
+      model: 'TEXTRON AVIATION INC. B300C',
+    },
+    { registration: 'VH-FFI', type: 'BE20', model: 'BEECH B200' },
+  ]);
+  // No holder, no address, no police, no person, nothing suspended.
+  assert.doesNotMatch(JSON.stringify(rows), /SMITH|Casuarina|POLICE|JONES|ZZA/);
+  assert.deepEqual(parseCasa('some,other,file\n1,2,3\n'), []);
+});
+
+void test('CASA is asked only when switched on, and then adds Flying Doctor aircraft and nothing else', async () => {
+  assert.equal(casaOn({}), false);
+  assert.equal(casaOn({ FLEET_CASA_REGISTER: 'on' }), true);
+  const bodies = {
+    [NAFC_URL]: nafcPage,
+    [PLANE_ALERT_URL]: alertCsv,
+    [TAR1090_URL]: gz,
+    [CASA_URL]: casaCsv,
+  };
+  const seen = [];
+  const fetcher = async (url) => {
+    seen.push(url);
+    return new Response(bodies[url]);
+  };
+  const off = await fetchFleet({ fetcher, env: {} });
+  assert.equal(seen.includes(CASA_URL), false);
+  const on = await fetchFleet({ fetcher, env: { FLEET_CASA_REGISTER: 'on' } });
+  assert.equal(seen.includes(CASA_URL), true);
+  const added = on.fleet.filter((a) => !off.fleet.some((b) => b.hex === a.hex));
+  assert.deepEqual(
+    added.map((a) => [a.registration, a.hex, a.role, a.operator, a.source]),
+    [
+      ['VH-8FD', '7cacd7', 'medical', 'Royal Flying Doctor Service', 'casa'],
+      ['VH-FFI', '7c1a0c', 'medical', 'Royal Flying Doctor Service', 'casa'],
+    ],
+  );
+  // The police helicopter with a privacy flag stays out, register or not.
+  assert.equal(
+    on.fleet.some((a) => a.registration === 'VH-PHB'),
+    false,
+  );
+  assert.equal(on.counts.police, off.counts.police);
+  // A register that fails leaves the fleet as it was.
+  const broken = await fetchFleet({
+    fetcher: async (url) =>
+      url === CASA_URL
+        ? new Response('', { status: 503 })
+        : new Response(bodies[url]),
+    env: { FLEET_CASA_REGISTER: 'on' },
+  });
+  assert.equal(broken.fleet.length, off.fleet.length);
 });

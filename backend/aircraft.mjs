@@ -15,8 +15,30 @@
 // aircraft always show. Bombers and helitaks only near an active bush or grass
 // fire: many of them fly other jobs too (crop spraying, lifting), and a spray
 // run must not look like a water bomber at work.
+//
+// Flights (flights.mjs, 13-11-2026): with `tracking` on the service also polls
+// when nobody looks, so a flight has a track, a firefighting aircraft can be
+// linked to the fire it works on and a large air tanker's take-off is seen.
+// That comes out of the same bucket of 300 a day and never adds to it:
+// - one request a round, never more: aircraft in flight first, then the large
+//   air tankers (only with an active fire), the rescue helicopters, and in the
+//   room that is left the other firefighting aircraft in turns (with a fire)
+//   or the medical planes (without). Police aircraft are not followed;
+// - every 8 minutes while a followed aircraft is in the air (180 a day at
+//   most), every 12 minutes otherwise (120 a day);
+// - it stops when the bucket is down to 10, which stay for people who open
+//   the layer, and a poll for the layer counts as a round here too;
+// - the bucket's level is kept in SQLite, so a restart cannot refill it.
 import { readFileSync } from 'node:fs';
 import { fetchFleet } from './fleet.mjs';
+import {
+  FlightTracker,
+  PRIVATE_ROLES,
+  TRACK_ROLES,
+  WORKING_MS,
+  aircraftName,
+  isLargeAirTanker,
+} from './flights.mjs';
 
 const API = 'https://api.adsb.lol/v2/hex/';
 // adsb.lol documents no limit on the hex list, so this stays at a modest 150.
@@ -28,6 +50,21 @@ export const NEAR_FIRE_KM = 50;
 export const FLEET_REFRESH_MS = 24 * 3_600_000;
 export const FLEET_RETRY_MS = 3_600_000;
 export const MIN_FLEET = 100;
+// Following flights without a viewer (see the top of the file).
+export const WATCH_ACTIVE_MS = 8 * 60_000;
+export const WATCH_IDLE_MS = 12 * 60_000;
+export const WATCH_RESERVE = 10;
+export const ATTRIBUTION =
+  'Aircraft positions: adsb.lol (ODbL). Call signs: NAFC. Aircraft lists: plane-alert-db (ODbL), tar1090-db.';
+
+/** Flight tracking is on unless AIRCRAFT_TRACKING says off. */
+export function trackingOn(env = process.env) {
+  return !['uit', 'off', 'false', '0'].includes(
+    String(env.AIRCRAFT_TRACKING ?? '')
+      .trim()
+      .toLowerCase(),
+  );
+}
 // Shown wherever they are; the firefighting roles only near a fire.
 export const ALWAYS_SHOWN = new Set(['rescue', 'police', 'medical']);
 
@@ -71,6 +108,12 @@ export class Budget {
     if (this.tokens < n) return false;
     this.tokens -= n;
     return true;
+  }
+  /** Continue from a stored level; never above a full bucket. */
+  restore(tokens, at) {
+    if (!Number.isFinite(tokens) || !Number.isFinite(at)) return;
+    this.tokens = Math.min(this.max, Math.max(0, tokens));
+    this.at = at;
   }
 }
 
@@ -130,6 +173,8 @@ export class AircraftService {
     fleetSource = () => fetchFleet(),
     activeFires = () => [],
     budget = new Budget(),
+    tracking = false,
+    onEvent = null,
     log = (o) => console.log(JSON.stringify({ aircraft: true, ...o })),
   } = {}) {
     this.db = db;
@@ -142,6 +187,10 @@ export class AircraftService {
     this.positions = new Map();
     this.lastView = -Infinity;
     this.lastPoll = -Infinity;
+    this.lastWatch = -Infinity;
+    this.watchTurn = 0;
+    this.lastPrune = -Infinity;
+    this.onEvent = onEvent;
     this.lastSuccess = 0;
     this.polling = false;
     this.round = 0;
@@ -158,7 +207,20 @@ export class AircraftService {
         .prepare("SELECT value FROM aircraft_state WHERE key='pausedUntil'")
         .get();
       this.pausedUntil = Number(row?.value) || 0;
+      try {
+        const saved = JSON.parse(
+          String(
+            db
+              .prepare("SELECT value FROM aircraft_state WHERE key='budget'")
+              .get()?.value ?? 'null',
+          ),
+        );
+        if (saved) budget.restore(saved.tokens, saved.at);
+      } catch {
+        // A full bucket, as before.
+      }
     }
+    this.tracker = tracking ? new FlightTracker({ db, log }) : null;
     if (fleet) this.#useFleet(fleet, 0);
     else {
       // The newest of the last good rebuild and the bundled file.
@@ -189,6 +251,12 @@ export class AircraftService {
       a.localeCompare(b),
     );
     this.fleetBuiltAt = builtAt;
+    // CC BY: name CASA whenever its register put an aircraft on the list.
+    this.attribution =
+      ATTRIBUTION +
+      (list.some((a) => a.source === 'casa')
+        ? ' Aircraft register: CASA (CC BY 4.0).'
+        : '');
   }
 
   #storedFleet() {
@@ -213,6 +281,14 @@ export class AircraftService {
         "INSERT INTO aircraft_state VALUES('pausedUntil', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
       )
       .run(String(this.pausedUntil));
+  }
+
+  #saveBudget() {
+    this.db
+      ?.prepare(
+        "INSERT INTO aircraft_state VALUES('budget', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+      )
+      .run(JSON.stringify({ tokens: this.budget.tokens, at: this.budget.at }));
   }
 
   /**
@@ -300,18 +376,71 @@ export class AircraftService {
     return fast.concat(this.round % 2 === 0 ? slow : slow.slice(0, room));
   }
 
+  // One request for the flights (see the top of the file), in this order:
+  // aircraft in flight, large air tankers when there is a fire, rescue
+  // helicopters, then the other firefighting aircraft or the medical planes
+  // in turns.
+  #watchHexes(fires) {
+    const out = new Set();
+    const add = (hex) => {
+      if (out.size < CHUNK && this.fleet.has(hex)) out.add(hex);
+    };
+    for (const hex of this.tracker.airborne()) add(hex);
+    const fleet = [...this.fleet.values()];
+    if (fires.length)
+      for (const a of fleet) if (isLargeAirTanker(a)) add(a.hex);
+    for (const a of fleet) if (a.role === 'rescue') add(a.hex);
+    // With a fire the room goes to the firefighting aircraft, else to the
+    // medical planes; whoever does not fit waits for a next round.
+    const rest = fleet.filter(
+      (a) =>
+        TRACK_ROLES.has(a.role) &&
+        !out.has(a.hex) &&
+        (fires.length ? !ALWAYS_SHOWN.has(a.role) : a.role === 'medical'),
+    );
+    const room = CHUNK - out.size;
+    for (let i = 0; i < Math.min(room, rest.length); i++)
+      add(rest[(this.watchTurn + i) % rest.length].hex);
+    if (rest.length > room)
+      this.watchTurn = (this.watchTurn + room) % rest.length;
+    return [...out];
+  }
+
   async tick(now = Date.now()) {
     if (!this.key || this.polling) return;
-    if (now - this.lastView > VIEW_WINDOW_MS) return;
-    if (now - this.lastPoll < CADENCE_MS || now < this.pausedUntil) return;
-    const hexes = this.#hexes();
+    if (now < this.pausedUntil) return;
+    // For someone looking at the layer: everything, every 3 minutes. Otherwise
+    // one request for the flights, which leaves a reserve in the bucket.
+    const viewed =
+      now - this.lastView <= VIEW_WINDOW_MS &&
+      now - this.lastPoll >= CADENCE_MS;
+    const watch =
+      !viewed &&
+      this.tracker &&
+      now - this.lastWatch >=
+        (this.tracker.airborne().length ? WATCH_ACTIVE_MS : WATCH_IDLE_MS);
+    if (!viewed && !watch) return;
+    if (watch && this.budget.level(now) - 1 < WATCH_RESERVE) return;
+    let fires = [];
+    try {
+      fires = this.activeFires().filter(isLandscapeFire);
+    } catch {
+      // No fires known this round: nothing is linked.
+    }
+    const hexes = viewed ? this.#hexes() : this.#watchHexes(fires);
     const chunks = [];
     for (let i = 0; i < hexes.length; i += CHUNK)
       chunks.push(hexes.slice(i, i + CHUNK));
-    if (!chunks.length || !this.budget.take(chunks.length, now)) return;
+    if (!chunks.length) return;
+    if (!this.budget.take(chunks.length, now)) return;
+    this.#saveBudget();
     this.polling = true;
-    this.lastPoll = now;
-    this.round += 1;
+    this.lastWatch = now;
+    if (viewed) {
+      this.lastPoll = now;
+      this.round += 1;
+    }
+    const events = [];
     try {
       for (const chunk of chunks) {
         const res = await this.fetcher(API + chunk.join(','), {
@@ -352,7 +481,7 @@ export class AircraftService {
             now - Math.round((Number(a.seen_pos ?? a.seen) || 0) * 1000);
           const old = this.positions.get(hex);
           if (old && old.seenAt >= seenAt) continue;
-          this.positions.set(hex, {
+          const position = {
             lat: a.lat,
             lon: a.lon,
             altFt: a.alt_baro === 'ground' ? 0 : Number(a.alt_baro) || null,
@@ -361,18 +490,94 @@ export class AircraftService {
             track: Number(a.track) || null,
             flight: String(a.flight || '').trim() || null,
             seenAt,
-          });
+          };
+          this.positions.set(hex, position);
+          if (this.tracker)
+            events.push(
+              ...this.tracker.observe(
+                this.fleet.get(hex),
+                {
+                  ...position,
+                  gs: typeof a.gs === 'number' ? a.gs : null,
+                  climbFpm:
+                    typeof a.baro_rate === 'number'
+                      ? a.baro_rate
+                      : typeof a.geom_rate === 'number'
+                        ? a.geom_rate
+                        : null,
+                },
+                fires,
+                now,
+              ),
+            );
         }
       }
       this.tooMany = 0;
       this.lastSuccess = now;
       this.lastError = null;
+      this.tracker?.afterPoll(new Set(hexes), now);
+      if (this.tracker && now - this.lastPrune > 3_600_000) {
+        this.lastPrune = now;
+        this.tracker.prune(now);
+      }
     } catch (error) {
       this.lastError = String(error?.name || error).slice(0, 80);
       this.log({ error: this.lastError });
     } finally {
       this.polling = false;
+      // After the poll, also one that stopped half way, and never in its
+      // way: a failing listener is logged.
+      for (const event of events) {
+        try {
+          await this.onEvent?.(event);
+        } catch (error) {
+          this.log({ event: event.type, error: String(error).slice(0, 120) });
+        }
+      }
     }
+  }
+
+  #describe(a) {
+    return {
+      hex: a.hex,
+      registration: a.registration,
+      callsign: a.callsign,
+      name: aircraftName(a),
+      role: a.role,
+      operator: a.operator ?? null,
+      rotor: a.rotor,
+      class: a.class,
+      type: a.type,
+      model: a.model,
+      large: isLargeAirTanker(a),
+    };
+  }
+
+  /**
+   * The flights of one aircraft in the last 7 days (flights.mjs), or null
+   * when the aircraft is not followed. Rescue and medical flights carry no
+   * fire and no place: only `landing` base, elsewhere or unknown.
+   */
+  flightsOf(hex, now = Date.now()) {
+    const a = this.fleet.get(hex);
+    if (!a || !this.tracker || !TRACK_ROLES.has(a.role)) return null;
+    return {
+      aircraft: this.#describe(a),
+      state: this.tracker.state(hex, now),
+      historyDays: 7,
+      flights: this.tracker.flights(hex, now),
+      attribution: this.attribution,
+    };
+  }
+
+  /** Firefighting aircraft linked to an incident in the last 24 hours. */
+  incidentAircraft(incidentId, now = Date.now()) {
+    const aircraft = [];
+    for (const link of this.tracker?.forIncident(incidentId, now) ?? []) {
+      const a = this.fleet.get(link.hex);
+      if (a) aircraft.push({ ...this.#describe(a), ...link });
+    }
+    return { incidentId, aircraft, attribution: this.attribution };
   }
 
   snapshot(now = Date.now()) {
@@ -387,19 +592,29 @@ export class AircraftService {
       }
       const nearFire = nearestFire([p.lat, p.lon], fires);
       if (!ALWAYS_SHOWN.has(a.role) && !nearFire) continue;
+      const flight = this.tracker?.current(hex) ?? null;
+      const link = PRIVATE_ROLES.has(a.role)
+        ? null
+        : flight?.links.findLast((l) => now - l.lastNear <= WORKING_MS);
       aircraft.push({
-        hex,
-        registration: a.registration,
-        callsign: a.callsign,
-        role: a.role,
-        operator: a.operator ?? null,
-        rotor: a.rotor,
-        class: a.class,
-        type: a.type,
-        model: a.model,
+        ...this.#describe(a),
         ...p,
         seenAt: new Date(p.seenAt).toISOString(),
-        nearFire,
+        // A medical aircraft is shown as an aircraft only, next to nothing.
+        nearFire: a.role === 'medical' ? null : nearFire,
+        // Flight (flights.mjs): airborne, at_base, landed_elsewhere, landed,
+        // unknown or null. Never where a rescue or medical aircraft landed.
+        state: this.tracker?.state(hex, now) ?? null,
+        flightId: flight?.id ?? null,
+        airborneSince: flight ? new Date(flight.startedAt).toISOString() : null,
+        workingOn: link
+          ? {
+              id: link.incidentId,
+              title: link.title,
+              location: link.location,
+              since: new Date(link.since).toISOString(),
+            }
+          : null,
       });
     }
     return {
@@ -408,10 +623,10 @@ export class AircraftService {
       updatedAt: this.lastSuccess
         ? new Date(this.lastSuccess).toISOString()
         : null,
-      attribution:
-        'Aircraft positions: adsb.lol (ODbL). Call signs: NAFC. Aircraft lists: plane-alert-db (ODbL), tar1090-db.',
+      attribution: this.attribution,
       status: {
         enabled: Boolean(this.key),
+        tracking: Boolean(this.tracker),
         pausedUntil:
           this.pausedUntil > now
             ? new Date(this.pausedUntil).toISOString()
