@@ -1,8 +1,8 @@
 /**
  * Kaart, ingezoomd op je eigen plek. Sinds 08-11 zoals de kaart van de grote
  * app (wens Chris): een filterpil bovenin met een filterblad (periode,
- * diensten, waarschuwingsniveau), een knop Kaartlagen (ondergrond en
- * overheidsvliegtuigen) en wat buiten het filter valt verdwijnt. Standaard
+ * diensten, waarschuwingsniveau), een knop Kaartlagen (ondergrond,
+ * overheidsvliegtuigen en sinds 13-11 vaartuigen) en wat buiten het filter valt verdwijnt. Standaard
  * staat alleen wat nu loopt erop; een afgelopen melding verliest zijn
  * gekleurde vulling, niet zijn kleur.
  *
@@ -32,6 +32,9 @@ import { useKaartKeuze } from '../kaartKeuze';
 import { useLuchtBeeld } from '../vliegtuigen';
 import { inLagen, zonderSignaal, type Vliegtuig } from '../vliegtuigData';
 import { VliegtuigMarker } from '../components/VliegtuigMarker';
+import { useVaartBeeld } from '../vaartuigen';
+import { inWaterLagen, beschikbareWaterLagen, type Vaartuig } from '../vaartuigData';
+import { VaartuigMarker } from '../components/VaartuigMarker';
 
 import { T, F, SCHADUW, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useMinderBeweging } from '../thema';
@@ -448,6 +451,30 @@ function KaartMetMeldingen() {
     [navigation],
   );
 
+  // Vaartuigen (13-11): alleen ophalen als er een waterlaag aan staat en de
+  // kaart in beeld is (vaartuigen.ts); elk verzoek telt bij de backend als
+  // "er kijkt iemand". Een laag die de backend niet (meer) heeft, tekent niets.
+  const waterAan = Object.values(keuze.water).some(Boolean);
+  const waterBeeld = useVaartBeeld(waterAan && inBeeld);
+  const vaartuigen = React.useMemo(() => {
+    if (!waterAan || !waterBeeld) return [];
+    const lagen = new Set(beschikbareWaterLagen(waterBeeld).map((l) => l.key));
+    return inWaterLagen(waterBeeld.vaartuigen, keuze.water).filter((v) => lagen.has(v.soort));
+  }, [waterAan, waterBeeld, keuze.water]);
+  const waterSleutel = vaartuigen
+    .map((v) => `${v.mmsi}:${v.lat}:${v.lon}:${v.moving ? v.course ?? v.heading : 'x'}:${v.stale ? 's' : ''}`).join('|');
+  const [waterHerteken, setWaterHerteken] = useState(true);
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    setWaterHerteken(true);
+    const t = setTimeout(() => setWaterHerteken(false), 1200);
+    return () => clearTimeout(t);
+  }, [waterSleutel]);
+  const openVaartuig = React.useCallback(
+    (v: Vaartuig) => navigation.navigate('Vaartuig', { vaartuig: v }),
+    [navigation],
+  );
+
   // Nooit meer een leeg scherm terwijl we op een plek wachten: weten we nog
   // niets, dan opent de kaart op heel Australië en zoomt hij in zodra de plek
   // binnen is (het effect gaat via animateToRegion, want initialRegion geldt
@@ -568,6 +595,14 @@ function KaartMetMeldingen() {
             </Marker>
           );
         })}
+        {vaartuigen.map((v) => (
+          <VaartuigMarker
+            key={`water-${v.mmsi}`}
+            v={v}
+            tracksViewChanges={Platform.OS === 'android' ? waterHerteken : false}
+            onPress={openVaartuig}
+          />
+        ))}
         {toestellen.map((v) => (
           <VliegtuigMarker
             key={`lucht-${v.hex}`}
@@ -597,7 +632,7 @@ function KaartMetMeldingen() {
           </ZwevendVlak>
         ) : null}
         <View style={styles.knoppenRechts} pointerEvents="box-none">
-          <LagenKnop aan={luchtAan || keuze.kaartType === 'hybrid'} onPress={() => navigation.navigate('KaartLagen')} />
+          <LagenKnop aan={luchtAan || waterAan || keuze.kaartType === 'hybrid'} onPress={() => navigation.navigate('KaartLagen')} />
           <MijnPlekKnop aan={!!mijnPlek} onPress={naarMij} />
         </View>
       </KnoppenLaag>

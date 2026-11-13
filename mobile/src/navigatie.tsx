@@ -25,7 +25,9 @@ import {
 import { SafeAreaView } from 'react-native-screens/experimental';
 
 import type { Melding } from './api';
-import type { Vliegtuig } from './vliegtuigData';
+import type { Vliegtuig, Toestel } from './vliegtuigData';
+import type { Vaartuig } from './vaartuigData';
+import type { SpoorPunt } from './spoor';
 import { ICONEN, type IcoonNaam } from './iconen';
 import { PALET_LICHT, PALET_DONKER, isIOS, isIOS26, type Palet } from './theme';
 import { useThema, useMinderBeweging } from './thema';
@@ -38,6 +40,7 @@ import GroepScreen from './screens/GroepScreen';
 import KaartFiltersScreen from './screens/KaartFiltersScreen';
 import KaartLagenScreen from './screens/KaartLagenScreen';
 import VliegtuigScreen from './screens/VliegtuigScreen';
+import VaartuigScreen from './screens/VaartuigScreen';
 
 /**
  * Alle schermen van de vier stapels. Kaart kan een plek meekrijgen (vanuit
@@ -45,8 +48,11 @@ import VliegtuigScreen from './screens/VliegtuigScreen';
  * inzoomt als je twee keer dezelfde plek kiest, en `overzicht` (ook een
  * volgnummer) zet heel Australië in beeld. Groep is het blad met de
  * meldingen die op de kaart één plek delen; KaartFilters, KaartLagen en
- * Vliegtuig zijn de bladen van de kaart (08-11). Allemaal alleen in de
- * kaartstapel.
+ * Vliegtuig zijn de bladen van de kaart (08-11), Vaartuig sinds 13-11. Die
+ * staan alleen in de kaartstapel, behalve Vliegtuig: dat opent ook vanaf een
+ * brand (Detail), en Detail zit in elke stapel. Vanaf de kaart krijgt het een
+ * toestel dat nu vliegt (`vliegtuig`), vanaf een brand de vaste gegevens van
+ * het toestel met de vlucht en het spoor van die brand.
  */
 export type StapelParams = {
   Buurt: undefined;
@@ -57,7 +63,10 @@ export type StapelParams = {
   Groep: { leden: Melding[] };
   KaartFilters: undefined;
   KaartLagen: undefined;
-  Vliegtuig: { vliegtuig: Vliegtuig };
+  Vliegtuig:
+    | { vliegtuig: Vliegtuig; toestel?: undefined; vlucht?: undefined; spoor?: undefined }
+    | { toestel: Toestel; vliegtuig?: undefined; vlucht?: string | null; spoor?: SpoorPunt[] };
+  Vaartuig: { vaartuig: Vaartuig };
 };
 
 export type TabParams = {
@@ -142,6 +151,32 @@ const detailOpties: NativeStackNavigationOptions = {
   ...(isIOS ? { headerTransparent: true } : {}),
 };
 
+/**
+ * Een blad van het systeem. iOS: UISheetPresentationController met greep; op
+ * iOS 26 een doorzichtige achtergrond, dan tekent het systeem het blad in
+ * glas. Android: een BottomSheet (react-native-screens); de greep tekent het
+ * scherm zelf (BladGreep), want sheetGrabberVisible is alleen voor iOS.
+ */
+function useBlad(): NativeStackNavigationOptions {
+  const C = useThema();
+  return React.useMemo(() => ({
+    presentation: 'formSheet',
+    headerShown: false,
+    sheetGrabberVisible: true,
+    // Android: de M3-bovenhoek van 28 dp; zonder waarde maakt
+    // react-native-screens de hoeken vierkant. iOS houdt die van het
+    // systeem.
+    sheetCornerRadius: isIOS ? undefined : 28,
+    contentStyle: { backgroundColor: isIOS26 ? 'transparent' : C.bg },
+  }), [C]);
+}
+
+/**
+ * Het blad van een toestel of vaartuig: half open met het begin in beeld, en
+ * door te trekken tot vol scherm voor de vluchten of tochten van de week.
+ */
+const ritBlad: NativeStackNavigationOptions = { sheetAllowedDetents: [0.6, 1] };
+
 function useKop(): NativeStackNavigationOptions {
   const C = useThema();
   const minderBeweging = useMinderBeweging();
@@ -152,10 +187,12 @@ function useKop(): NativeStackNavigationOptions {
 // het tabblad er recht onder. De Live-pil staat bovenin de lijst.
 function BuurtStapel() {
   const kop = useKop();
+  const blad = useBlad();
   return (
     <Stapel.Navigator screenOptions={kop}>
       <Stapel.Screen name="Buurt" component={BuurtScreen} options={{ title: 'Nearby', headerShown: false }} />
       <Stapel.Screen name="Detail" component={DetailScreen} getId={detailId} options={detailOpties} />
+      <Stapel.Screen name="Vliegtuig" component={VliegtuigScreen} options={{ ...blad, ...ritBlad }} />
     </Stapel.Navigator>
   );
 }
@@ -170,38 +207,32 @@ function BuurtStapel() {
  * tekent GroepScreen zelf, want sheetGrabberVisible is alleen voor iOS.
  */
 function KaartStapel() {
-  const C = useThema();
   const kop = useKop();
-  const blad: NativeStackNavigationOptions = {
-    presentation: 'formSheet',
-    headerShown: false,
-    sheetGrabberVisible: true,
-    // Android: de M3-bovenhoek van 28 dp; zonder waarde maakt
-    // react-native-screens de hoeken vierkant. iOS houdt die van het
-    // systeem.
-    sheetCornerRadius: isIOS ? undefined : 28,
-    contentStyle: { backgroundColor: isIOS26 ? 'transparent' : C.bg },
-  };
+  const blad = useBlad();
   return (
     <Stapel.Navigator screenOptions={kop}>
       <Stapel.Screen name="Kaart" component={KaartScreen} options={{ title: 'Map', headerShown: false }} />
       <Stapel.Screen name="Detail" component={DetailScreen} getId={detailId} options={detailOpties} />
       <Stapel.Screen name="Groep" component={GroepScreen} options={{ ...blad, sheetAllowedDetents: [0.5, 1] }} />
-      {/* Filters en Kaartlagen: zo hoog als hun inhoud, zoals de panelen
-          van de grote app. Het toestel ook: een paar regels. */}
+      {/* Filters: zo hoog als de inhoud, zoals het paneel van de grote app. */}
       <Stapel.Screen name="KaartFilters" component={KaartFiltersScreen} options={{ ...blad, sheetAllowedDetents: 'fitToContents' }} />
-      <Stapel.Screen name="KaartLagen" component={KaartLagenScreen} options={{ ...blad, sheetAllowedDetents: 'fitToContents' }} />
-      <Stapel.Screen name="Vliegtuig" component={VliegtuigScreen} options={{ ...blad, sheetAllowedDetents: 'fitToContents' }} />
+      {/* Kaartlagen schuift sinds 13-11: met de vaartuigen erbij past het
+          niet meer op elk scherm. */}
+      <Stapel.Screen name="KaartLagen" component={KaartLagenScreen} options={{ ...blad, sheetAllowedDetents: [0.7, 1] }} />
+      <Stapel.Screen name="Vliegtuig" component={VliegtuigScreen} options={{ ...blad, ...ritBlad }} />
+      <Stapel.Screen name="Vaartuig" component={VaartuigScreen} options={{ ...blad, ...ritBlad }} />
     </Stapel.Navigator>
   );
 }
 
 function ZoekStapel() {
   const kop = useKop();
+  const blad = useBlad();
   return (
     <Stapel.Navigator screenOptions={kop}>
       <Stapel.Screen name="Zoeken" component={ZoekScreen} options={{ title: 'Search', ...groteTitel }} />
       <Stapel.Screen name="Detail" component={DetailScreen} getId={detailId} options={detailOpties} />
+      <Stapel.Screen name="Vliegtuig" component={VliegtuigScreen} options={{ ...blad, ...ritBlad }} />
     </Stapel.Navigator>
   );
 }

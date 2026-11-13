@@ -128,6 +128,7 @@ export async function registreerVoorPushMetInstellingen(inst: Instellingen): Pro
     geluidPerDienst: inst.geluidPerDienst,
     notificationsEnabled: inst.notificaties,
     gripOnly: inst.gripAlarm,
+    airTankers: inst.blusvliegtuigen,
   });
   return true;
 }
@@ -186,5 +187,6 @@ export async function werkPushFilterBij(inst: Instellingen): Promise<void> {
     geluidPerDienst: inst.geluidPerDienst,
     notificationsEnabled: inst.notificaties,
     gripOnly: inst.gripAlarm,
+    airTankers: inst.blusvliegtuigen,
   });
 }

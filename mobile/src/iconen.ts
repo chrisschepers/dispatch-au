@@ -81,6 +81,10 @@ export const ICONEN = {
   positie: { ios: 'antenna.radiowaves.left.and.right', android: 'access-point' },
   geenSignaal: { ios: 'antenna.radiowaves.left.and.right.slash', android: 'access-point-off' },
   brand: { ios: 'flame.fill', android: 'fire' },
+  // Vaartuigen, vluchten en tochten (13-11).
+  toestand: { ios: 'info.circle', android: 'information-outline' },
+  lengte: { ios: 'ruler', android: 'ruler' },
+  blusvliegtuig: { ios: 'airplane.departure', android: 'airplane-takeoff' },
 } as const satisfies Record<string, { ios: SFSymbol; android: MciNaam }>;
 
 export type IcoonNaam = keyof typeof ICONEN;

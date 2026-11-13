@@ -341,6 +341,8 @@ export async function zetPushFilter(userId: string, filter: {
   geluidPerDienst?: Record<string, string>;
   notificationsEnabled: boolean;
   gripOnly?: boolean;
+  /** Melding als een groot blusvliegtuig opstijgt naar een brand binnen je eigen filter. */
+  airTankers?: boolean;
 }): Promise<void> {
   const res = await fetch(`${BASE}/v1/devices/${userId}/filter`, {
     method: 'PATCH', headers: headers(),
@@ -353,6 +355,7 @@ export async function zetPushFilter(userId: string, filter: {
       emergencyWarningsAnywhere: filter.gripOnly ?? false,
       sound: filter.geluid,
       notificationsEnabled: filter.notificationsEnabled,
+      airTankers: filter.airTankers ?? false,
     }),
   });
   if (!res.ok) throw new Error(`filter → ${res.status}`);

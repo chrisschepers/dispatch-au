@@ -39,6 +39,12 @@ export interface Instellingen {
    * `gripOnly`). Wens Chris 27-09.
    */
   gripAlarm: boolean;
+  /**
+   * Push als een groot blusvliegtuig (large air tanker) opstijgt naar of gaat
+   * werken aan een brand binnen je eigen filter (backend `airTankers`,
+   * 13-11-2026). Standaard uit.
+   */
+  blusvliegtuigen: boolean;
   notificaties: boolean;
   /**
    * Uiterlijk: 'automatisch' volgt de telefoon, 'licht'/'donker' zetten het
@@ -62,6 +68,7 @@ const STANDAARD: Instellingen = {
   geluidPerDienst: {},
   alleenGroot: false,
   gripAlarm: false,
+  blusvliegtuigen: false,
   notificaties: false,           // pas aan na de expliciete vraag in onboarding
   thema: 'automatisch',          // volgt standaard het thema van de telefoon
   pro: false,

@@ -177,7 +177,7 @@ function Binnenkant() {
   }, [
     onboarded,
     inst.straalKm, inst.straalPerDienst,
-    inst.disciplines, inst.alleenGroot, inst.gripAlarm, inst.notificaties,
+    inst.disciplines, inst.alleenGroot, inst.gripAlarm, inst.blusvliegtuigen, inst.notificaties,
     inst.volgLocatie, inst.handLat, inst.handLon,
     inst.geluid, inst.geluidPerDienst,
   ]);
