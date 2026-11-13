@@ -89,8 +89,9 @@ test('rescue and medical: a finished flight has no track, whatever the backend s
     attribution: 'Aircraft positions: adsb.lol (ODbL).',
   });
   assert.equal(v.state, 'landed_elsewhere');
-  assert.deepEqual(v.vluchten.map((f) => f.spoor.length), [3, 0, 0, 0, 0]);
-  assert.deepEqual(v.vluchten.map(heeftSpoor), [true, false, false, false, false]);
+  // Ook de lopende vlucht heeft geen spoor: het begint op de startplek.
+  assert.deepEqual(v.vluchten.map((f) => f.spoor.length), [0, 0, 0, 0, 0]);
+  assert.deepEqual(v.vluchten.map(heeftSpoor), [false, false, false, false, false]);
   assert.deepEqual(v.vluchten.map((f) => f.landing), [null, 'base', 'elsewhere', null, null]);
   assert.deepEqual(v.vluchten.map(vluchtAfloop), [
     'In the air now, take-off not seen', 'Returned to base', 'Landed away from base', 'Signal lost',

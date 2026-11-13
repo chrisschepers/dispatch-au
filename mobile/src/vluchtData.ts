@@ -132,7 +132,10 @@ export function parseVluchten(json: unknown): Vluchten | null {
     // Reddings- en medische vluchten: alleen het spoor van de vlucht die nog
     // loopt. Zodra hij geland of uit beeld is, eindigt het spoor waar hij
     // neerkwam, en dat tonen we nooit, ook niet als de backend het meestuurt.
-    const verborgen = a.trackHidden === true || (geheim && state !== 'airborne');
+    // Ook de lopende vlucht (besluit 13-11): het eerste punt van het spoor is
+    // de startplek, en na een landing elders is dat juist die plek (het
+    // ziekenhuis, het ongeval). Het toestel zelf staat wel live op de kaart.
+    const verborgen = a.trackHidden === true || geheim;
     const branden: VluchtBrand[] = [];
     if (blust && Array.isArray(a.fires)) {
       for (const f of a.fires.slice(0, 20)) {
