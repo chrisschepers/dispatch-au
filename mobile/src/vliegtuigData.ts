@@ -11,6 +11,8 @@
  * toont hun laag pas als ze in `roles` staan, zodat dat zonder nieuwe build kan.
  */
 
+import { alsMoment, plekVan } from './spoor.ts';
+
 export type VliegRol = 'bomber' | 'helitak' | 'transport' | 'scanner' | 'rescue' | 'police' | 'medical';
 const ROLLEN: readonly VliegRol[] = ['bomber', 'helitak', 'transport', 'scanner', 'rescue', 'police', 'medical'];
 
@@ -73,7 +75,23 @@ export interface Brandplek {
   distanceKm: number;
 }
 
-export interface Vliegtuig {
+/**
+ * Wat het toestel doet volgens de backend (flights.mjs). Voor reddings- en
+ * medische toestellen alleen "op de basis" of "elders geland": nooit waar.
+ */
+export type VliegToestand = 'airborne' | 'at_base' | 'landed_elsewhere' | 'landed' | 'unknown';
+const TOESTANDEN: readonly VliegToestand[] = ['airborne', 'at_base', 'landed_elsewhere', 'landed', 'unknown'];
+
+/** De brand waar een blustoestel nu aan werkt. */
+export interface Werkplek {
+  id: string;
+  title: string;
+  location: string;
+  since: string | null;
+}
+
+/** Wat een toestel ís, los van waar het nu vliegt; ook bekend uit een vlucht of bij een brand. */
+export interface Toestel {
   hex: string;
   registration: string;
   callsign: string;
@@ -85,6 +103,11 @@ export interface Vliegtuig {
   klasse: string | null;
   type: string | null;
   model: string | null;
+  /** Large air tanker (NAFC "FW - Type 1"). */
+  large: boolean;
+}
+
+export interface Vliegtuig extends Toestel {
   lat: number;
   lon: number;
   altFt: number | null;
@@ -95,6 +118,11 @@ export interface Vliegtuig {
   /** Moment van de laatste positie (ISO). */
   seenAt: string;
   nearFire: Brandplek | null;
+  /** Null bij een oudere backend, of bij een toestel dat niet gevolgd wordt (politie). */
+  state: VliegToestand | null;
+  flightId: string | null;
+  airborneSince: string | null;
+  workingOn: Werkplek | null;
 }
 
 export interface LuchtBeeld {
@@ -126,6 +154,51 @@ function brandplek(v: unknown): Brandplek | null {
   };
 }
 
+function werkplek(v: unknown): Werkplek | null {
+  if (!v || typeof v !== 'object') return null;
+  const b = v as Record<string, unknown>;
+  const id = tekst(b.id, 200);
+  if (!id) return null;
+  return {
+    id,
+    title: tekst(b.title, 200) ?? 'Fire',
+    location: tekst(b.location, 300) ?? '',
+    since: alsMoment(b.since),
+  };
+}
+
+/**
+ * De vaste gegevens van een toestel, uit elke route die ze levert (/v1/aircraft,
+ * de toestellen bij een brand, de vluchten). Null bij een onbekende rol of hex.
+ */
+export function parseToestel(v: unknown): Toestel | null {
+  if (!v || typeof v !== 'object') return null;
+  const a = v as Record<string, unknown>;
+  const hex = tekst(a.hex, 6)?.toLowerCase();
+  const role = a.role as VliegRol;
+  if (!hex || !/^[0-9a-f]{6}$/.test(hex) || !ROLLEN.includes(role)) return null;
+  const registration = tekst(a.registration, 12) ?? '';
+  return {
+    hex,
+    registration,
+    // De roepnaam van NAFC ("Bomber 210"); de rest heet zoals hij uitzendt,
+    // en anders naar zijn registratie.
+    callsign: tekst(a.callsign, 40) ?? tekst(a.flight, 12) ?? tekst(a.name, 40) ?? (registration || hex.toUpperCase()),
+    role,
+    rotor: a.rotor === true,
+    operator: tekst(a.operator, 80),
+    klasse: tekst(a.class, 60),
+    type: tekst(a.type, 10),
+    model: tekst(a.model, 80),
+    large: a.large === true,
+  };
+}
+
+/** Een toestand die de app kent, anders null (een nieuwe waarde van de backend zegt dan niets). */
+export function parseToestand(v: unknown): VliegToestand | null {
+  return TOESTANDEN.includes(v as VliegToestand) ? (v as VliegToestand) : null;
+}
+
 /**
  * Het antwoord van /v1/aircraft, gecontroleerd. Een rij met een onbekende rol
  * of zonder geldige plek valt weg; de rest blijft staan.
@@ -137,35 +210,29 @@ export function parseLuchtBeeld(json: unknown): LuchtBeeld {
   for (const r of rijen) {
     if (!r || typeof r !== 'object') continue;
     const a = r as Record<string, unknown>;
-    const hex = tekst(a.hex, 6)?.toLowerCase();
-    const role = a.role as VliegRol;
-    const lat = getal(a.lat), lon = getal(a.lon);
-    const seenAt = tekst(a.seenAt, 40);
-    if (!hex || !/^[0-9a-f]{6}$/.test(hex) || !ROLLEN.includes(role)) continue;
-    if (lat == null || lon == null || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
-    if (!seenAt || !Number.isFinite(Date.parse(seenAt))) continue;
-    const registration = tekst(a.registration, 12) ?? '';
+    const toestel = parseToestel(a);
+    // Een plek die als tekst binnenkomt wordt een getal (spoor.ts); wat geen
+    // plek is valt weg, zodat de kaart nooit een ongeldige coördinaat krijgt.
+    const plek = plekVan(a.lat, a.lon);
+    const seenAt = alsMoment(a.seenAt);
+    if (!toestel || !plek || !seenAt) continue;
+    // Medische toestellen horen nooit bij een brand (de backend geeft ze ook niet).
+    const blust = GROEP_VAN_ROL[toestel.role] === 'blussen';
     vliegtuigen.push({
-      hex,
-      registration,
-      // Alleen NAFC-toestellen hebben een vaste roepnaam; de rest heet zoals
-      // hij uitzendt, en anders naar zijn registratie.
-      callsign: tekst(a.callsign, 40) ?? tekst(a.flight, 12) ?? (registration || hex.toUpperCase()),
-      role,
-      rotor: a.rotor === true,
-      operator: tekst(a.operator, 80),
-      klasse: tekst(a.class, 60),
-      type: tekst(a.type, 10),
-      model: tekst(a.model, 80),
-      lat,
-      lon,
+      ...toestel,
+      lat: plek.lat,
+      lon: plek.lon,
       altFt: getal(a.altFt),
       onGround: a.onGround === true,
       gsKts: getal(a.gsKts),
       track: getal(a.track),
       flight: tekst(a.flight, 12),
       seenAt,
-      nearFire: brandplek(a.nearFire),
+      nearFire: toestel.role === 'medical' ? null : brandplek(a.nearFire),
+      state: parseToestand(a.state),
+      flightId: tekst(a.flightId, 40),
+      airborneSince: alsMoment(a.airborneSince),
+      workingOn: blust ? werkplek(a.workingOn) : null,
     });
   }
   const status = (j.status && typeof j.status === 'object' ? j.status : {}) as Record<string, unknown>;

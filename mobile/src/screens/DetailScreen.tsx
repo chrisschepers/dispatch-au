@@ -35,6 +35,10 @@ import { bronVan, domeinVan } from '../bronnen';
 import type { StapelParams, TabParams } from '../navigatie';
 import { useInhoudMaat } from '../inhoudMaat';
 import { mengKleur, opKleur } from '../kleur';
+import { haalBrandToestellen } from '../vluchten';
+import { brandToestelStand, grootLabel, type BrandToestel } from '../vluchtData';
+import { rolTekst } from '../vliegtuigData';
+import { ToestelRondje } from '../components/VliegtuigMarker';
 
 type Rt =RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
 // Detail zit in de stapel van een tabblad, en het kaartje springt naar een
@@ -123,6 +127,26 @@ export default function DetailScreen() {
     // straat en zonder eenheidsnamen.
     haalMelding(begin.id).then(setMelding).catch(() => {});
   }, [begin.id]);
+
+  // Blustoestellen bij deze brand (13-11): de backend koppelt bommenwerpers
+  // en blushelikopters aan een bush- of grasbrand waar ze boven werken, en
+  // geeft ze 24 uur terug. Alleen vragen bij een brandmelding; elke minuut
+  // opnieuw zolang het scherm open is. Niets, een oudere backend of een fout:
+  // dan blijft het blok weg.
+  const [toestellen, setToestellen] = useState<BrandToestel[]>([]);
+  const [toestelBron, setToestelBron] = useState<string | null>(null);
+  const isBrand = begin.discipline === 'Fire' && begin.kind !== 'warning';
+  useEffect(() => {
+    if (!isBrand) return;
+    let levend = true;
+    const haal = () => {
+      if (!navigation.isFocused()) return;
+      haalBrandToestellen(begin.id).then((t) => { if (levend) { setToestellen(t.toestellen); setToestelBron(t.bron); } }).catch(() => {});
+    };
+    haal();
+    const timer = setInterval(haal, 60_000);
+    return () => { levend = false; clearInterval(timer); };
+  }, [begin.id, isBrand, navigation]);
 
   // Delen hoort in de kop: het is een bijactie, geen hoofdknop (audit 20-08).
   // iOS: een echte UIBarButtonItem met het deelsymbool van het systeem, in de
@@ -380,6 +404,39 @@ export default function DetailScreen() {
           </Drukbaar>
         ) : null}
       </View>
+
+      {/* Blustoestellen bij deze brand. Tik = het blad van het toestel, met
+          het spoor van zijn vlucht hier op een kaartje. */}
+      {toestellen.length > 0 && (
+        <View style={[kaartStijl, styles.blok]}>
+          <Text style={styles.blokKop} accessibilityRole="header">Aircraft at this fire</Text>
+          {toestellen.map((b, i) => {
+            const soort = [grootLabel(b.toestel), rolTekst(b.toestel), b.toestel.model].filter(Boolean).join(' · ');
+            const stand = brandToestelStand(b);
+            return (
+              <Drukbaar
+                key={b.toestel.hex}
+                style={[styles.rij, i > 0 && styles.scheiding]}
+                markeer
+                onPress={() => navigation.navigate('Vliegtuig', { toestel: b.toestel, vlucht: b.flightId, spoor: b.spoor })}
+                label={`${b.naam}, ${soort}, ${stand}`}
+                hint="Shows this aircraft and its track"
+              >
+                <ToestelRondje v={{ role: b.toestel.role, rotor: b.toestel.rotor, track: null }} maat={30} stil={!b.working} draai={false} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rijTitel}>{b.naam}</Text>
+                  <Text style={styles.rijSub}>{soort}</Text>
+                  <Text style={[styles.rijSub, b.working && { color: C.accentTekst, fontWeight: F.weightSemibold }]}>{stand}</Text>
+                </View>
+                {isIOS && <Icoon naam="chevron" grootte={18} kleur={C.textMuted} gewicht="semibold" />}
+              </Drukbaar>
+            );
+          })}
+          <Text style={[styles.rijSub, { marginTop: 8 }]}>
+            Aircraft seen working over this fire in the last 24 hours. {toestelBron ?? 'Aircraft positions: adsb.lol (ODbL).'}
+          </Text>
+        </View>
+      )}
 
       {/* Verloop: wie werd wanneer opgeroepen, in gewone zinnen. De backend
           maakt de zinnen (services/verloop.ts); hier staat alleen de vorm.

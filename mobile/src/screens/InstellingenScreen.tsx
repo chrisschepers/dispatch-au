@@ -162,6 +162,29 @@ export default function InstellingenScreen() {
     }
   }
 
+  /**
+   * Grote blusvliegtuigen (13-11). Zelfde regel als de hoofdschakelaar: de
+   * keuze gaat meteen en gecontroleerd naar de server, en komt hij daar niet
+   * aan, dan gaat de schakelaar terug met een uitleg. Zo toont de app nooit
+   * een stand die de server niet heeft.
+   */
+  async function toggleBlusvliegtuigen(aan: boolean) {
+    zet('blusvliegtuigen', aan);
+    try {
+      if (!(await huidigeGebruiker())) throw new Error('not registered');
+      await werkPushFilterBij({ ...inst, blusvliegtuigen: aan });
+    } catch {
+      zet('blusvliegtuigen', !aan);
+      Alert.alert(
+        'That did not work',
+        aan
+          ? 'Turning this alert on did not reach the server. Check your connection and try again.'
+          : 'Turning this alert off did not reach the server, so you may still get it. '
+            + 'Check your connection and try again.',
+      );
+    }
+  }
+
   function toggleDienst(key: string) {
     zet('disciplines', wisselDienst(inst.disciplines, key));
   }
@@ -266,6 +289,16 @@ export default function InstellingenScreen() {
                   titel="Warnings only"
                   sub="Only Advice, Watch and Act or Emergency Warning"
                   schakelaar={{ aan: inst.alleenGroot, wissel: (v) => zet('alleenGroot', v) }}
+                />
+                {/* Grote blusvliegtuigen (13-11): volgt je eigen filter voor
+                    Fire, dus alleen zinvol met de gewone meldingen aan. */}
+                <Rij
+                  icoon="blusvliegtuig" tegelKleur="#E85A16" scheiding
+                  titel="Large air tankers taking off"
+                  sub={inst.disciplines.includes('Fire')
+                    ? 'When one heads to a bushfire within your Fire radius'
+                    : 'Switch on Fire under "Alerts for" to get these'}
+                  schakelaar={{ aan: inst.blusvliegtuigen, wissel: toggleBlusvliegtuigen }}
                 />
               </>
             )}

@@ -4,18 +4,25 @@
  * Alleen de groepen die de backend kent (vliegtuigData.ts); met de
  * bronvermelding eronder, want de posities vallen onder ODbL en die eist
  * naamsvermelding zolang je ze toont.
+ *
+ * Sinds 13-11 ook "On the water": per soort vaartuig die de backend nu heeft
+ * een schakelaar (vaartuigData.ts), met de bronvermelding van de AIS-gegevens.
+ * Geeft de backend geen vaartuigen (oudere versie, of de route faalt), dan
+ * staat het kopje er niet. Het blad schuift, want met beide groepen past het
+ * niet meer op elk scherm.
  */
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { StapelParams } from '../navigatie';
 import { useKaartKeuze, zetKaartKeuze } from '../kaartKeuze';
 import { useLuchtBeeld } from '../vliegtuigen';
-import {
-  beschikbareGroepen, GROEP_VAN_ROL, type LuchtGroep, type LuchtGroepInfo,
-} from '../vliegtuigData';
+import { beschikbareGroepen, GROEP_VAN_ROL, type LuchtGroep } from '../vliegtuigData';
+import { useVaartBeeld } from '../vaartuigen';
+import { beschikbareWaterLagen, type VaartSoort } from '../vaartuigData';
+import type { MciNaam } from '../iconen';
 import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { BladGreep } from '../components/BladGreep';
@@ -36,6 +43,15 @@ export default function KaartLagenScreen() {
   const groepen = beschikbareGroepen(beeld?.rollen ?? null);
   const aantal = (g: LuchtGroep) => beeld?.vliegtuigen.filter((v) => GROEP_VAN_ROL[v.role] === g).length ?? null;
   const iets = groepen.some((g) => keuze.lucht[g.key]);
+  // Vaartuigen: ook hier ophalen, voor de lagen die er zijn en het aantal per laag.
+  const water = useVaartBeeld(true);
+  const waterLagen = beschikbareWaterLagen(water);
+  const aantalWater = (s: VaartSoort) => water?.vaartuigen.filter((v) => v.soort === s).length ?? null;
+  const ietsWater = waterLagen.some((l) => keuze.water[l.key]);
+  const waterMelding = !water || waterLagen.length === 0 ? null
+    : !water.aan ? 'Vessel positions are not available at the moment.'
+      : water.pauzeTot ? `Vessel positions are paused until ${new Date(water.pauzeTot).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}.`
+        : null;
 
   // Eerlijk als de posities er even niet zijn: gepauzeerd na een limiet, of
   // geen sleutel op de server.
@@ -44,9 +60,13 @@ export default function KaartLagenScreen() {
       : beeld.pauzeTot ? `Aircraft positions are paused until ${new Date(beeld.pauzeTot).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}, to stay within the data limit.`
         : null;
 
-  return (
-    <View style={styles.root}>
-      <BladGreep onPress={() => navigation.goBack()} />
+  const inhoud = (
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={styles.root}
+      // Android: de lijst geeft het slepen door aan het blad.
+      nestedScrollEnabled
+    >
       <Text style={styles.titel} accessibilityRole="header">Map layers</Text>
 
       <BladKop>Map</BladKop>
@@ -76,6 +96,37 @@ export default function KaartLagenScreen() {
       <Text style={styles.voet}>
         {iets && beeld ? `${beeld.bron} Updated every few minutes; aircraft can switch off their transponder.` : 'Positions update every few minutes.'}
       </Text>
+
+      {waterLagen.length > 0 ? (
+        <>
+          <BladKop>On the water</BladKop>
+          <View style={kaartStijl}>
+            {waterLagen.map((l, i) => (
+              <LaagRij
+                key={l.key}
+                groep={l}
+                telling={aantalWater(l.key)}
+                aan={keuze.water[l.key]}
+                scheiding={i > 0}
+                onWissel={(v) => zetKaartKeuze({ water: { ...keuze.water, [l.key]: v } })}
+              />
+            ))}
+          </View>
+          {waterMelding ? <Text style={styles.waarschuwing}>{waterMelding}</Text> : null}
+          <Text style={styles.voet}>
+            {ietsWater && water?.bron ? `${water.bron} ` : ''}Vessels that send AIS; a boat can switch it off, and a
+            boat at its berth often has.
+          </Text>
+        </>
+      ) : null}
+    </ScrollView>
+  );
+
+  if (isIOS) return inhoud;
+  return (
+    <View style={{ flex: 1 }}>
+      <BladGreep onPress={() => navigation.goBack()} />
+      {inhoud}
     </View>
   );
 }
@@ -86,7 +137,7 @@ export default function KaartLagenScreen() {
  * de hele rij de schakelaar (M3), op iOS draagt de Switch naam en uitleg.
  */
 function LaagRij({ groep: g, telling, aan, scheiding, onWissel }: {
-  groep: LuchtGroepInfo;
+  groep: { label: string; sub: string; kleur: string; icoon: MciNaam };
   telling: number | null;
   aan: boolean;
   scheiding: boolean;
@@ -135,7 +186,7 @@ function LaagRij({ groep: g, telling, aan, scheiding, onWissel }: {
 }
 
 const maak_styles = (C: Palet) => StyleSheet.create({
-  root: { paddingHorizontal: 16, paddingTop: isIOS ? 20 : 0, paddingBottom: 24 },
+  root: { paddingHorizontal: 16, paddingTop: isIOS ? 20 : 0, paddingBottom: 32 },
   titel: isIOS
     ? { fontSize: 22, fontWeight: F.weightBold, letterSpacing: -0.3, lineHeight: 28, color: C.textPrimary, minHeight: 44, textAlignVertical: 'center' }
     : { fontSize: 22, fontWeight: F.weightRegular, lineHeight: 28, color: C.textPrimary, paddingVertical: 8 },

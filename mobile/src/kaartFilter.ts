@@ -11,6 +11,7 @@
  * fire" in Caroline Springs, alle vier al van de officiële lijst af).
  */
 import { STANDAARD_LUCHT, type LuchtGroep } from './vliegtuigData.ts';
+import { STANDAARD_WATER, type VaartSoort } from './vaartuigData.ts';
 
 /** 0 = alleen wat nu loopt; anders ook wat in de laatste zoveel uur afliep. */
 export type KaartPeriode = 0 | 4 | 24 | 72;
@@ -137,15 +138,20 @@ export function herhalingTekst(
 
 export type KaartType = 'standard' | 'hybrid';
 
-/** Alles wat je op de kaart kiest: het filter, de ondergrond en de lagen in de lucht. */
+/** Alles wat je op de kaart kiest: het filter, de ondergrond en de lagen in de lucht en op het water. */
 export interface KaartKeuze extends KaartFilter {
   kaartType: KaartType;
   lucht: Record<LuchtGroep, boolean>;
+  /** Vaartuigen per soort (13-11); een keuze van voor die tijd krijgt de standaard. */
+  water: Record<VaartSoort, boolean>;
 }
 
 /** Een nieuwe installatie: alles wat nu loopt, alle diensten, de gewone kaart. */
 export function standaardKeuze(alleDiensten: readonly string[]): KaartKeuze {
-  return { periode: 0, diensten: [...alleDiensten], niveau: 'alle', kaartType: 'standard', lucht: { ...STANDAARD_LUCHT } };
+  return {
+    periode: 0, diensten: [...alleDiensten], niveau: 'alle', kaartType: 'standard',
+    lucht: { ...STANDAARD_LUCHT }, water: { ...STANDAARD_WATER },
+  };
 }
 
 /**
@@ -166,11 +172,19 @@ export function schoneKeuze(raw: unknown, alleDiensten: readonly string[]): Kaar
       if (typeof v === 'boolean') lucht[k] = v;
     }
   }
+  const water = { ...basis.water };
+  if (r.water && typeof r.water === 'object') {
+    for (const k of Object.keys(water) as VaartSoort[]) {
+      const v = (r.water as Record<string, unknown>)[k];
+      if (typeof v === 'boolean') water[k] = v;
+    }
+  }
   return {
     periode: PERIODES.includes(r.periode as KaartPeriode) ? (r.periode as KaartPeriode) : basis.periode,
     diensten: diensten.length ? diensten : basis.diensten,
     niveau: NIVEAUS.includes(r.niveau as KaartNiveau) ? (r.niveau as KaartNiveau) : basis.niveau,
     kaartType: r.kaartType === 'hybrid' ? 'hybrid' : 'standard',
     lucht,
+    water,
   };
 }
