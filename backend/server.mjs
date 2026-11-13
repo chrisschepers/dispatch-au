@@ -9,7 +9,7 @@ import { appConfig } from './app-config.mjs';
 import { IncidentStore } from './store.mjs';
 import { PushService } from './push.mjs';
 import { renderSite, STATES } from './site.mjs';
-import { AircraftService } from './aircraft.mjs';
+import { AircraftService, trackingOn } from './aircraft.mjs';
 import { VesselService } from './vessels.mjs';
 import { Articles } from './articles.mjs';
 import { mapData } from './site-map.mjs';
@@ -166,6 +166,29 @@ export function createServer(
           return send(503, { error: 'Aircraft layer unavailable' });
         return send(200, aircraft.request());
       }
+      // Flights of one aircraft, and the firefighting aircraft working on an
+      // incident (flights.mjs). Reading these does not count as viewing.
+      const air = url.pathname.match(
+        /^\/v1\/(?:aircraft\/([0-9a-f]{6})\/flights|incidents\/([^/]{1,160})\/aircraft)$/,
+      );
+      if (air) {
+        if (!aircraft)
+          return send(503, { error: 'Aircraft layer unavailable' });
+        res.setHeader('Cache-Control', 'public, max-age=30');
+        if (air[2]) {
+          let id;
+          try {
+            id = decodeURIComponent(air[2]);
+          } catch {
+            return send(400, { error: 'Invalid incident' });
+          }
+          return send(200, aircraft.incidentAircraft(id));
+        }
+        const flights = aircraft.flightsOf(air[1]);
+        return flights
+          ? send(200, flights)
+          : send(404, { error: 'Unknown aircraft' });
+      }
       // Rescue, police and fire vessels (vessels.mjs). The list counts as
       // someone looking at the layer, so it is never cached.
       if (url.pathname.startsWith('/v1/vessels')) {
@@ -318,6 +341,12 @@ async function main() {
     db: store.db,
     activeFires: () =>
       (store.feed('au', 24)?.incidents ?? []).filter((i) => i.listed),
+    // Flights, fire links and take-offs (flights.mjs); AIRCRAFT_TRACKING=off
+    // goes back to polling only while someone looks.
+    tracking: trackingOn(),
+    // Large air tanker on its way: only sent with AIR_TANKER_PUSH on.
+    onEvent: (event) =>
+      event.type === 'air-tanker' ? push.airTanker(event) : null,
   });
   // Rescue and police vessels; also polls slowly when nobody looks, for trips.
   const vessels = new VesselService({ db: store.db });
