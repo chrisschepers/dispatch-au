@@ -10,6 +10,7 @@ import { IncidentStore } from './store.mjs';
 import { PushService } from './push.mjs';
 import { renderSite, STATES } from './site.mjs';
 import { AircraftService } from './aircraft.mjs';
+import { VesselService } from './vessels.mjs';
 import { Articles } from './articles.mjs';
 import { mapData } from './site-map.mjs';
 import { places } from './places.mjs';
@@ -113,6 +114,7 @@ export function createServer(
   push = null,
   aircraft = null,
   articles = null,
+  vessels = null,
 ) {
   const news = articles ?? new Articles(store.db);
   const pageCache = new Map();
@@ -163,6 +165,20 @@ export function createServer(
         if (!aircraft)
           return send(503, { error: 'Aircraft layer unavailable' });
         return send(200, aircraft.request());
+      }
+      // Rescue, police and fire vessels (vessels.mjs). The list counts as
+      // someone looking at the layer, so it is never cached.
+      if (url.pathname.startsWith('/v1/vessels')) {
+        if (!vessels) return send(503, { error: 'Vessel layer unavailable' });
+        if (url.pathname === '/v1/vessels') {
+          res.setHeader('Cache-Control', 'no-store');
+          return send(200, vessels.request());
+        }
+        const m = url.pathname.match(/^\/v1\/vessels\/(\d{9})\/trips$/);
+        const trips = m && vessels.tripsOf(Number(m[1]));
+        if (!trips) return send(404, { error: 'Not found' });
+        res.setHeader('Cache-Control', 'public, max-age=30');
+        return send(200, trips);
       }
       if (url.pathname === '/v1/config') {
         res.setHeader('Cache-Control', 'public, max-age=300');
@@ -303,7 +319,11 @@ async function main() {
     activeFires: () =>
       (store.feed('au', 24)?.incidents ?? []).filter((i) => i.listed),
   });
-  const server = createServer(store, push, aircraft, articles);
+  // Rescue and police vessels; also polls slowly when nobody looks, for trips.
+  const vessels = new VesselService({ db: store.db });
+  setInterval(() => void vessels.tick(), 30_000).unref();
+  void vessels.tick();
+  const server = createServer(store, push, aircraft, articles, vessels);
   // Keeps the 3-minute rhythm while someone has the layer open.
   setInterval(() => void aircraft.tick(), 30_000).unref();
   // Rebuilds the fleet from NAFC and the aircraft lists once a day.

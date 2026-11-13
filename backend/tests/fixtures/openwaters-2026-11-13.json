@@ -1,0 +1,4743 @@
+{
+ "note": "Open Waters AIS, measured 2026-11-13 about 11:10 UTC: every recognised vessel, every type 51/55 vessel, look-alike names and a sample of ordinary vessels. Receiver ids left out.",
+ "attribution": {
+  "aishub": "Open Waters AIS (https://openwaters.io/ais/). AISHub (https://www.aishub.net)",
+  "aisstream": "Open Waters AIS (https://openwaters.io/ais/). aisstream.io",
+  "station": "Open Waters AIS (https://openwaters.io/ais/)"
+ },
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "id": 5030133,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.54037,
+     -27.43165
+    ]
+   },
+   "properties": {
+    "mmsi": 5030133,
+    "seen": "2026-11-13T02:05:46Z",
+    "kind": "base",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 5030134,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.53908,
+     -32.44105
+    ]
+   },
+   "properties": {
+    "mmsi": 5030134,
+    "seen": "2026-11-11T09:05:32Z",
+    "kind": "base",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 5030150,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.79837,
+     -32.91848
+    ]
+   },
+   "properties": {
+    "mmsi": 5030150,
+    "seen": "2026-11-10T14:21:29Z",
+    "kind": "base",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 220809131,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.40517,
+     -33.43747
+    ]
+   },
+   "properties": {
+    "mmsi": 220809131,
+    "name": "KAYBEANNA 1-99%",
+    "callsign": "99%",
+    "sog": 0,
+    "cog": 0,
+    "seen": "2026-11-11T08:33:54Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 220809154,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.2888,
+     -33.59399
+    ]
+   },
+   "properties": {
+    "mmsi": 220809154,
+    "name": "KAYBEANNA 4-99%",
+    "callsign": "99%",
+    "sog": 0,
+    "cog": 0,
+    "seen": "2026-11-11T09:36:01Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 220809194,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.32736,
+     -33.55872
+    ]
+   },
+   "properties": {
+    "mmsi": 220809194,
+    "name": "KAYBEANNA 3-99%",
+    "callsign": "99%",
+    "sog": 0,
+    "cog": 0,
+    "seen": "2026-11-11T09:40:05Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 229877000,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.21368,
+     -33.971
+    ]
+   },
+   "properties": {
+    "mmsi": 229877000,
+    "name": "CMA CGM VOLTAIRE",
+    "type": 72,
+    "callsign": "9HA5622",
+    "sog": 0,
+    "cog": 109.3,
+    "heading": 248,
+    "seen": "2026-11-13T11:05:39Z",
+    "length": 270,
+    "kind": "vessel",
+    "flag": "MT"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 241334000,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     149.64206,
+     -21.11496
+    ]
+   },
+   "properties": {
+    "mmsi": 241334000,
+    "name": "SAMOS WARRIOR",
+    "type": 70,
+    "callsign": "SVCA2",
+    "sog": 0.2,
+    "cog": 292,
+    "heading": 356,
+    "seen": "2026-11-08T09:45:44Z",
+    "length": 229,
+    "kind": "vessel",
+    "flag": "GR"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 242611843,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.74336,
+     -32.06021
+    ]
+   },
+   "properties": {
+    "mmsi": 242611843,
+    "name": "HSD-NET-02%",
+    "sog": 0,
+    "cog": 311.8,
+    "seen": "2026-11-12T07:50:19Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 250904882,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.53674,
+     -34.51411
+    ]
+   },
+   "properties": {
+    "mmsi": 250904882,
+    "name": "MICAVA 2-99%",
+    "sog": 0,
+    "cog": 341.7,
+    "seen": "2026-11-10T11:17:02Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 250904883,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.55475,
+     -34.46991
+    ]
+   },
+   "properties": {
+    "mmsi": 250904883,
+    "name": "MICAVA 4-99%",
+    "sog": 0.9,
+    "cog": 33.1,
+    "seen": "2026-11-10T08:35:24Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 250904937,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.10839,
+     -33.76437
+    ]
+   },
+   "properties": {
+    "mmsi": 250904937,
+    "name": "KAYBEANNA 8-99%",
+    "sog": 0.2,
+    "cog": 33.4,
+    "seen": "2026-11-11T07:37:18Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 250904956,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.23197,
+     -33.62818
+    ]
+   },
+   "properties": {
+    "mmsi": 250904956,
+    "name": "KAYBEANNA 5-99%",
+    "sog": 0.2,
+    "cog": 157.2,
+    "seen": "2026-11-11T07:59:17Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 250905020,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.14306,
+     -33.7146
+    ]
+   },
+   "properties": {
+    "mmsi": 250905020,
+    "name": "KAYBEANNA 7-99%",
+    "sog": 0.2,
+    "cog": 129.9,
+    "seen": "2026-11-11T07:52:02Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 253101364,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.48029,
+     -34.57505
+    ]
+   },
+   "properties": {
+    "mmsi": 253101364,
+    "name": "MICAVA 6-99%",
+    "sog": 0.7,
+    "cog": 14.1,
+    "seen": "2026-11-10T11:19:45Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 253102066,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.32241,
+     -34.86192
+    ]
+   },
+   "properties": {
+    "mmsi": 253102066,
+    "name": "MICAVA 5-99%",
+    "sog": 0.3,
+    "cog": 343.5,
+    "seen": "2026-11-10T18:52:55Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 255200490,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.32274,
+     -34.86216
+    ]
+   },
+   "properties": {
+    "mmsi": 255200490,
+    "name": "MICAVA 10-99%",
+    "sog": 0.1,
+    "cog": 207.1,
+    "seen": "2026-11-10T18:50:37Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 255200699,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.37742,
+     -33.47573
+    ]
+   },
+   "properties": {
+    "mmsi": 255200699,
+    "name": "KAYBEANNA 10-99%",
+    "sog": 0.5,
+    "cog": 168.6,
+    "seen": "2026-11-11T07:12:10Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 255200915,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.76988,
+     -33.95427
+    ]
+   },
+   "properties": {
+    "mmsi": 255200915,
+    "name": "SEA ANGEL 1-99%",
+    "sog": 0,
+    "cog": 353.7,
+    "seen": "2026-11-11T14:35:04Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 255201737,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.35772,
+     -34.72128
+    ]
+   },
+   "properties": {
+    "mmsi": 255201737,
+    "name": "MICAVA 9-99%",
+    "sog": 0.8,
+    "cog": 5.5,
+    "seen": "2026-11-10T09:34:57Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 255915679,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.16914,
+     -27.37405
+    ]
+   },
+   "properties": {
+    "mmsi": 255915679,
+    "name": "CMA CGM ETOSHA",
+    "type": 70,
+    "callsign": "CQ2137",
+    "sog": 0,
+    "cog": 136,
+    "heading": 31,
+    "seen": "2026-11-13T11:11:11Z",
+    "length": 240,
+    "kind": "vessel",
+    "flag": "PT"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 262101080,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.89741,
+     -33.83611
+    ]
+   },
+   "properties": {
+    "mmsi": 262101080,
+    "name": "SEA ANGEL 006-26%",
+    "sog": 0.1,
+    "cog": 352.7,
+    "seen": "2026-11-07T05:20:07Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 262101312,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.18991,
+     -33.87403
+    ]
+   },
+   "properties": {
+    "mmsi": 262101312,
+    "name": "SEA ANGEL 010-49%",
+    "sog": 0.3,
+    "cog": 199.1,
+    "seen": "2026-11-13T11:11:13Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 339000101,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.33594,
+     -27.87093
+    ]
+   },
+   "properties": {
+    "mmsi": 339000101,
+    "name": "SERENDIPITOUS",
+    "type": 37,
+    "callsign": "6YWO2",
+    "sog": 0,
+    "seen": "2026-11-10T22:49:41Z",
+    "length": 19,
+    "kind": "vessel",
+    "flag": "JM"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 431882000,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.53082,
+     -32.76451
+    ]
+   },
+   "properties": {
+    "mmsi": 431882000,
+    "name": "SHOHAKU",
+    "type": 70,
+    "callsign": "7KNX",
+    "sog": 10.7,
+    "cog": 47.3,
+    "heading": 47,
+    "seen": "2026-11-13T11:09:55Z",
+    "length": 235,
+    "kind": "vessel",
+    "flag": "JP"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503000092,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.13982,
+     -31.87005
+    ]
+   },
+   "properties": {
+    "mmsi": 503000092,
+    "name": "ADV BESANT",
+    "type": 90,
+    "callsign": "VJN4816",
+    "sog": 2.3,
+    "cog": 221,
+    "heading": 202,
+    "seen": "2026-11-13T11:03:24Z",
+    "length": 83,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503000098,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.68927,
+     -32.23039
+    ]
+   },
+   "properties": {
+    "mmsi": 503000098,
+    "name": "ADV STOKER",
+    "type": 51,
+    "callsign": "VJN4918",
+    "sog": 0,
+    "cog": 108.9,
+    "heading": 16,
+    "seen": "2026-11-13T11:04:52Z",
+    "length": 96,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503000221,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.22179,
+     -33.86855
+    ]
+   },
+   "properties": {
+    "mmsi": 503000221,
+    "name": "ADV GUIDANCE",
+    "type": 79,
+    "callsign": "VMQE",
+    "sog": 0,
+    "cog": 152.3,
+    "heading": 210,
+    "seen": "2026-11-13T11:07:39Z",
+    "length": 107,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503000720,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.16382,
+     -27.40153
+    ]
+   },
+   "properties": {
+    "mmsi": 503000720,
+    "name": "QPV VEDETTE",
+    "type": 37,
+    "callsign": "ZS363",
+    "sog": 0,
+    "seen": "2026-11-13T02:51:17Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503001480,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     121.90218,
+     -33.87209
+    ]
+   },
+   "properties": {
+    "mmsi": 503001480,
+    "name": "HELLFIRE BAY",
+    "type": 52,
+    "callsign": "860848",
+    "sog": 0,
+    "cog": 140.5,
+    "seen": "2026-11-13T11:01:27Z",
+    "length": 24,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503002050,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.48977,
+     -34.77416
+    ]
+   },
+   "properties": {
+    "mmsi": 503002050,
+    "name": "ECSTATIC",
+    "type": 36,
+    "callsign": "CG2338",
+    "sog": 0.1,
+    "seen": "2026-11-07T21:41:25Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503003840,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.74589,
+     -32.06037
+    ]
+   },
+   "properties": {
+    "mmsi": 503003840,
+    "name": "JETWAVE ORION",
+    "type": 52,
+    "callsign": "VJN4468",
+    "sog": 0,
+    "cog": 210.7,
+    "seen": "2026-11-13T11:05:17Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503004330,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.10522,
+     -27.19409
+    ]
+   },
+   "properties": {
+    "mmsi": 503004330,
+    "name": "RSL REDCLIFFE QF32",
+    "type": 51,
+    "callsign": "CG-QF32",
+    "sog": 0,
+    "seen": "2026-11-11T08:23:00Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503004510,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.16045,
+     -27.09556
+    ]
+   },
+   "properties": {
+    "mmsi": 503004510,
+    "name": "ASTRA",
+    "type": 36,
+    "sog": 0.5,
+    "cog": 216.4,
+    "seen": "2026-11-13T05:43:58Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503005810,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.77525,
+     -16.94281
+    ]
+   },
+   "properties": {
+    "mmsi": 503005810,
+    "name": "ABFC CAPE NELSON",
+    "type": 55,
+    "callsign": "VHOH",
+    "sog": 0,
+    "cog": 51.9,
+    "heading": 207,
+    "seen": "2026-11-13T11:04:55Z",
+    "length": 59,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503006520,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24223,
+     -23.83234
+    ]
+   },
+   "properties": {
+    "mmsi": 503006520,
+    "name": "LYLE M HOEY II",
+    "type": 55,
+    "callsign": "VMQ9576",
+    "sog": 0,
+    "cog": 196.6,
+    "heading": 187,
+    "seen": "2026-11-13T11:06:47Z",
+    "length": 24,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503008960,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.50763,
+     -32.17766
+    ]
+   },
+   "properties": {
+    "mmsi": 503008960,
+    "name": "MARINE RESCUE FO30",
+    "type": 51,
+    "callsign": "FO30",
+    "sog": 0,
+    "cog": 348.6,
+    "heading": 356,
+    "seen": "2026-11-13T00:07:08Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503009020,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.00975,
+     -38.30674
+    ]
+   },
+   "properties": {
+    "mmsi": 503009020,
+    "name": "RESCUE SP2",
+    "type": 51,
+    "callsign": "SP02",
+    "sog": 0,
+    "cog": 299.1,
+    "heading": 116,
+    "seen": "2026-11-13T01:24:33Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503009200,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.19565,
+     -33.86348
+    ]
+   },
+   "properties": {
+    "mmsi": 503009200,
+    "name": "MV LADY PAMELA",
+    "type": 37,
+    "callsign": "VMQ9595",
+    "sog": 0,
+    "cog": 350.9,
+    "seen": "2026-11-13T11:05:37Z",
+    "length": 29,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503010540,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.48973,
+     -34.79234
+    ]
+   },
+   "properties": {
+    "mmsi": 503010540,
+    "name": "C/GUARD NAUTIC STAR",
+    "type": 51,
+    "callsign": "CG 02",
+    "sog": 0,
+    "cog": 74.3,
+    "seen": "2026-11-13T07:18:31Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503011020,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.78123,
+     -16.92018
+    ]
+   },
+   "properties": {
+    "mmsi": 503011020,
+    "name": "PV ALBANY",
+    "type": 50,
+    "callsign": "ALBANY",
+    "sog": 0,
+    "cog": 25.4,
+    "seen": "2026-11-13T06:56:35Z",
+    "length": 13,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503011610,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.10468,
+     -27.19436
+    ]
+   },
+   "properties": {
+    "mmsi": 503011610,
+    "name": "CG34",
+    "type": 51,
+    "callsign": "CG34",
+    "sog": 0,
+    "cog": 68.7,
+    "seen": "2026-11-09T11:23:42Z",
+    "length": 6,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503011670,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.77336,
+     -16.95216
+    ]
+   },
+   "properties": {
+    "mmsi": 503011670,
+    "name": "QPV PERRY IRWIN",
+    "type": 55,
+    "callsign": "32011QB",
+    "sog": 0,
+    "cog": 271.4,
+    "heading": 175,
+    "seen": "2026-11-13T11:08:51Z",
+    "length": 24,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503012360,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.18933,
+     -33.87126
+    ]
+   },
+   "properties": {
+    "mmsi": 503012360,
+    "name": "HARBOUR SPIRIT",
+    "type": 60,
+    "callsign": "27120QC",
+    "sog": 0.1,
+    "cog": 119.9,
+    "seen": "2026-11-13T06:44:25Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503014540,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.14752,
+     -30.30467
+    ]
+   },
+   "properties": {
+    "mmsi": 503014540,
+    "name": "MARINE RESCUE CO 30",
+    "type": 51,
+    "callsign": "CO 30",
+    "sog": 0,
+    "cog": 295.4,
+    "heading": 301,
+    "seen": "2026-11-11T23:56:39Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503016950,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.20293,
+     -33.85604
+    ]
+   },
+   "properties": {
+    "mmsi": 503016950,
+    "name": "PV SINCLAIR",
+    "callsign": "24552",
+    "sog": 0,
+    "heading": 249,
+    "seen": "2026-11-13T11:11:18Z",
+    "length": 18,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503018580,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.27048,
+     -33.80129
+    ]
+   },
+   "properties": {
+    "mmsi": 503018580,
+    "name": "ABSOLUT",
+    "type": 36,
+    "callsign": "R 350",
+    "sog": 0.8,
+    "cog": 319.9,
+    "seen": "2026-11-13T09:18:41Z",
+    "length": 13,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503019460,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.1265,
+     -26.6855
+    ]
+   },
+   "properties": {
+    "mmsi": 503019460,
+    "name": "QPV MULU",
+    "type": 37,
+    "callsign": "31929QC",
+    "sog": 0,
+    "seen": "2026-11-10T00:02:23Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503019920,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.30343,
+     -33.65656
+    ]
+   },
+   "properties": {
+    "mmsi": 503019920,
+    "name": "HARLEQUIN",
+    "type": 36,
+    "callsign": "HARLEQU",
+    "sog": 0,
+    "seen": "2026-11-11T01:38:56Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503020370,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.20745,
+     -33.61531
+    ]
+   },
+   "properties": {
+    "mmsi": 503020370,
+    "name": "MARINE RESCUE CP-30",
+    "type": 51,
+    "callsign": "CP 30",
+    "sog": 0,
+    "cog": 205,
+    "heading": 196,
+    "seen": "2026-11-09T03:06:00Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503023270,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.48384,
+     -34.78572
+    ]
+   },
+   "properties": {
+    "mmsi": 503023270,
+    "name": "NERANA",
+    "type": 36,
+    "callsign": "NERANA",
+    "sog": 0,
+    "cog": 251.5,
+    "seen": "2026-11-12T03:18:22Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503031980,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24811,
+     -33.80677
+    ]
+   },
+   "properties": {
+    "mmsi": 503031980,
+    "name": "PINDIMARA",
+    "type": 36,
+    "callsign": "SY888",
+    "sog": 0.3,
+    "cog": 142.6,
+    "seen": "2026-11-13T07:57:05Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503033990,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.42322,
+     -27.94817
+    ]
+   },
+   "properties": {
+    "mmsi": 503033990,
+    "name": "CADENCE OF ADELAIDE",
+    "type": 36,
+    "callsign": "VHN3286",
+    "sog": 0.2,
+    "cog": 326.9,
+    "seen": "2026-11-10T22:59:21Z",
+    "length": 13,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503035850,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.20988,
+     -33.86052
+    ]
+   },
+   "properties": {
+    "mmsi": 503035850,
+    "name": "OCEAN SURFER",
+    "type": 60,
+    "sog": 0,
+    "cog": 177.1,
+    "seen": "2026-11-13T10:14:29Z",
+    "length": 34,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503038350,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.1434,
+     -32.71781
+    ]
+   },
+   "properties": {
+    "mmsi": 503038350,
+    "name": "MARINE RESCUE PS31",
+    "type": 51,
+    "callsign": "PS 31",
+    "sog": 0,
+    "heading": 255,
+    "seen": "2026-11-10T22:54:34Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503039350,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.1763,
+     -33.8514
+    ]
+   },
+   "properties": {
+    "mmsi": 503039350,
+    "name": "RHEMTIDE",
+    "type": 99,
+    "sog": 2.8,
+    "cog": 110.7,
+    "seen": "2026-11-13T11:10:53Z",
+    "length": 24,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503039480,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     117.94377,
+     -34.99463
+    ]
+   },
+   "properties": {
+    "mmsi": 503039480,
+    "name": "RESCUE 1",
+    "type": 51,
+    "callsign": "VMR610",
+    "sog": 0.2,
+    "seen": "2026-11-11T04:35:23Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503039650,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.20752,
+     -33.6153
+    ]
+   },
+   "properties": {
+    "mmsi": 503039650,
+    "name": "MARINE RESCUE CP31",
+    "type": 51,
+    "callsign": "CP31",
+    "sog": 0.1,
+    "cog": 0,
+    "heading": 180,
+    "seen": "2026-11-09T00:16:32Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503041420,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.12607,
+     -26.68544
+    ]
+   },
+   "properties": {
+    "mmsi": 503041420,
+    "name": "ROTARY 3",
+    "type": 51,
+    "callsign": "ROTARY3",
+    "sog": 0,
+    "heading": 96,
+    "seen": "2026-11-11T21:03:18Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503041620,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.14535,
+     -32.71902
+    ]
+   },
+   "properties": {
+    "mmsi": 503041620,
+    "name": "RV BOMBORA",
+    "type": 55,
+    "callsign": "SY907",
+    "sog": 0,
+    "cog": 330.9,
+    "seen": "2026-11-13T01:39:37Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503042670,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.14361,
+     -27.06338
+    ]
+   },
+   "properties": {
+    "mmsi": 503042670,
+    "name": "BRIBIE 2",
+    "type": 51,
+    "callsign": "BRIBIE2",
+    "sog": 0,
+    "cog": 175.7,
+    "heading": 176,
+    "seen": "2026-11-10T05:53:57Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503043440,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.4891,
+     -34.77466
+    ]
+   },
+   "properties": {
+    "mmsi": 503043440,
+    "name": "ERV GALLANTRY",
+    "type": 51,
+    "callsign": "VHS3136",
+    "sog": 0,
+    "cog": 167.2,
+    "seen": "2026-11-13T08:17:40Z",
+    "length": 20,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503047390,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     114.61178,
+     -28.76711
+    ]
+   },
+   "properties": {
+    "mmsi": 503047390,
+    "name": "NASHIRA",
+    "type": 51,
+    "callsign": "VMR0670",
+    "sog": 0,
+    "cog": 346.5,
+    "heading": 2,
+    "seen": "2026-11-08T02:38:12Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503048730,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.7297,
+     -32.05261
+    ]
+   },
+   "properties": {
+    "mmsi": 503048730,
+    "name": "EAGLE EXPRESS",
+    "type": 60,
+    "callsign": "VNW4107",
+    "sog": 0,
+    "cog": 177.3,
+    "seen": "2026-11-13T10:27:46Z",
+    "length": 34,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503051410,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.10468,
+     -32.71687
+    ]
+   },
+   "properties": {
+    "mmsi": 503051410,
+    "name": "STORMTROOPER",
+    "type": 36,
+    "callsign": "RN370",
+    "sog": 0,
+    "cog": 121.5,
+    "seen": "2026-11-11T05:24:35Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503051660,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.77226,
+     -16.93652
+    ]
+   },
+   "properties": {
+    "mmsi": 503051660,
+    "name": "RESCUE III",
+    "type": 51,
+    "callsign": "28156QC",
+    "sog": 0.1,
+    "cog": 161,
+    "seen": "2026-11-08T05:11:19Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503055190,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.01392,
+     -25.90129
+    ]
+   },
+   "properties": {
+    "mmsi": 503055190,
+    "name": "COOLOOLA RESCUE III",
+    "type": 51,
+    "sog": 0,
+    "cog": 191.6,
+    "seen": "2026-11-10T00:10:47Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503058110,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     147.2936,
+     -42.98817
+    ]
+   },
+   "properties": {
+    "mmsi": 503058110,
+    "name": "LYN MADDOCK",
+    "type": 53,
+    "sog": 0,
+    "cog": 0,
+    "seen": "2026-11-10T23:36:17Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503058190,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.16373,
+     -27.40138
+    ]
+   },
+   "properties": {
+    "mmsi": 503058190,
+    "name": "QPV DAN STILLER",
+    "type": 55,
+    "callsign": "24738",
+    "sog": 0.1,
+    "seen": "2026-11-12T03:00:07Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503059450,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.2438,
+     -23.8316
+    ]
+   },
+   "properties": {
+    "mmsi": 503059450,
+    "name": "SOMMER SEA",
+    "type": 37,
+    "callsign": "RV 303",
+    "sog": 0,
+    "cog": 236.1,
+    "seen": "2026-11-07T00:00:18Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503065870,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.56778,
+     -33.27965
+    ]
+   },
+   "properties": {
+    "mmsi": 503065870,
+    "name": "MARINE RESCUE NR 20",
+    "type": 51,
+    "callsign": "NR 20",
+    "sog": 0,
+    "heading": 129,
+    "seen": "2026-11-06T23:58:46Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503067490,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     144.96425,
+     -37.86161
+    ]
+   },
+   "properties": {
+    "mmsi": 503067490,
+    "name": "CAHER II",
+    "type": 36,
+    "callsign": "XV426",
+    "sog": 0.1,
+    "seen": "2026-11-13T06:23:00Z",
+    "length": 13,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503068830,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.09498,
+     -27.2111
+    ]
+   },
+   "properties": {
+    "mmsi": 503068830,
+    "name": "SALTPETER",
+    "type": 36,
+    "callsign": "BOQ57Q",
+    "sog": 0,
+    "cog": 140.8,
+    "seen": "2026-11-13T11:09:38Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503069120,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.28615,
+     -27.51496
+    ]
+   },
+   "properties": {
+    "mmsi": 503069120,
+    "name": "MARINE RESCUE RB31",
+    "type": 51,
+    "callsign": "RB IV",
+    "sog": 0,
+    "cog": 77.2,
+    "seen": "2026-11-09T01:52:29Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503071430,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.76595,
+     -32.02517
+    ]
+   },
+   "properties": {
+    "mmsi": 503071430,
+    "name": "ROVER 2",
+    "type": 51,
+    "sog": 0.7,
+    "cog": 291.1,
+    "seen": "2026-11-13T05:11:06Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503071440,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.81054,
+     -32.00057
+    ]
+   },
+   "properties": {
+    "mmsi": 503071440,
+    "name": "GEMINI",
+    "type": 51,
+    "sog": 0.3,
+    "seen": "2026-11-13T05:55:50Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503071510,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.12723,
+     -26.68632
+    ]
+   },
+   "properties": {
+    "mmsi": 503071510,
+    "name": "STRAYCAT II",
+    "type": 36,
+    "callsign": "862186",
+    "sog": 0,
+    "cog": 135.3,
+    "seen": "2026-11-13T11:08:26Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503071960,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.12116,
+     -34.00042
+    ]
+   },
+   "properties": {
+    "mmsi": 503071960,
+    "name": "LORD HOWE ISLAND",
+    "type": 55,
+    "callsign": "VNZ2670",
+    "sog": 0,
+    "cog": 42.1,
+    "seen": "2026-11-13T02:14:25Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503072230,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.36018,
+     -27.64023
+    ]
+   },
+   "properties": {
+    "mmsi": 503072230,
+    "name": "QPV STEWART KERLIN",
+    "type": 55,
+    "callsign": "44546QC",
+    "sog": 24.4,
+    "cog": 150.4,
+    "heading": 152,
+    "seen": "2026-11-13T11:09:59Z",
+    "length": 16,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503073520,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.38603,
+     -24.76228
+    ]
+   },
+   "properties": {
+    "mmsi": 503073520,
+    "name": "MOONSHOT",
+    "type": 30,
+    "callsign": "20178QB",
+    "sog": 0.1,
+    "seen": "2026-11-09T01:00:52Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503075060,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.50768,
+     -32.1777
+    ]
+   },
+   "properties": {
+    "mmsi": 503075060,
+    "name": "MARINE RESCUE FO 20",
+    "type": 51,
+    "callsign": "FO 20",
+    "sog": 0,
+    "heading": 356,
+    "seen": "2026-11-13T00:30:18Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503075270,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.90998,
+     -25.29582
+    ]
+   },
+   "properties": {
+    "mmsi": 503075270,
+    "name": "QPV SHAYNE GILL",
+    "type": 55,
+    "callsign": "455543",
+    "sog": 0,
+    "cog": 194.8,
+    "heading": 204,
+    "seen": "2026-11-13T01:27:44Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503076580,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.16333,
+     -33.8564
+    ]
+   },
+   "properties": {
+    "mmsi": 503076580,
+    "name": "MARINE RESCUE PJ20",
+    "type": 51,
+    "callsign": "PJ20",
+    "sog": 0,
+    "heading": 191,
+    "seen": "2026-11-09T22:45:25Z",
+    "length": 6,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503076590,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.33245,
+     -33.4386
+    ]
+   },
+   "properties": {
+    "mmsi": 503076590,
+    "name": "MARINE RESCUE BW21",
+    "type": 51,
+    "callsign": "BW21",
+    "sog": 0,
+    "cog": 204.2,
+    "heading": 183,
+    "seen": "2026-11-13T03:45:41Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503076780,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24197,
+     -23.82809
+    ]
+   },
+   "properties": {
+    "mmsi": 503076780,
+    "name": "RESCUE 1",
+    "type": 53,
+    "callsign": "447593",
+    "sog": 0.1,
+    "cog": 292.4,
+    "seen": "2026-11-13T06:18:08Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503079250,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24687,
+     -23.83305
+    ]
+   },
+   "properties": {
+    "mmsi": 503079250,
+    "name": "PV GOONANGA",
+    "type": 50,
+    "callsign": "VNZ2379",
+    "sog": 0.1,
+    "cog": 351.3,
+    "seen": "2026-11-13T03:42:46Z",
+    "length": 17,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503081560,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.19121,
+     -27.45876
+    ]
+   },
+   "properties": {
+    "mmsi": 503081560,
+    "name": "MAGELLAN",
+    "type": 37,
+    "callsign": "UM489Q",
+    "sog": 0,
+    "heading": 230,
+    "seen": "2026-11-13T11:10:01Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503082020,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.13381,
+     -26.68395
+    ]
+   },
+   "properties": {
+    "mmsi": 503082020,
+    "name": "PV NORM WATT",
+    "type": 55,
+    "sog": 0,
+    "cog": 298.8,
+    "heading": 41,
+    "seen": "2026-11-13T01:07:00Z",
+    "length": 18,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503089360,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.49186,
+     -34.77442
+    ]
+   },
+   "properties": {
+    "mmsi": 503089360,
+    "name": "WARDANA",
+    "type": 55,
+    "callsign": "418972",
+    "sog": 0,
+    "seen": "2026-11-12T06:53:22Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503090980,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     144.66891,
+     -38.26336
+    ]
+   },
+   "properties": {
+    "mmsi": 503090980,
+    "name": "RESCUE 304",
+    "type": 51,
+    "callsign": "RES304",
+    "sog": 0,
+    "cog": 255.8,
+    "heading": 29,
+    "seen": "2026-11-08T05:34:21Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503092760,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.18967,
+     -27.45243
+    ]
+   },
+   "properties": {
+    "mmsi": 503092760,
+    "name": "SPOONBILL III",
+    "type": 55,
+    "callsign": "456381",
+    "sog": 0,
+    "seen": "2026-11-12T23:16:20Z",
+    "length": 16,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503093880,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.6398,
+     -33.31012
+    ]
+   },
+   "properties": {
+    "mmsi": 503093880,
+    "name": "DINGO MARLEY",
+    "type": 51,
+    "sog": 0.1,
+    "seen": "2026-11-09T03:37:41Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503095790,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.04046,
+     -32.72971
+    ]
+   },
+   "properties": {
+    "mmsi": 503095790,
+    "name": "MARINE RESCUE LT 30",
+    "type": 51,
+    "callsign": "LT30",
+    "sog": 0.1,
+    "seen": "2026-11-10T03:38:18Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503095810,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.33237,
+     -33.4386
+    ]
+   },
+   "properties": {
+    "mmsi": 503095810,
+    "name": "MARINE RESCUE BW22",
+    "type": 51,
+    "callsign": "BW22",
+    "sog": 0,
+    "cog": 192.4,
+    "heading": 186,
+    "seen": "2026-11-07T23:47:47Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503095820,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.77128,
+     -32.92272
+    ]
+   },
+   "properties": {
+    "mmsi": 503095820,
+    "name": "MARINE RESCUE NC 30",
+    "type": 51,
+    "callsign": "NC 30",
+    "sog": 0.7,
+    "cog": 310,
+    "seen": "2026-11-12T09:34:02Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503096180,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.23625,
+     -33.80501
+    ]
+   },
+   "properties": {
+    "mmsi": 503096180,
+    "name": "BAREFOOT NEMO-99%",
+    "sog": 0.3,
+    "cog": 316.4,
+    "seen": "2026-11-13T10:58:04Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503096300,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     144.9176,
+     -37.86059
+    ]
+   },
+   "properties": {
+    "mmsi": 503096300,
+    "name": "SVITZER MERINGA",
+    "type": 52,
+    "callsign": "VJN3054",
+    "sog": 5.5,
+    "cog": 323.4,
+    "seen": "2026-11-13T11:08:52Z",
+    "length": 24,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503100160,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.74879,
+     -32.06638
+    ]
+   },
+   "properties": {
+    "mmsi": 503100160,
+    "name": "PV WOONBALU",
+    "type": 55,
+    "sog": 0,
+    "heading": 24,
+    "seen": "2026-11-13T11:02:39Z",
+    "length": 18,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503101000,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.19353,
+     -33.83991
+    ]
+   },
+   "properties": {
+    "mmsi": 503101000,
+    "name": "ADV CAPE OTWAY",
+    "type": 90,
+    "callsign": "<VKBP",
+    "sog": 0,
+    "cog": 200.2,
+    "heading": 57,
+    "seen": "2026-11-13T11:10:11Z",
+    "length": 59,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503101930,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.30415,
+     -33.66227
+    ]
+   },
+   "properties": {
+    "mmsi": 503101930,
+    "name": "MARINE RESCUE BB 30",
+    "type": 51,
+    "callsign": "BB 30",
+    "sog": 0,
+    "cog": 90,
+    "seen": "2026-11-09T04:33:57Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503103920,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     144.66878,
+     -38.26365
+    ]
+   },
+   "properties": {
+    "mmsi": 503103920,
+    "name": "VP15",
+    "type": 55,
+    "callsign": "VP15",
+    "sog": 0,
+    "cog": 306.4,
+    "heading": 303,
+    "seen": "2026-11-09T02:19:08Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503105140,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.14697,
+     -34.07322
+    ]
+   },
+   "properties": {
+    "mmsi": 503105140,
+    "name": "BOTANY HACKING 30",
+    "type": 51,
+    "callsign": "BH 30",
+    "sog": 0.5,
+    "cog": 199.1,
+    "heading": 354,
+    "seen": "2026-11-08T02:15:30Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503106610,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.6056,
+     -31.95924
+    ]
+   },
+   "properties": {
+    "mmsi": 503106610,
+    "name": "HARBOUR MASTER",
+    "type": 60,
+    "sog": 22.3,
+    "cog": 49.7,
+    "heading": 51,
+    "seen": "2026-11-13T11:04:30Z",
+    "length": 35,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503111070,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.16476,
+     -27.40123
+    ]
+   },
+   "properties": {
+    "mmsi": 503111070,
+    "name": "QPV BRIG",
+    "type": 55,
+    "callsign": "458690",
+    "sog": 0.2,
+    "seen": "2026-11-13T05:41:20Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503111090,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.16244,
+     -33.85665
+    ]
+   },
+   "properties": {
+    "mmsi": 503111090,
+    "name": "MARINE RESCUE PJ-31",
+    "type": 51,
+    "callsign": "PJ 31",
+    "sog": 0,
+    "cog": 56.7,
+    "seen": "2026-11-10T02:03:49Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503111710,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.31916,
+     -27.56708
+    ]
+   },
+   "properties": {
+    "mmsi": 503111710,
+    "name": "TRUE LOVE",
+    "type": 36,
+    "sog": 0.2,
+    "cog": 175.9,
+    "seen": "2026-11-13T11:05:49Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503113050,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.36143,
+     -27.85024
+    ]
+   },
+   "properties": {
+    "mmsi": 503113050,
+    "name": "TANGO",
+    "type": 37,
+    "callsign": "GK912",
+    "sog": 0,
+    "seen": "2026-11-10T21:45:17Z",
+    "length": 15,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503114060,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.19237,
+     -27.4569
+    ]
+   },
+   "properties": {
+    "mmsi": 503114060,
+    "name": "IDLE MOMENTS",
+    "type": 37,
+    "callsign": "VP249Q",
+    "sog": 0,
+    "seen": "2026-11-13T11:07:03Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503114480,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     147.30332,
+     -42.82881
+    ]
+   },
+   "properties": {
+    "mmsi": 503114480,
+    "name": "FIREBIRD",
+    "type": 36,
+    "callsign": "RG85",
+    "sog": 0,
+    "seen": "2026-11-12T00:01:57Z",
+    "length": 13,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503114820,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     144.3673,
+     -38.1444
+    ]
+   },
+   "properties": {
+    "mmsi": 503114820,
+    "name": "RESCUE 307",
+    "type": 51,
+    "callsign": "RES307",
+    "sog": 0,
+    "cog": 294,
+    "heading": 27,
+    "seen": "2026-11-08T05:47:15Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503114830,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.00981,
+     -38.30729
+    ]
+   },
+   "properties": {
+    "mmsi": 503114830,
+    "name": "RESCUE 308",
+    "type": 51,
+    "callsign": "RES.308",
+    "sog": 0,
+    "cog": 34,
+    "heading": 20,
+    "seen": "2026-11-08T04:09:41Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503114920,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     144.66636,
+     -38.26244
+    ]
+   },
+   "properties": {
+    "mmsi": 503114920,
+    "name": "PV GRIFFITHS",
+    "type": 50,
+    "sog": 0,
+    "seen": "2026-11-13T11:05:36Z",
+    "length": 17,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503115060,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.12722,
+     -26.68651
+    ]
+   },
+   "properties": {
+    "mmsi": 503115060,
+    "name": "TRICK SHOT",
+    "type": 36,
+    "callsign": "TRICK S",
+    "sog": 0,
+    "seen": "2026-11-13T11:10:09Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503115730,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     150.92916,
+     -23.18458
+    ]
+   },
+   "properties": {
+    "mmsi": 503115730,
+    "name": "WALDEN",
+    "type": 36,
+    "callsign": "QF267Q",
+    "sog": 0.5,
+    "cog": 18.8,
+    "seen": "2026-11-06T12:12:13Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503116140,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.48548,
+     -34.79428
+    ]
+   },
+   "properties": {
+    "mmsi": 503116140,
+    "name": "POLICE LAUNCH 2",
+    "type": 55,
+    "sog": 0,
+    "cog": 337,
+    "heading": 254,
+    "seen": "2026-11-09T04:07:14Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503119910,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.90961,
+     -25.29406
+    ]
+   },
+   "properties": {
+    "mmsi": 503119910,
+    "name": "RESCUE 1",
+    "type": 51,
+    "callsign": "HB11",
+    "sog": 0,
+    "cog": 78,
+    "heading": 163,
+    "seen": "2026-11-09T20:17:27Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503120630,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.31558,
+     -27.58015
+    ]
+   },
+   "properties": {
+    "mmsi": 503120630,
+    "name": "VP31",
+    "type": 51,
+    "callsign": "VP31",
+    "sog": 0.5,
+    "cog": 340.1,
+    "seen": "2026-11-13T04:20:57Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503121760,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.30429,
+     -33.65629
+    ]
+   },
+   "properties": {
+    "mmsi": 503121760,
+    "name": "IMPULSE",
+    "type": 36,
+    "callsign": "ACX514N",
+    "sog": 0.1,
+    "heading": 348,
+    "seen": "2026-11-12T08:36:49Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503124840,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.13349,
+     -26.68425
+    ]
+   },
+   "properties": {
+    "mmsi": 503124840,
+    "name": "PV TIMBIN",
+    "type": 50,
+    "callsign": "145490",
+    "sog": 0,
+    "heading": 127,
+    "seen": "2026-11-13T06:07:26Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503125690,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.78206,
+     -16.91722
+    ]
+   },
+   "properties": {
+    "mmsi": 503125690,
+    "name": "ROTARY SPIRIT",
+    "type": 51,
+    "callsign": "CG091",
+    "sog": 0,
+    "heading": 359,
+    "seen": "2026-11-08T05:08:41Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503125780,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.74715,
+     -32.06634
+    ]
+   },
+   "properties": {
+    "mmsi": 503125780,
+    "name": "SIRENA",
+    "type": 36,
+    "sog": 0,
+    "seen": "2026-11-13T11:08:43Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503128640,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.30415,
+     -33.66221
+    ]
+   },
+   "properties": {
+    "mmsi": 503128640,
+    "name": "MARINE RESCUE BB21",
+    "type": 51,
+    "callsign": "BB21",
+    "sog": 0,
+    "seen": "2026-11-07T01:59:59Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503129520,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.12302,
+     -34.00107
+    ]
+   },
+   "properties": {
+    "mmsi": 503129520,
+    "name": "MARINE RESCUE BH32",
+    "type": 51,
+    "callsign": "BH32",
+    "sog": 0,
+    "cog": 45,
+    "heading": 167,
+    "seen": "2026-11-08T04:47:40Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503130210,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.08289,
+     -27.33085
+    ]
+   },
+   "properties": {
+    "mmsi": 503130210,
+    "name": "SANDS RESCUE",
+    "type": 51,
+    "callsign": "460050",
+    "sog": 0,
+    "seen": "2026-11-09T23:53:05Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503134090,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.1451,
+     -26.67751
+    ]
+   },
+   "properties": {
+    "mmsi": 503134090,
+    "name": "PV BURAN",
+    "type": 50,
+    "callsign": "459508",
+    "sog": 16.9,
+    "cog": 113.6,
+    "heading": 119,
+    "seen": "2026-11-13T10:58:53Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503134260,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     114.61239,
+     -28.76696
+    ]
+   },
+   "properties": {
+    "mmsi": 503134260,
+    "name": "MIMOSA",
+    "type": 51,
+    "sog": 0,
+    "cog": 175,
+    "heading": 182,
+    "seen": "2026-11-08T03:01:15Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503135227,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.48842,
+     -34.79161
+    ]
+   },
+   "properties": {
+    "mmsi": 503135227,
+    "name": "SWEET JANE",
+    "type": 36,
+    "callsign": "SA450S",
+    "sog": 0,
+    "cog": 67.2,
+    "seen": "2026-11-13T11:02:43Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503140260,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.22875,
+     -33.86315
+    ]
+   },
+   "properties": {
+    "mmsi": 503140260,
+    "name": "AFP10",
+    "type": 55,
+    "callsign": "AFP10",
+    "sog": 0,
+    "seen": "2026-11-10T11:53:30Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503140520,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.14405,
+     -33.85059
+    ]
+   },
+   "properties": {
+    "mmsi": 503140520,
+    "name": "MASCOT",
+    "type": 60,
+    "sog": 0,
+    "cog": 353.7,
+    "seen": "2026-11-12T10:17:08Z",
+    "length": 16,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503143090,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.12775,
+     -26.68582
+    ]
+   },
+   "properties": {
+    "mmsi": 503143090,
+    "name": "HOPE",
+    "type": 55,
+    "callsign": "HOPE",
+    "sog": 0,
+    "seen": "2026-11-09T02:12:51Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503143750,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.09749,
+     -27.45049
+    ]
+   },
+   "properties": {
+    "mmsi": 503143750,
+    "name": "WAUBIN",
+    "type": 51,
+    "callsign": "WA11",
+    "sog": 0,
+    "cog": 130.3,
+    "heading": 150,
+    "seen": "2026-11-13T03:02:59Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503144210,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.18958,
+     -27.45245
+    ]
+   },
+   "properties": {
+    "mmsi": 503144210,
+    "name": "TABILBAHN",
+    "type": 55,
+    "callsign": "461493",
+    "sog": 0,
+    "seen": "2026-11-13T00:02:37Z",
+    "length": 13,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503147110,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     152.14339,
+     -32.71776
+    ]
+   },
+   "properties": {
+    "mmsi": 503147110,
+    "name": "MARINE RESCUE PS 30",
+    "type": 51,
+    "callsign": "PS 30",
+    "sog": 0,
+    "cog": 359.2,
+    "heading": 75,
+    "seen": "2026-11-13T10:27:53Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503151110,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.19936,
+     -33.95698
+    ]
+   },
+   "properties": {
+    "mmsi": 503151110,
+    "name": "SURF-RESCUE30",
+    "type": 51,
+    "callsign": "SR30",
+    "sog": 0,
+    "cog": 32.5,
+    "heading": 29,
+    "seen": "2026-11-07T02:22:50Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503151400,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.11802,
+     -38.07423
+    ]
+   },
+   "properties": {
+    "mmsi": 503151400,
+    "name": "CG07",
+    "type": 51,
+    "callsign": "CG07",
+    "sog": 6.3,
+    "cog": 49.7,
+    "heading": 46,
+    "seen": "2026-11-13T10:53:53Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503153610,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.11633,
+     -27.43161
+    ]
+   },
+   "properties": {
+    "mmsi": 503153610,
+    "name": "EDEN",
+    "type": 55,
+    "callsign": "460105",
+    "sog": 0,
+    "seen": "2026-11-12T03:33:23Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503153920,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.385,
+     -27.88018
+    ]
+   },
+   "properties": {
+    "mmsi": 503153920,
+    "name": "MALOLO",
+    "type": 37,
+    "callsign": "MALOLO",
+    "sog": 0,
+    "cog": 0,
+    "seen": "2026-11-10T21:47:42Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503154020,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.23661,
+     -33.80492
+    ]
+   },
+   "properties": {
+    "mmsi": 503154020,
+    "name": "BAREFOOT BLUE-99%",
+    "sog": 0,
+    "cog": 6.3,
+    "seen": "2026-11-13T11:10:44Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503154030,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.23452,
+     -33.78647
+    ]
+   },
+   "properties": {
+    "mmsi": 503154030,
+    "name": "BAREFOOT RED -08%",
+    "sog": 0,
+    "cog": 204.2,
+    "seen": "2026-11-13T11:10:28Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503157260,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24078,
+     -23.82968
+    ]
+   },
+   "properties": {
+    "mmsi": 503157260,
+    "name": "GLADSTONE RESCUE 1",
+    "type": 51,
+    "sog": 0,
+    "cog": 84.5,
+    "heading": 264,
+    "seen": "2026-11-10T15:00:50Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503159280,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.19234,
+     -27.4532
+    ]
+   },
+   "properties": {
+    "mmsi": 503159280,
+    "name": "MR BOJANGLES",
+    "type": 36,
+    "callsign": "863692",
+    "sog": 0,
+    "cog": 309.1,
+    "seen": "2026-11-13T11:09:25Z",
+    "length": 13,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503159630,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.83483,
+     -31.9746
+    ]
+   },
+   "properties": {
+    "mmsi": 503159630,
+    "name": "RELIANT2",
+    "type": 51,
+    "sog": 7.4,
+    "cog": 203.1,
+    "seen": "2026-11-13T11:08:33Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503164640,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.12623,
+     -26.69748
+    ]
+   },
+   "properties": {
+    "mmsi": 503164640,
+    "name": "RIPLEY",
+    "type": 37,
+    "callsign": "SR108Q",
+    "sog": 0,
+    "seen": "2026-11-13T11:10:31Z",
+    "length": 16,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503167180,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24076,
+     -23.8296
+    ]
+   },
+   "properties": {
+    "mmsi": 503167180,
+    "name": "JETSKI RESCUE 2",
+    "sog": 0.1,
+    "seen": "2026-11-06T21:33:24Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503168580,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.64159,
+     -33.06852
+    ]
+   },
+   "properties": {
+    "mmsi": 503168580,
+    "name": "MARINE RESCUE LM31",
+    "type": 51,
+    "callsign": "LM-31",
+    "sog": 0,
+    "cog": 50.5,
+    "heading": 77,
+    "seen": "2026-11-11T05:57:58Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503168860,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.19245,
+     -27.45602
+    ]
+   },
+   "properties": {
+    "mmsi": 503168860,
+    "name": "STARWATCH",
+    "type": 37,
+    "callsign": "VP319Q",
+    "sog": 0,
+    "seen": "2026-11-13T11:05:53Z",
+    "length": 15,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503172010,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.19263,
+     -27.4579
+    ]
+   },
+   "properties": {
+    "mmsi": 503172010,
+    "name": "CHAMPAGNE",
+    "type": 36,
+    "callsign": "BTB14Q",
+    "sog": 0,
+    "seen": "2026-11-13T11:09:43Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503174690,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.19081,
+     -27.45751
+    ]
+   },
+   "properties": {
+    "mmsi": 503174690,
+    "name": "NAUTI BUOY",
+    "type": 37,
+    "callsign": "RIV23Q",
+    "sog": 0,
+    "seen": "2026-11-12T05:03:13Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503176030,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.10588,
+     -27.19354
+    ]
+   },
+   "properties": {
+    "mmsi": 503176030,
+    "name": "CURLEW",
+    "type": 37,
+    "callsign": "KE001Q",
+    "sog": 0,
+    "seen": "2026-11-06T22:07:48Z",
+    "length": 13,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503176070,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.22051,
+     -33.9685
+    ]
+   },
+   "properties": {
+    "mmsi": 503176070,
+    "name": "PV YANAGA",
+    "type": 50,
+    "callsign": " 5180",
+    "sog": 0,
+    "cog": 258.2,
+    "seen": "2026-11-13T11:11:18Z",
+    "length": 17,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503177120,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24082,
+     -23.82956
+    ]
+   },
+   "properties": {
+    "mmsi": 503177120,
+    "name": "GLADSTONERESCUE3",
+    "type": 31,
+    "callsign": "462699",
+    "sog": 0,
+    "cog": 297.7,
+    "heading": 293,
+    "seen": "2026-11-08T00:05:37Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503177370,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.61916,
+     -32.9764
+    ]
+   },
+   "properties": {
+    "mmsi": 503177370,
+    "name": "BETTER HALF",
+    "type": 37,
+    "callsign": "AGI418N",
+    "sog": 0,
+    "seen": "2026-11-13T10:29:57Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503178350,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.48938,
+     -34.77489
+    ]
+   },
+   "properties": {
+    "mmsi": 503178350,
+    "name": "MARINE   PATROL  1",
+    "type": 55,
+    "callsign": "MPV1",
+    "sog": 0,
+    "cog": 162.3,
+    "heading": 296,
+    "seen": "2026-11-13T05:10:40Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503181390,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24409,
+     -23.8326
+    ]
+   },
+   "properties": {
+    "mmsi": 503181390,
+    "name": "HAPPY",
+    "type": 36,
+    "callsign": "BTU05Q",
+    "sog": 0.1,
+    "cog": 198.9,
+    "seen": "2026-11-13T11:08:38Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503182060,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.22849,
+     -33.80554
+    ]
+   },
+   "properties": {
+    "mmsi": 503182060,
+    "name": "SITE OFFICE",
+    "type": 37,
+    "callsign": "AMMOON",
+    "sog": 0,
+    "cog": 257.6,
+    "heading": 4,
+    "seen": "2026-11-11T13:02:43Z",
+    "length": 18,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503183230,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.77173,
+     -16.94554
+    ]
+   },
+   "properties": {
+    "mmsi": 503183230,
+    "name": "PD11",
+    "type": 51,
+    "callsign": "PD11",
+    "sog": 0,
+    "cog": 135,
+    "heading": 203,
+    "seen": "2026-11-11T03:26:22Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503185260,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.48853,
+     -34.77431
+    ]
+   },
+   "properties": {
+    "mmsi": 503185260,
+    "name": "PV WARNA",
+    "type": 50,
+    "sog": 0,
+    "cog": 180,
+    "seen": "2026-11-13T11:06:41Z",
+    "length": 17,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503185990,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.10535,
+     -27.19415
+    ]
+   },
+   "properties": {
+    "mmsi": 503185990,
+    "name": "RC11",
+    "type": 51,
+    "callsign": "RC11",
+    "sog": 0,
+    "cog": 108.4,
+    "heading": 156,
+    "seen": "2026-11-13T11:10:02Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503186560,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.19142,
+     -33.85925
+    ]
+   },
+   "properties": {
+    "mmsi": 503186560,
+    "name": "WP41",
+    "type": 55,
+    "callsign": "WP41",
+    "sog": 0,
+    "cog": 22.8,
+    "heading": 47,
+    "seen": "2026-11-11T08:09:40Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503186950,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.18987,
+     -27.45238
+    ]
+   },
+   "properties": {
+    "mmsi": 503186950,
+    "name": "MN23",
+    "type": 51,
+    "callsign": "MN23",
+    "sog": 0,
+    "cog": 54.5,
+    "heading": 62,
+    "seen": "2026-11-08T08:34:56Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503187550,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     138.48815,
+     -34.79489
+    ]
+   },
+   "properties": {
+    "mmsi": 503187550,
+    "name": "CG SENTEL",
+    "type": 51,
+    "callsign": "CG05",
+    "sog": 0,
+    "cog": 164.6,
+    "heading": 165,
+    "seen": "2026-11-07T04:10:57Z",
+    "length": 8,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503188120,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.10396,
+     -27.44572
+    ]
+   },
+   "properties": {
+    "mmsi": 503188120,
+    "name": "BUNBEE",
+    "type": 55,
+    "sog": 0.1,
+    "heading": 253,
+    "seen": "2026-11-12T20:18:43Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503188940,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.40291,
+     -27.49313
+    ]
+   },
+   "properties": {
+    "mmsi": 503188940,
+    "name": "SB11",
+    "type": 51,
+    "callsign": "464993",
+    "sog": 0,
+    "cog": 303.4,
+    "heading": 227,
+    "seen": "2026-11-13T01:46:26Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503189790,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.63984,
+     -33.31277
+    ]
+   },
+   "properties": {
+    "mmsi": 503189790,
+    "name": "SPIRIT OF BUNBURY",
+    "type": 51,
+    "sog": 0,
+    "seen": "2026-11-13T03:19:23Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503190710,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     146.36265,
+     -41.18473
+    ]
+   },
+   "properties": {
+    "mmsi": 503190710,
+    "name": "PV SWIFT",
+    "type": 50,
+    "sog": 0,
+    "cog": 27,
+    "heading": 165,
+    "seen": "2026-11-13T11:06:49Z",
+    "length": 17,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503191020,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.14361,
+     -27.06358
+    ]
+   },
+   "properties": {
+    "mmsi": 503191020,
+    "name": "BR-11",
+    "type": 51,
+    "callsign": "BR11",
+    "sog": 0,
+    "cog": 273.7,
+    "heading": 352,
+    "seen": "2026-11-11T00:12:37Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503193060,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24854,
+     -33.80187
+    ]
+   },
+   "properties": {
+    "mmsi": 503193060,
+    "name": "BAREFOOT EDGE-99%",
+    "sog": 0.1,
+    "cog": 277.5,
+    "seen": "2026-11-13T11:10:00Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503193770,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.21821,
+     -33.85288
+    ]
+   },
+   "properties": {
+    "mmsi": 503193770,
+    "name": "WP-401",
+    "type": 37,
+    "callsign": "WP401",
+    "sog": 6.9,
+    "cog": 299.8,
+    "heading": 304,
+    "seen": "2026-11-13T11:11:15Z",
+    "length": 7,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503193790,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.76108,
+     -32.91758
+    ]
+   },
+   "properties": {
+    "mmsi": 503193790,
+    "name": "WP43",
+    "type": 37,
+    "sog": 0,
+    "cog": 235.4,
+    "heading": 116,
+    "seen": "2026-11-10T04:26:01Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503195750,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.74035,
+     -32.06263
+    ]
+   },
+   "properties": {
+    "mmsi": 503195750,
+    "name": "R100",
+    "type": 51,
+    "callsign": "466132",
+    "sog": 0,
+    "seen": "2026-11-13T11:03:24Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503199450,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.70545,
+     -32.2347
+    ]
+   },
+   "properties": {
+    "mmsi": 503199450,
+    "type": 55,
+    "callsign": "AFP307",
+    "sog": 0.7,
+    "cog": 265.7,
+    "seen": "2026-11-11T02:43:05Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503225100,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.20003,
+     -33.84222
+    ]
+   },
+   "properties": {
+    "mmsi": 503225100,
+    "name": "NEMESIS",
+    "type": 37,
+    "callsign": "WP11",
+    "sog": 0,
+    "cog": 339.6,
+    "seen": "2026-11-13T11:10:48Z",
+    "length": 32,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503345200,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.19889,
+     -33.86818
+    ]
+   },
+   "properties": {
+    "mmsi": 503345200,
+    "name": "CHARLOTTE",
+    "type": 60,
+    "callsign": "VJ5689",
+    "sog": 1.7,
+    "cog": 14.4,
+    "heading": 180,
+    "seen": "2026-11-13T11:11:14Z",
+    "length": 25,
+    "kind": "sar",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503360000,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.54268,
+     -28.18017
+    ]
+   },
+   "properties": {
+    "mmsi": 503360000,
+    "name": "WP27",
+    "type": 37,
+    "callsign": "VHN9841",
+    "sog": 0,
+    "cog": 234.9,
+    "heading": 284,
+    "seen": "2026-11-11T01:15:12Z",
+    "length": 16,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503371000,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.77277,
+     -16.94905
+    ]
+   },
+   "properties": {
+    "mmsi": 503371000,
+    "name": "ABFC STORM BAY",
+    "callsign": "VMGV",
+    "sog": 0.1,
+    "cog": 0,
+    "seen": "2026-11-13T02:49:28Z",
+    "length": 35,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503427100,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.76048,
+     -32.91951
+    ]
+   },
+   "properties": {
+    "mmsi": 503427100,
+    "name": "SPITFIRE",
+    "type": 53,
+    "callsign": "VNW3568",
+    "sog": 0,
+    "cog": 270,
+    "heading": 167,
+    "seen": "2026-11-11T04:09:40Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503440200,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.10531,
+     -27.19423
+    ]
+   },
+   "properties": {
+    "mmsi": 503440200,
+    "name": "CG33 DOLPHINS",
+    "type": 51,
+    "callsign": "CG-33",
+    "sog": 0,
+    "seen": "2026-11-11T07:31:04Z",
+    "length": 5,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503500500,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.24077,
+     -23.82948
+    ]
+   },
+   "properties": {
+    "mmsi": 503500500,
+    "name": "GLADSTONE 1",
+    "type": 51,
+    "sog": 0,
+    "cog": 287.5,
+    "seen": "2026-11-09T07:48:55Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503528400,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.18976,
+     -27.45236
+    ]
+   },
+   "properties": {
+    "mmsi": 503528400,
+    "name": "MN22",
+    "type": 51,
+    "callsign": "MN22",
+    "sog": 0,
+    "cog": 280.7,
+    "heading": 155,
+    "seen": "2026-11-08T07:50:30Z",
+    "length": 9,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503592100,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.2474,
+     -33.80572
+    ]
+   },
+   "properties": {
+    "mmsi": 503592100,
+    "name": "MARINE RESCUE MH30",
+    "type": 50,
+    "callsign": "MH30",
+    "sog": 0.1,
+    "cog": 0,
+    "heading": 241,
+    "seen": "2026-11-13T03:51:55Z",
+    "length": 12,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503623300,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.11723,
+     -27.4315
+    ]
+   },
+   "properties": {
+    "mmsi": 503623300,
+    "name": "K.I. ROSS",
+    "type": 55,
+    "callsign": "VHQ3926",
+    "sog": 0,
+    "cog": 188.2,
+    "heading": 218,
+    "seen": "2026-11-11T00:56:43Z",
+    "length": 24,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503640500,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     144.66612,
+     -38.26251
+    ]
+   },
+   "properties": {
+    "mmsi": 503640500,
+    "name": "PV MALU BAU",
+    "type": 50,
+    "callsign": "2DAR9",
+    "sog": 0,
+    "cog": 170.5,
+    "seen": "2026-11-13T11:08:29Z",
+    "length": 18,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503674100,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.18297,
+     -33.86947
+    ]
+   },
+   "properties": {
+    "mmsi": 503674100,
+    "name": "MA079",
+    "type": 55,
+    "callsign": "MA079",
+    "sog": 0,
+    "cog": 215.7,
+    "seen": "2026-11-11T02:20:34Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503681100,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.2861,
+     -27.51503
+    ]
+   },
+   "properties": {
+    "mmsi": 503681100,
+    "name": "MARINE RESCUE RB11",
+    "type": 51,
+    "callsign": "RB2",
+    "sog": 0,
+    "seen": "2026-11-13T01:36:38Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503689700,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.14355,
+     -27.06344
+    ]
+   },
+   "properties": {
+    "mmsi": 503689700,
+    "name": "BRIBIE 3",
+    "type": 51,
+    "sog": 0.1,
+    "cog": 48.5,
+    "seen": "2026-11-10T00:03:30Z",
+    "length": 5,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503692600,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     115.74799,
+     -32.0652
+    ]
+   },
+   "properties": {
+    "mmsi": 503692600,
+    "name": "PV HAMELIN",
+    "type": 55,
+    "callsign": "VNW5350",
+    "sog": 0,
+    "cog": 179.3,
+    "seen": "2026-11-13T07:35:29Z",
+    "length": 22,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503695300,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.78895,
+     -32.92364
+    ]
+   },
+   "properties": {
+    "mmsi": 503695300,
+    "name": "PV SEVER",
+    "sog": 0,
+    "heading": 205,
+    "seen": "2026-11-13T10:35:06Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503695900,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.12615,
+     -26.68551
+    ]
+   },
+   "properties": {
+    "mmsi": 503695900,
+    "name": "MARINE RESCUE ONE",
+    "type": 51,
+    "callsign": "MR1",
+    "sog": 0,
+    "seen": "2026-11-12T22:52:45Z",
+    "length": 6,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503705200,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.28628,
+     -27.51503
+    ]
+   },
+   "properties": {
+    "mmsi": 503705200,
+    "name": "MARINE RESCUE RB12",
+    "type": 51,
+    "callsign": "RB III",
+    "sog": 0.1,
+    "cog": 62.1,
+    "seen": "2026-11-09T23:48:51Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503710100,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.12607,
+     -26.68551
+    ]
+   },
+   "properties": {
+    "mmsi": 503710100,
+    "name": "MOOLOOLABA RESCUE",
+    "sog": 0,
+    "heading": 98,
+    "seen": "2026-11-08T05:54:43Z",
+    "length": 14,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503715700,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.14718,
+     -34.07273
+    ]
+   },
+   "properties": {
+    "mmsi": 503715700,
+    "name": "MARINE RESCUE ED30",
+    "type": 51,
+    "callsign": "ED-30",
+    "sog": 0,
+    "cog": 19.1,
+    "heading": 121,
+    "seen": "2026-11-13T02:32:31Z",
+    "length": 11,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503730800,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.20288,
+     -33.85558
+    ]
+   },
+   "properties": {
+    "mmsi": 503730800,
+    "name": "PV SHARP",
+    "type": 50,
+    "callsign": "413524",
+    "sog": 0,
+    "heading": 300,
+    "seen": "2026-11-13T11:11:12Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503771500,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.64152,
+     -33.0685
+    ]
+   },
+   "properties": {
+    "mmsi": 503771500,
+    "name": "MARINE RESCUE LM-30",
+    "sog": 0,
+    "cog": 170.5,
+    "seen": "2026-11-06T21:15:17Z",
+    "length": 10,
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 503778300,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.40287,
+     -27.49315
+    ]
+   },
+   "properties": {
+    "mmsi": 503778300,
+    "name": "SB31",
+    "type": 51,
+    "callsign": "31134QC",
+    "sog": 0,
+    "seen": "2026-11-12T00:22:44Z",
+    "kind": "vessel",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 529011000,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.7795,
+     -16.93709
+    ]
+   },
+   "properties": {
+    "mmsi": 529011000,
+    "name": "RKS TEANOAI II",
+    "type": 55,
+    "callsign": "T3GP",
+    "sog": 0,
+    "cog": 261.6,
+    "heading": 351,
+    "seen": "2026-11-13T11:08:46Z",
+    "length": 39,
+    "kind": "vessel",
+    "flag": "KI"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 557009600,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145.77941,
+     -16.93652
+    ]
+   },
+   "properties": {
+    "mmsi": 557009600,
+    "name": "RSIPV TARO",
+    "type": 55,
+    "callsign": "H4TP",
+    "sog": 0,
+    "cog": 271.5,
+    "heading": 351,
+    "seen": "2026-11-13T11:03:52Z",
+    "length": 39,
+    "kind": "vessel",
+    "flag": "SB"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 972692119,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     144.77295,
+     -38.35553
+    ]
+   },
+   "properties": {
+    "mmsi": 972692119,
+    "sog": 0,
+    "cog": 145.5,
+    "seen": "2026-11-11T01:03:07Z",
+    "kind": "sar"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 985030249,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     150.79007,
+     -23.16092
+    ]
+   },
+   "properties": {
+    "mmsi": 985030249,
+    "name": "KANIMBLA T8-99%",
+    "sog": 0.3,
+    "cog": 238.7,
+    "seen": "2026-11-12T06:05:41Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 985030309,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     150.79003,
+     -23.16084
+    ]
+   },
+   "properties": {
+    "mmsi": 985030309,
+    "name": "KANIMBLA T8-99%",
+    "sog": 0.2,
+    "cog": 357.8,
+    "seen": "2026-11-12T05:15:17Z",
+    "kind": "gear"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995031018,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.84967,
+     -32.89717
+    ]
+   },
+   "properties": {
+    "mmsi": 995031018,
+    "name": "ISOLATED DANGER BUOY",
+    "type": 28,
+    "seen": "2026-11-10T14:03:04Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036053,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.8775,
+     -32.93333
+    ]
+   },
+   "properties": {
+    "mmsi": 995036053,
+    "name": "PILOT BOARDING GROUN",
+    "type": 1,
+    "seen": "2026-11-10T14:04:56Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036060,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.86333,
+     -32.96278
+    ]
+   },
+   "properties": {
+    "mmsi": 995036060,
+    "name": "PILOT BOARDING GROUN",
+    "type": 1,
+    "seen": "2026-11-10T13:51:04Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036061,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.87222,
+     -32.98333
+    ]
+   },
+   "properties": {
+    "mmsi": 995036061,
+    "name": "PILOT BOARDING GROUN",
+    "type": 1,
+    "seen": "2026-11-10T13:18:12Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036070,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.4907,
+     -26.97025
+    ]
+   },
+   "properties": {
+    "mmsi": 995036070,
+    "name": "BNE-FLINDERS REEF",
+    "type": 9,
+    "seen": "2026-11-13T11:10:59Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036071,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.29802,
+     -27.05786
+    ]
+   },
+   "properties": {
+    "mmsi": 995036071,
+    "name": "BNE-M1R STARBOARD",
+    "type": 25,
+    "seen": "2026-11-13T11:10:58Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036072,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.14952,
+     -26.83042
+    ]
+   },
+   "properties": {
+    "mmsi": 995036072,
+    "name": "BNE NW2R SPEC MARK",
+    "type": 19,
+    "seen": "2026-11-13T11:10:08Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036097,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.22305,
+     -27.29047
+    ]
+   },
+   "properties": {
+    "mmsi": 995036097,
+    "name": "BNE SWMARK 1.4'EB",
+    "type": 29,
+    "seen": "2026-11-13T11:10:57Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036098,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.17703,
+     -26.81202
+    ]
+   },
+   "properties": {
+    "mmsi": 995036098,
+    "name": "BNE FAIRWAY",
+    "type": 30,
+    "seen": "2026-11-13T11:09:38Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036099,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.32283,
+     -27.09797
+    ]
+   },
+   "properties": {
+    "mmsi": 995036099,
+    "name": "BNE M4-M6 PORT MARK",
+    "type": 13,
+    "seen": "2026-11-13T11:08:55Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036114,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.1719,
+     -26.81658
+    ]
+   },
+   "properties": {
+    "mmsi": 995036114,
+    "name": "BNE F/W STBD ONE",
+    "type": 25,
+    "seen": "2026-11-13T11:11:05Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036115,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.16261,
+     -26.82006
+    ]
+   },
+   "properties": {
+    "mmsi": 995036115,
+    "name": "BNE F/W STBD TWO",
+    "type": 25,
+    "seen": "2026-11-13T11:10:57Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036116,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.14905,
+     -26.82313
+    ]
+   },
+   "properties": {
+    "mmsi": 995036116,
+    "name": "BNE F/W STBD THREE",
+    "type": 25,
+    "seen": "2026-11-13T11:08:26Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036117,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.14559,
+     -26.82786
+    ]
+   },
+   "properties": {
+    "mmsi": 995036117,
+    "name": "BNE NW2 STBD",
+    "type": 25,
+    "seen": "2026-11-13T11:09:06Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 995036160,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     153.1729,
+     -27.35841
+    ]
+   },
+   "properties": {
+    "mmsi": 995036160,
+    "name": "BNE BC17 SPECIAL",
+    "type": 19,
+    "seen": "2026-11-09T07:01:08Z",
+    "kind": "aton",
+    "flag": "AU"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 999900442,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     151.22701,
+     -33.86106
+    ]
+   },
+   "properties": {
+    "mmsi": 999900442,
+    "name": "PETREL442",
+    "seen": "2026-11-10T04:41:28Z",
+    "kind": "aton"
+   }
+  }
+ ]
+}
