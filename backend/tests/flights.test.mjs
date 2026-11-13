@@ -518,6 +518,7 @@ const PRIVATE_KEYS = [
   'state',
   'takeoffSeen',
   'track',
+  'trackHidden',
 ];
 
 void test('rescue helicopter: airborne, landed, back at base; a landing elsewhere is never named', () => {
@@ -711,14 +712,17 @@ void test('history: 7 days per aircraft, and a running flight survives a restart
   );
   const again = new FlightTracker({ db, now: T0 + 35 * MIN });
   assert.equal(again.state(rescue.hex, T0 + 35 * MIN), 'airborne');
+  assert.equal(
+    again.current(rescue.hex).track.length,
+    1,
+    'the point from before the restart is kept',
+  );
   again.observe(rescue, ground(base, T0 + 45 * MIN), [], T0 + 45 * MIN);
   const flights = again.flights(rescue.hex, T0 + 50 * MIN);
   assert.equal(flights.length, 2);
-  assert.equal(
-    flights[0].track.length,
-    2,
-    'the point from before the restart is kept',
-  );
+  // A finished rescue flight keeps no track in the history (privacy).
+  assert.deepEqual(flights[0].track, []);
+  assert.equal(flights[0].trackHidden, true);
   // Eight days on, a new start finds nothing left.
   const later = T0 + HISTORY_MS + 24 * 60 * MIN;
   const old = new FlightTracker({ db, now: later });

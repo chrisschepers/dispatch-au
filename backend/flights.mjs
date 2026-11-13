@@ -546,6 +546,12 @@ export class FlightTracker {
     };
     if (PRIVATE_ROLES.has(f.role)) {
       out.landing = f.endedAt ? (f.landing ?? null) : null;
+      // A finished rescue or medical flight keeps no track in the history: the
+      // line would end on the landing place (a hospital, an accident scene),
+      // which is exactly what `landing` refuses to name. While the aircraft is
+      // airborne its position is on the map anyway, so that track stays.
+      out.trackHidden = !!f.endedAt;
+      if (f.endedAt) out.track = [];
       return out;
     }
     out.fires = f.links.map((l) => ({
