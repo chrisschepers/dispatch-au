@@ -14,6 +14,8 @@ import { VesselService } from './vessels.mjs';
 import { Articles } from './articles.mjs';
 import { mapData } from './site-map.mjs';
 import { places } from './places.mjs';
+import { Dashboard } from './dashboard.mjs';
+import { DASHBOARD_CSP, DASHBOARD_HTML } from './dashboard-page.mjs';
 
 // Device routes for push alerts (docs/PUSH-API.md). Small JSON bodies only.
 function readJson(req, limit = 8192) {
@@ -115,6 +117,7 @@ export function createServer(
   aircraft = null,
   articles = null,
   vessels = null,
+  dashboard = null,
 ) {
   const news = articles ?? new Articles(store.db);
   const pageCache = new Map();
@@ -158,6 +161,44 @@ export function createServer(
       return send(405, { error: 'Method not allowed' });
     try {
       if (url.pathname === '/health') return send(200, { ok: true });
+      // Owner dashboard (dashboard.mjs): a page without data, and the counts
+      // behind a key. Both are 404 until ADMIN_KEY is set, and neither is
+      // for other websites to read.
+      if (url.pathname === '/dashboard' || url.pathname === '/v1/admin/stats') {
+        if (!dashboard?.key()) return send(404, { error: 'Not found' });
+        res.removeHeader('Access-Control-Allow-Origin');
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+        res.setHeader('Referrer-Policy', 'no-referrer');
+        if (url.pathname === '/dashboard') {
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.setHeader('Content-Security-Policy', DASHBOARD_CSP);
+          res.setHeader('X-Frame-Options', 'DENY');
+          const out = encode(req, res, DASHBOARD_HTML);
+          res.writeHead(200);
+          return res.end(out);
+        }
+        // Who is guessing: the last hop in X-Forwarded-For (the one a proxy
+        // adds itself, where a caller can only put names in front), or the
+        // socket without a proxy. Only used to slow down wrong keys.
+        const client =
+          String(req.headers['x-forwarded-for'] ?? '')
+            .split(',')
+            .pop()
+            .trim() ||
+          req.socket.remoteAddress ||
+          'unknown';
+        const verdict = dashboard.check(req.headers['x-admin-key'], client);
+        if (verdict === 'limited') {
+          res.setHeader('Retry-After', '300');
+          return send(429, { error: 'Too many attempts' });
+        }
+        if (verdict !== 'ok') return send(401, { error: 'Unauthorised' });
+        const stats = dashboard.stats();
+        return stats
+          ? send(200, stats)
+          : send(503, { error: 'Statistics unavailable' });
+      }
       // Firefighting, rescue, police and medical aircraft (aircraft.mjs).
       // Every call counts as someone looking at the layer, so never cached.
       if (url.pathname === '/v1/aircraft') {
@@ -352,7 +393,31 @@ async function main() {
   const vessels = new VesselService({ db: store.db });
   setInterval(() => void vessels.tick(), 30_000).unref();
   void vessels.tick();
-  const server = createServer(store, push, aircraft, articles, vessels);
+  // Owner dashboard: the day's figures go to daily_stats at start and every
+  // hour, so the history survives devices that are removed later.
+  const dashboard = new Dashboard(store.db, { store });
+  const snapshot = () => {
+    try {
+      dashboard.snapshot();
+    } catch (error) {
+      console.warn(
+        JSON.stringify({
+          dashboard: 'snapshot failed',
+          error: String(error).slice(0, 160),
+        }),
+      );
+    }
+  };
+  snapshot();
+  setInterval(snapshot, 3600_000).unref();
+  const server = createServer(
+    store,
+    push,
+    aircraft,
+    articles,
+    vessels,
+    dashboard,
+  );
   // Keeps the 3-minute rhythm while someone has the layer open.
   setInterval(() => void aircraft.tick(), 30_000).unref();
   // Rebuilds the fleet from NAFC and the aircraft lists once a day.
