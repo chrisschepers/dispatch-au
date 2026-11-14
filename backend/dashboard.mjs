@@ -1,10 +1,10 @@
 // Owner dashboard: how the app is doing, from what this service already knows.
 //
-//  - GET /v1/admin/stats  counts only, with the header `x-admin-key`;
-//  - GET /dashboard       one page without any data in it (dashboard-page.mjs).
+//  - GET /v1/stats   counts only (also at /v1/admin/stats, the old address);
+//  - GET /dashboard   one page without any data in it (dashboard-page.mjs).
 //
-// Both answer 404 while ADMIN_KEY is unset or shorter than 24 characters, so
-// the routes are never open by accident.
+// Open, without a key (wish of the owner, 15-11-2026). That is why only
+// counts ever leave this module, and why they are cached for a minute.
 //
 // Privacy: nothing per device ever leaves this module. No push tokens, device
 // ids, install hashes or coordinates, only counts; an app version that fewer
@@ -17,19 +17,14 @@
 // History: `created_at` only exists for devices still in the table, so an
 // hourly snapshot writes the day's figures to `daily_stats`. Those rows start
 // on the day this shipped; earlier days in the series come from `created_at`.
-import crypto from 'node:crypto';
 import { sources } from './feeds.mjs';
 import { skippedByRegion } from './skipped.mjs';
 
 export const DASHBOARD_TZ = 'Australia/Melbourne';
 export const SERIES_DAYS = 60;
 const CACHE_MS = 60_000;
-const MIN_KEY_LENGTH = 24;
 const MIN_GROUP = 3;
 const TOP_VERSIONS = 8;
-// Wrong keys: ten per client in five minutes, then 429 until the window ends.
-const FAIL_LIMIT = 10;
-const FAIL_WINDOW_MS = 5 * 60_000;
 const HOUR = 3600_000;
 const DAY = 24 * HOUR;
 
@@ -94,28 +89,13 @@ export function shiftDay(day, days) {
 
 const iso = (ms) => new Date(ms).toISOString();
 
-/** Is the dashboard switched on? Only with a key of 24 characters or more. */
-export function adminKey(env = process.env) {
-  const key = String(env.ADMIN_KEY ?? '').trim();
-  return key.length >= MIN_KEY_LENGTH ? key : null;
-}
-
-/** Compares in constant time, also when the lengths differ. */
-export function keyMatches(given, key) {
-  if (typeof given !== 'string' || !key) return false;
-  const digest = (v) => crypto.createHash('sha256').update(v).digest();
-  return crypto.timingSafeEqual(digest(given), digest(key));
-}
-
 const RANK_NAMES = ['incident', 'advice', 'watchAndAct', 'emergencyWarning'];
 
 export class Dashboard {
-  constructor(db, { store = null, env = process.env } = {}) {
+  constructor(db, { store = null } = {}) {
     this.db = db;
     this.store = store;
-    this.env = env;
     this.cache = null;
-    this.failures = new Map();
     // The device tables belong to push.mjs; they exist before this runs in
     // the server. Without them (a bare store in a test) the indexes wait.
     db.exec(`
@@ -143,29 +123,6 @@ export class Dashboard {
     `);
     this.ready = true;
     return true;
-  }
-
-  key() {
-    return adminKey(this.env);
-  }
-
-  /**
-   * 'ok', 'wrong' or 'limited' for a request with this key from this client.
-   * A client over the limit is refused without looking at its key.
-   */
-  check(given, client, now = Date.now()) {
-    const f = this.failures.get(client);
-    if (f && now - f.since > FAIL_WINDOW_MS) this.failures.delete(client);
-    else if (f && f.n >= FAIL_LIMIT) return 'limited';
-    if (keyMatches(given, this.key())) return 'ok';
-    const cur = this.failures.get(client) ?? { n: 0, since: now };
-    cur.n += 1;
-    // Insertion order is age: the oldest goes when the list is full.
-    this.failures.delete(client);
-    this.failures.set(client, cur);
-    if (this.failures.size > 500)
-      this.failures.delete(this.failures.keys().next().value);
-    return 'wrong';
   }
 
   #count(sql, ...args) {

@@ -161,11 +161,14 @@ export function createServer(
       return send(405, { error: 'Method not allowed' });
     try {
       if (url.pathname === '/health') return send(200, { ok: true });
-      // Owner dashboard (dashboard.mjs): a page without data, and the counts
-      // behind a key. Both are 404 until ADMIN_KEY is set, and neither is
-      // for other websites to read.
-      if (url.pathname === '/dashboard' || url.pathname === '/v1/admin/stats') {
-        if (!dashboard?.key()) return send(404, { error: 'Not found' });
+      // Owner dashboard (dashboard.mjs): a page without data, and the counts.
+      // Open, without a key; neither is for other websites to read.
+      if (
+        url.pathname === '/dashboard' ||
+        url.pathname === '/v1/stats' ||
+        url.pathname === '/v1/admin/stats'
+      ) {
+        if (!dashboard) return send(404, { error: 'Not found' });
         res.removeHeader('Access-Control-Allow-Origin');
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('X-Robots-Tag', 'noindex, nofollow');
@@ -178,22 +181,6 @@ export function createServer(
           res.writeHead(200);
           return res.end(out);
         }
-        // Who is guessing: the last hop in X-Forwarded-For (the one a proxy
-        // adds itself, where a caller can only put names in front), or the
-        // socket without a proxy. Only used to slow down wrong keys.
-        const client =
-          String(req.headers['x-forwarded-for'] ?? '')
-            .split(',')
-            .pop()
-            .trim() ||
-          req.socket.remoteAddress ||
-          'unknown';
-        const verdict = dashboard.check(req.headers['x-admin-key'], client);
-        if (verdict === 'limited') {
-          res.setHeader('Retry-After', '300');
-          return send(429, { error: 'Too many attempts' });
-        }
-        if (verdict !== 'ok') return send(401, { error: 'Unauthorised' });
         const stats = dashboard.stats();
         return stats
           ? send(200, stats)

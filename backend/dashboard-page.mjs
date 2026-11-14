@@ -1,10 +1,6 @@
 // The owner dashboard page (GET /dashboard). One self-contained document: no
 // external script, font or image, and no data. The numbers come from
-// /v1/admin/stats, fetched by the page with the key the owner gives it.
-//
-// The key travels in the URL fragment (/dashboard#k=...), which a browser
-// never sends to a server. The page moves it to sessionStorage and takes it
-// out of the address bar.
+// /v1/stats, which is open (counts only).
 //
 // The Content-Security-Policy names the hash of the one style block and the
 // one script below, so nothing else can run here, inline or not. The script
@@ -80,31 +76,11 @@ input{font:inherit;flex:1 1 220px;min-width:0;padding:8px 10px;border:1px solid 
 const SCRIPT = `
 (function () {
   'use strict';
-  var KEY = 'enm_admin_key';
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var $ = function (id) { return document.getElementById(id); };
   // The SVG namespace, read from the empty element in the page.
   var SVG = $('ns').namespaceURI;
   var last = null;
-
-  function store(action, value) {
-    try {
-      if (action === 'set') sessionStorage.setItem(KEY, value);
-      else if (action === 'clear') sessionStorage.removeItem(KEY);
-      else return sessionStorage.getItem(KEY);
-    } catch (e) { /* private window: the key lives in memory only */ }
-    return null;
-  }
-  var memoryKey = null;
-  function key() { return memoryKey || store('get'); }
-  function setKey(k) { memoryKey = k; if (k) store('set', k); else store('clear'); }
-
-  // The key from the fragment, then out of the address bar and the history.
-  var m = /(?:^#|&)k=([^&]+)/.exec(location.hash);
-  if (m) {
-    try { setKey(decodeURIComponent(m[1])); } catch (e) { /* not a key */ }
-    history.replaceState(null, '', location.pathname);
-  }
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -140,10 +116,9 @@ const SCRIPT = `
     return 10 * p;
   }
 
-  function show(signedIn, message) {
-    $('signin').hidden = signedIn;
-    $('board').hidden = !signedIn;
-    $('signout').hidden = !signedIn;
+  function show(ok, message) {
+    $('board').hidden = !ok;
+    $('msg').hidden = ok;
     $('msg').textContent = message || '';
   }
 
@@ -324,14 +299,10 @@ const SCRIPT = `
 
   var busy = false;
   function load() {
-    var k = key();
-    if (!k) { show(false); return; }
     if (busy) return;
     busy = true;
-    fetch('/v1/admin/stats', { headers: { 'x-admin-key': k }, cache: 'no-store' })
+    fetch('/v1/stats', { cache: 'no-store' })
       .then(function (res) {
-        if (res.status === 401) { setKey(null); show(false, 'That key was not accepted.'); return null; }
-        if (res.status === 429) { show(!!last, 'Too many wrong keys. Try again in five minutes.'); return null; }
         if (res.status === 404) { show(false, 'The dashboard is switched off on the server.'); return null; }
         if (!res.ok) throw new Error('status ' + res.status);
         return res.json();
@@ -341,13 +312,6 @@ const SCRIPT = `
       .then(function () { busy = false; });
   }
 
-  $('signin').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var v = $('key').value.trim();
-    $('key').value = '';
-    if (v) { setKey(v); load(); }
-  });
-  $('signout').addEventListener('click', function () { setKey(null); last = null; show(false); });
   var resize = null;
   window.addEventListener('resize', function () {
     clearTimeout(resize);
@@ -375,15 +339,9 @@ const BODY = `<!doctype html>
 <header>
 <h1>Emergencies Near Me</h1>
 <span class="meta" id="updated">Owner dashboard</span>
-<button type="button" id="signout" hidden>Forget key</button>
 </header>
 
-<form class="card" id="signin" hidden autocomplete="off">
-<label for="key">Admin key</label>
-<input id="key" type="password" autocomplete="off" spellcheck="false" required>
-<button type="submit">Open</button>
-<p class="msg" id="msg" role="alert"></p>
-</form>
+<p class="card msg" id="msg" role="alert" hidden></p>
 
 <div id="board" hidden>
 <section class="tiles" aria-label="Installs">

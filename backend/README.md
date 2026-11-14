@@ -82,10 +82,8 @@ Switches (Railway variables):
 
 `dashboard.mjs` and `dashboard-page.mjs`: one page for the owner that shows how the app is doing, from what this service already knows. Store figures (App Store, Google Play, RevenueCat) are not connected; the page has an empty "Stores" section for them.
 
-- Switch it on with the Railway variable `ADMIN_KEY`, a random string of at least 24 characters (for example `openssl rand -hex 32`). Without it, or with a shorter one, `/dashboard` and `/v1/admin/stats` both answer 404.
-- Open `https://<host>/dashboard#k=<key>`. The part after `#` is never sent to the server; the page moves the key to `sessionStorage` (this tab only), takes it out of the address bar and refreshes every 60 seconds. Without a key in the address it shows a field to paste one. "Forget key" removes it.
-- `GET /dashboard` is one self-contained page without any data: no external script, font or image, `Cache-Control: no-store`, `X-Robots-Tag: noindex`, and a Content-Security-Policy that only allows the page's own style and script (by hash) and requests to this server.
-- `GET /v1/admin/stats` with the header `x-admin-key`: counts only. 401 for a wrong or missing key; after ten wrong keys in five minutes a client gets 429 until the window ends, without its key being looked at. The key is not accepted in the query string. The answer is computed at most once a minute and kept in memory; the feed is not involved.
+- Open `https://<host>/dashboard`. It is open, without a key (owner's choice, 15-11-2026), refreshes every 60 seconds and is marked `noindex`.
+- `GET /v1/stats` (also `/v1/admin/stats`, the old address): counts only, nothing per device. Computed at most once a minute and kept in memory; the feed is not involved.
 
 What it returns: `generatedAt`, `timeZone` (`Australia/Melbourne`), `today`, `cacheSeconds`, `devices` (`total`, `new {today, last7d, last30d}`, `active {last24h, last7d, last30d}`, `platforms {ios, android, unknown}`, `versions [{version, devices}]`, `withPushToken`, `notificationsEnabled`, `withLocation`), `series {days: 60, snapshotsSince, daily [{day, new, total, active24h, pushes}]}`, `pushes {today, last7d, byRank7d {incident, advice, watchAndAct, emergencyWarning}}`, `sources [{region, state, alert, fetchedAt, lastAttemptAt, consecutiveFailures, error, skipped}]` (as `/v1/status`) and `stores {connected: false}`.
 
