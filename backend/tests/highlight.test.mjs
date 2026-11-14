@@ -90,7 +90,7 @@ const plane = (hex, o = {}) => ({
   ...o,
 });
 
-test('selection: the warning level comes first, whatever the size', () => {
+void test('selection: the warning level comes first, whatever the size', () => {
   const s = pick([
     nsw({ id: 'nsw:incident:1', level: 'Advice', sizeHa: 5000 }),
     nsw({ id: 'nsw:incident:2', level: 'Emergency Warning', sizeHa: 3 }),
@@ -101,7 +101,7 @@ test('selection: the warning level comes first, whatever the size', () => {
   assert.match(s.why, /only Emergency Warning/);
 });
 
-test('selection: then aircraft, then hectares, then resources, then duration', () => {
+void test('selection: then aircraft, then hectares, then resources, then duration', () => {
   const air = { 'nsw:incident:small': [plane('a'), plane('b'), plane('b')] };
   const a = pick(
     [
@@ -141,7 +141,7 @@ test('selection: then aircraft, then hectares, then resources, then duration', (
   assert.equal(d.deciding, 'durationMin');
 });
 
-test('selection: a missing figure ranks below any real one and is never 0', () => {
+void test('selection: a missing figure ranks below any real one and is never 0', () => {
   assert.equal(rankKey(nsw({ sizeHa: null })).sizeHa, null);
   assert.equal(
     rankKey(nsw({ sizeHa: '1840' })).sizeHa,
@@ -155,7 +155,7 @@ test('selection: a missing figure ranks below any real one and is never 0', () =
   assert.equal(s.chosen.id, 'nsw:incident:2');
 });
 
-test('selection: no planned burns, no medical calls, no warning-only areas, no SA', () => {
+void test('selection: no planned burns, no medical calls, no warning-only areas, no SA', () => {
   const rows = [
     nsw({
       id: 'nsw:incident:hr',
@@ -231,7 +231,7 @@ test('selection: no planned burns, no medical calls, no warning-only areas, no S
   );
 });
 
-test('selection: a featured incident can be left out, and nothing qualifying gives null', () => {
+void test('selection: a featured incident can be left out, and nothing qualifying gives null', () => {
   const rows = [
     nsw({ id: 'nsw:incident:1', sizeHa: 900 }),
     nsw({ id: 'nsw:incident:2', sizeHa: 20 }),
@@ -245,7 +245,7 @@ test('selection: a featured incident can be left out, and nothing qualifying giv
   assert.equal(none.why, null);
 });
 
-test('the big number is never invented', () => {
+void test('the big number is never invented', () => {
   assert.equal(chooseNumber({ aircraft: 1, sizeHa: null }), null);
   assert.equal(chooseNumber({ aircraft: 0, sizeHa: 9.4 }), null);
   assert.equal(chooseNumber({ aircraft: 0, sizeHa: '1840' }), null);
@@ -271,7 +271,7 @@ test('the big number is never invented', () => {
   );
 });
 
-test('moments: only real times, at most three, and "out of control" is not control', () => {
+void test('moments: only real times, at most three, and "out of control" is not control', () => {
   const tz = 'Australia/Sydney';
   // From the feed alone: first listed and the latest update with its status.
   const feedOnly = chooseSteps({
@@ -336,7 +336,7 @@ test('moments: only real times, at most three, and "out of control" is not contr
   assert.equal(one[0].time, '12:58 pm');
 });
 
-test('the warning level pill uses the official AWS colours', () => {
+void test('the warning level pill uses the official AWS colours', () => {
   assert.deepEqual(
     Object.values(AWS).map((l) => [l.label, l.bg]),
     [
@@ -366,7 +366,7 @@ test('the warning level pill uses the official AWS colours', () => {
   assert.ok(!/--bg:#(FBE032|FF7900|D6001C)/.test(none));
 });
 
-test('scene: headline, place, date and the source as source-config requires', () => {
+void test('scene: headline, place, date and the source as source-config requires', () => {
   assert.deepEqual(splitHeadline('Bush Fire'), ['Bush', 'fire']);
   assert.deepEqual(splitHeadline('GRASS FIRE'), ['Grass', 'fire']);
   assert.deepEqual(splitHeadline('Fire'), ['', 'Fire']);
@@ -392,7 +392,7 @@ test('scene: headline, place, date and the source as source-config requires', ()
   assert.ok(html.includes('width:1080px;height:1350px'));
 });
 
-test('feed text cannot break the page', () => {
+void test('feed text cannot break the page', () => {
   const evil = nsw({
     title: 'Bush <script>alert(1)</script>',
     location: 'Main "Rd" </div><img src=x onerror=alert(1)>, WOLLOMBI 2325',
@@ -426,7 +426,7 @@ test('feed text cannot break the page', () => {
     }
 });
 
-test('reel: end card with app icon, the official App Store badge only, and "Link in bio"', () => {
+void test('reel: end card with app icon, the official App Store badge only, and "Link in bio"', () => {
   const scene = buildScene({ incident: nsw(), now: NOW });
   const withBadge = renderSceneHtml(scene, 'reel', {
     fonts: '',
@@ -456,7 +456,7 @@ test('reel: end card with app icon, the official App Store badge only, and "Link
   );
 });
 
-test("the App Store badge in the repo is Apple's file, unmodified", () => {
+void test("the App Store badge in the repo is Apple's file, unmodified", () => {
   const hash = createHash('sha256')
     .update(readFileSync(BADGE_PATH))
     .digest('hex');
@@ -470,7 +470,7 @@ test("the App Store badge in the repo is Apple's file, unmodified", () => {
   );
 });
 
-test('caption: essentials first, why, independence, official link, attribution, hashtags', () => {
+void test('caption: essentials first, why, independence, official link, attribution, hashtags', () => {
   const fx = watchAndActFixture();
   const selection = selectIncidentOfTheDay(fx.feed, {
     aircraftFor: (id) => fx.aircraft[id],
@@ -532,7 +532,7 @@ test('caption: essentials first, why, independence, official link, attribution, 
   );
 });
 
-test('fixture: Watch and Act with three aircraft gives the rich variant', () => {
+void test('fixture: Watch and Act with three aircraft gives the rich variant', () => {
   const fx = watchAndActFixture();
   const selection = selectIncidentOfTheDay(fx.feed, {
     aircraftFor: (id) => fx.aircraft[id],
@@ -564,7 +564,7 @@ test('fixture: Watch and Act with three aircraft gives the rich variant', () => 
   assert.ok(scene.area.length >= 1);
 });
 
-test('ffmpeg: H.264 yuv420p at 25 fps, the whole reel, moov first', () => {
+void test('ffmpeg: H.264 yuv420p at 25 fps, the whole reel, moov first', () => {
   const a = ffmpegArgs('/tmp/x.mp4');
   const after = (flag) => a[a.lastIndexOf(flag) + 1];
   assert.equal(after('-c:v'), 'libx264');
