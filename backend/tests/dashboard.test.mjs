@@ -5,13 +5,10 @@ import { PushService } from '../push.mjs';
 import { createServer } from '../server.mjs';
 import {
   Dashboard,
-  adminKey,
-  keyMatches,
   melbourneDay,
   melbourneDayStart,
 } from '../dashboard.mjs';
 
-const KEY = 'test-admin-key-of-32-characters!';
 
 // Everything that may never appear in a response.
 const SECRETS = [];
@@ -56,10 +53,10 @@ function seed(db, over = {}) {
   return d;
 }
 
-function setup(env = { ADMIN_KEY: KEY }) {
+function setup() {
   const store = new IncidentStore();
   const push = new PushService(store.db, { send: async () => [] });
-  const dashboard = new Dashboard(store.db, { store, env });
+  const dashboard = new Dashboard(store.db, { store });
   return { store, push, dashboard, db: store.db };
 }
 
@@ -74,96 +71,34 @@ async function serve({ store, push, dashboard }, run) {
   }
 }
 
-void test('the admin key must be at least 24 characters and is compared whole', () => {
-  assert.equal(adminKey({}), null);
-  assert.equal(adminKey({ ADMIN_KEY: '' }), null);
-  assert.equal(adminKey({ ADMIN_KEY: 'x'.repeat(23) }), null);
-  assert.equal(adminKey({ ADMIN_KEY: 'x'.repeat(24) }), 'x'.repeat(24));
-  assert.equal(keyMatches(KEY, KEY), true);
-  assert.equal(keyMatches(KEY.slice(0, -1), KEY), false);
-  assert.equal(keyMatches(`${KEY}x`, KEY), false);
-  assert.equal(keyMatches('', KEY), false);
-  assert.equal(keyMatches(undefined, KEY), false);
-  assert.equal(keyMatches(KEY, null), false);
+void test('open without a key: the counts at /v1/stats and the old address', async () => {
+  const ctx = setup();
+  seed(ctx.db);
+  await serve(ctx, async (base) => {
+    for (const path of ['/v1/stats', '/v1/admin/stats']) {
+      const res = await fetch(base + path);
+      assert.equal(res.status, 200, path);
+      assert.equal(res.headers.get('cache-control'), 'no-store');
+      assert.match(res.headers.get('x-robots-tag'), /noindex/);
+      assert.equal(res.headers.get('access-control-allow-origin'), null);
+      assert.equal((await res.json()).devices.total, 1);
+    }
+    assert.equal((await fetch(`${base}/v1/stats`, { method: 'POST' })).status, 405);
+  });
 });
 
-void test('without ADMIN_KEY, or with a short one, both routes are 404', async () => {
-  for (const env of [{}, { ADMIN_KEY: 'short-key' }]) {
-    await serve(setup(env), async (base) => {
-      for (const path of ['/v1/admin/stats', '/dashboard']) {
-        const res = await fetch(base + path, {
-          headers: { 'x-admin-key': env.ADMIN_KEY ?? '' },
-        });
-        assert.equal(res.status, 404, path);
-        assert.doesNotMatch(await res.text(), /devices|<html/i);
-      }
-    });
-  }
-  // A server built without the dashboard (as the other tests do) too.
+void test('a server built without the dashboard answers 404 on both routes', async () => {
   const store = new IncidentStore();
   const server = createServer(store);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   try {
     const base = `http://127.0.0.1:${server.address().port}`;
-    assert.equal((await fetch(`${base}/v1/admin/stats`)).status, 404);
+    assert.equal((await fetch(`${base}/v1/stats`)).status, 404);
     assert.equal((await fetch(`${base}/dashboard`)).status, 404);
   } finally {
     await new Promise((r) => server.close(r));
     store.close();
   }
-});
-
-void test('a missing or wrong key is 401, repeated wrong keys are slowed down, the right key gets the counts', async () => {
-  const ctx = setup();
-  seed(ctx.db);
-  await serve(ctx, async (base) => {
-    const get = (key, from = '203.0.113.1') =>
-      fetch(`${base}/v1/admin/stats`, {
-        headers: {
-          'x-forwarded-for': from,
-          ...(key == null ? {} : { 'x-admin-key': key }),
-        },
-      });
-    assert.equal((await get(null)).status, 401);
-    const wrong = await get(`${KEY}x`);
-    assert.equal(wrong.status, 401);
-    assert.doesNotMatch(await wrong.text(), /devices/);
-    // The key in the query string is not accepted.
-    assert.equal(
-      (await fetch(`${base}/v1/admin/stats?k=${KEY}&x-admin-key=${KEY}`))
-        .status,
-      401,
-    );
-    const ok = await get(KEY);
-    assert.equal(ok.status, 200);
-    assert.equal(ok.headers.get('cache-control'), 'no-store');
-    assert.match(ok.headers.get('x-robots-tag'), /noindex/);
-    assert.equal(ok.headers.get('access-control-allow-origin'), null);
-    assert.equal((await ok.json()).devices.total, 1);
-    assert.equal(
-      (await fetch(`${base}/v1/admin/stats`, { method: 'POST' })).status,
-      405,
-    );
-    // Ten wrong keys from one client: after that it is refused unseen,
-    // while another client is not affected.
-    for (let i = 0; i < 10; i++)
-      assert.equal((await get('nope', '198.51.100.7')).status, 401);
-    const limited = await get('nope', '198.51.100.7');
-    assert.equal(limited.status, 429);
-    assert.equal(limited.headers.get('retry-after'), '300');
-    assert.equal((await get(KEY, '198.51.100.7')).status, 429);
-    assert.equal((await get(KEY)).status, 200);
-  });
-});
-
-void test('the limit on wrong keys ends after five minutes', () => {
-  const { dashboard, store } = setup();
-  const t = Date.parse('2026-11-14T00:00:00Z');
-  for (let i = 0; i < 10; i++)
-    assert.equal(dashboard.check('nope', 'a', t), 'wrong');
-  assert.equal(dashboard.check(KEY, 'a', t + 1000), 'limited');
-  assert.equal(dashboard.check(KEY, 'a', t + 5 * 60_000 + 1), 'ok');
-  store.close();
 });
 
 void test('Melbourne days across both daylight saving changes', () => {
@@ -344,16 +279,13 @@ void test('nothing per device is in the response', async () => {
     });
   ctx.dashboard.snapshot();
   await serve(ctx, async (base) => {
-    const res = await fetch(`${base}/v1/admin/stats`, {
-      headers: { 'x-admin-key': KEY },
-    });
+    const res = await fetch(`${base}/v1/stats`);
     assert.equal(res.status, 200);
     const text = await res.text();
     assert.equal(JSON.parse(text).devices.total, 5);
     for (const secret of SECRETS)
       assert.equal(text.includes(secret), false, `leaked ${secret}`);
-    // Not the admin key either, nor a field that could carry a device.
-    assert.equal(text.includes(KEY), false);
+    // No field that could carry a device.
     assert.doesNotMatch(
       text,
       /"push_?token"|device_?id|install_?hash|"lat"|"lon"|"filter"|ExponentPushToken|-37\.8|144\.9/i,
@@ -457,7 +389,6 @@ void test('the dashboard page holds no data, loads nothing from elsewhere and is
   seed(ctx.db, { app_version: '7.7.7' });
   seed(ctx.db, { app_version: '7.7.7' });
   await serve(ctx, async (base) => {
-    // The page needs no key and is the same with a wrong one.
     const res = await fetch(`${base}/dashboard`);
     assert.equal(res.status, 200);
     assert.match(res.headers.get('content-type'), /^text\/html/);
@@ -489,22 +420,17 @@ void test('the dashboard page holds no data, loads nothing from elsewhere and is
     // No inline handlers or style attributes: the policy would block them.
     assert.doesNotMatch(html, /\son[a-z]+\s*=|\sstyle\s*=/i);
 
-    // No data: not the key, no seeded value, no number from the database.
-    assert.equal(html.includes(KEY), false);
+    // No data: no seeded value, no number from the database.
     assert.equal(html.includes('7.7.7'), false);
     for (const secret of SECRETS)
       assert.equal(html.includes(secret), false, `leaked ${secret}`);
-    const again = await (
-      await fetch(`${base}/dashboard`, { headers: { 'x-admin-key': 'nope' } })
-    ).text();
-    assert.equal(again, html);
+    assert.doesNotMatch(html, /x-admin-key|sessionStorage|type="password"/);
 
     // What the page promises to say.
     assert.match(html, /Stores/);
     assert.match(html, /Not connected yet/);
     assert.match(html, /at every start until that has succeeded once/);
-    assert.match(html, /sessionStorage/);
-    assert.match(html, /history\.replaceState/);
+    assert.match(html, /fetch\('\/v1\/stats'/);
 
     // A trailing slash or capitals go to the one address.
     const slash = await fetch(`${base}/Dashboard/`, { redirect: 'manual' });
