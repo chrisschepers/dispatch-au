@@ -20,6 +20,12 @@
 5. **Abonnement** in de Play Console: product `premium_year`, basisplan jaarlijks A$9,99, aanbod 3 dagen gratis. In RevenueCat koppelen aan entitlement `premium`, offering `default`, pakket Annual. Publieke `goog_`-sleutel in `mobile/src/aankopen.ts`.
 6. **Gesloten test**: minimaal 12 testers, 14 dagen onafgebroken, daarna productietoegang aanvragen. De testers van 112 Meldingen kunnen opnieuw (zelfde Google-groep).
 
+## Push op Android (15-11)
+
+De Android-app staat sinds 15-11-2026 in Firebase-project `p2000alert-38d3c` en `mobile/google-services.json` zit in de repo. Vanaf de eerstvolgende build staat `androidPushConfigured` daardoor op true: de app vraagt om meldingstoestemming en stuurt zijn FCM-token naar de backend.
+
+Versturen werkt pas als Railway-variabele `FCM_SERVICE_ACCOUNT` gezet is (servicesleutel met de rol *Firebase Cloud Messaging API Admin*); zonder die sleutel slaat de backend Android stil over. Zet een build met push dus niet in productie voordat die variabele er staat, en zet dan ook de winkeltekst terug naar de versie met meldingen (`mobile/store/play/README.md`).
+
 ## Stand van de builds (26-10)
 
 Build 1 en 2 (0.2.0) zijn gebouwd zonder `GOOGLE_MAPS_ANDROID_API_KEY` en zonder `mobile/google-services.json`. De repo heeft alleen de vier `DISPATCH_KEY*`-secrets. Gevolg: geen push, en de Google-kaart heeft geen sleutel (de kaart en het kaartje bij een melding). Regel stap 1 en 2 hierboven vóór de volgende build die testers krijgen. Zonder `PLAY_SERVICE_ACCOUNT_JSON` moet de .aab met de hand naar de Play Console.
