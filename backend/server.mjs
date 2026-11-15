@@ -7,7 +7,7 @@ import { fetchSource, sources } from './feeds.mjs';
 import { skippedByRegion } from './skipped.mjs';
 import { appConfig } from './app-config.mjs';
 import { IncidentStore } from './store.mjs';
-import { PushService } from './push.mjs';
+import { PushService, apnsConfigured, fcmConfigured } from './push.mjs';
 import { renderSite, STATES } from './site.mjs';
 import { AircraftService, trackingOn } from './aircraft.mjs';
 import { VesselService } from './vessels.mjs';
@@ -296,6 +296,9 @@ export function createServer(
           ok,
           checkedAt,
           sources: health,
+          // Only whether each push route has a usable key, never the key
+          // itself: so a wrong FCM_SERVICE_ACCOUNT shows up here (15-11-2026).
+          push: { apns: apnsConfigured(), fcm: fcmConfigured() },
         });
       }
       if (url.pathname !== '/v1/feed') return send(404, { error: 'Not found' });
