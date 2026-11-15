@@ -1,0 +1,86 @@
+{
+  "project_info": {
+    "project_number": "303578671064",
+    "project_id": "p2000alert-38d3c",
+    "storage_bucket": "p2000alert-38d3c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:303578671064:android:409f99854895e186dfb4ad",
+        "android_client_info": {
+          "package_name": "com.chrisschepers.dispatchau"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRBfWueee0qhjmZUgDs59ywPTNX45UDNM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:303578671064:android:020e5dfbd89cf0e2dfb4ad",
+        "android_client_info": {
+          "package_name": "com.p2000alarm.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRBfWueee0qhjmZUgDs59ywPTNX45UDNM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:303578671064:android:e0208cad6ce2f77adfb4ad",
+        "android_client_info": {
+          "package_name": "nl.meldingen112.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRBfWueee0qhjmZUgDs59ywPTNX45UDNM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:303578671064:android:17ab12bd3fbe5274dfb4ad",
+        "android_client_info": {
+          "package_name": "nl.p2000alarm.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRBfWueee0qhjmZUgDs59ywPTNX45UDNM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

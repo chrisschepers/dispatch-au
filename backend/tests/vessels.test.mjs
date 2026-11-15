@@ -184,7 +184,9 @@ void test('made-up false positives', () => {
 // ── Trips ──────────────────────────────────────────────────────────────────
 
 const MIN = 60_000;
-const T0 = Date.parse('2026-11-14T00:00:00Z');
+// Recent, not a fixed date: the API reads the real clock and drops a vessel
+// that has been still for more than a day (this failed from 15-11-2026).
+const T0 = Math.floor(Date.now() / 3_600_000) * 3_600_000 - 3 * 3_600_000;
 const BERTH = [-33.6, 151.3];
 /** A point `m` metres north of the berth. */
 const north = (m) => [BERTH[0] + m / 111_195, BERTH[1]];
