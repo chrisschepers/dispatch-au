@@ -2,7 +2,8 @@
 // Chris 08-11-2026).
 //
 // Positions come from adsb.lol (/v2/hex/{list}, several aircraft per request)
-// with HELI_ADSB_API_KEY. That key allows 10,000 requests a month, so:
+// with HELI_ADSB_API_KEY. The free key allows 10,000 requests a month, so
+// (the day's budget and the pace are settable, see budgetPerDay and paceFor):
 // - only poll while someone has the aircraft layer open (last 5 minutes);
 // - every 3 minutes, one request per 150 aircraft (#hexes leaves out what
 //   cannot show);
@@ -29,8 +30,8 @@
 // - it stops when the bucket is down to 10, which stay for people who open
 //   the layer, and a poll for the layer counts as a round here too;
 // - the bucket's level is kept in SQLite, so a restart cannot refill it.
-import { readFileSync } from 'node:fs';
-import { fetchFleet } from './fleet.mjs';
+import { readFileSync } from "node:fs";
+import { fetchFleet } from "./fleet.mjs";
 import {
   FlightTracker,
   PRIVATE_ROLES,
@@ -38,9 +39,9 @@ import {
   WORKING_MS,
   aircraftName,
   isLargeAirTanker,
-} from './flights.mjs';
+} from "./flights.mjs";
 
-const API = 'https://api.adsb.lol/v2/hex/';
+const API = "https://api.adsb.lol/v2/hex/";
 // adsb.lol documents no limit on the hex list, so this stays at a modest 150.
 const CHUNK = 150;
 export const VIEW_WINDOW_MS = 5 * 60_000;
@@ -54,31 +55,53 @@ export const MIN_FLEET = 100;
 export const WATCH_ACTIVE_MS = 8 * 60_000;
 export const WATCH_IDLE_MS = 12 * 60_000;
 export const WATCH_RESERVE = 10;
+// A day's requests. 300 fits the free key (10,000 a month). Since 16-11-2026
+// the service can run on the feeder key of the Dutch receiver, which the Dutch
+// app shares (wish Chris): AIRCRAFT_BUDGET_PER_DAY=700 then. Never above 1,500.
+export const DEFAULT_PER_DAY = 300;
+export function budgetPerDay(env = process.env) {
+  const n = Math.round(Number(env.AIRCRAFT_BUDGET_PER_DAY));
+  return Number.isFinite(n) && n >= 50 ? Math.min(n, 1_500) : DEFAULT_PER_DAY;
+}
+/**
+ * How often to poll with this much a day. From 600 a day: the layer every
+ * 2 minutes, and following flights every 4 minutes with one in the air
+ * (360 a day at most) and every 8 otherwise (180 a day).
+ */
+export function paceFor(perDay = DEFAULT_PER_DAY) {
+  return perDay >= 600
+    ? { cadence: 2 * 60_000, watchActive: 4 * 60_000, watchIdle: 8 * 60_000 }
+    : {
+        cadence: CADENCE_MS,
+        watchActive: WATCH_ACTIVE_MS,
+        watchIdle: WATCH_IDLE_MS,
+      };
+}
 export const ATTRIBUTION =
-  'Aircraft positions: adsb.lol (ODbL). Call signs: NAFC. Aircraft lists: plane-alert-db (ODbL), tar1090-db.';
+  "Aircraft positions: adsb.lol (ODbL). Call signs: NAFC. Aircraft lists: plane-alert-db (ODbL), tar1090-db.";
 
 /** Flight tracking is on unless AIRCRAFT_TRACKING says off. */
 export function trackingOn(env = process.env) {
-  return !['uit', 'off', 'false', '0'].includes(
-    String(env.AIRCRAFT_TRACKING ?? '')
+  return !["uit", "off", "false", "0"].includes(
+    String(env.AIRCRAFT_TRACKING ?? "")
       .trim()
       .toLowerCase(),
   );
 }
 // Shown wherever they are; the firefighting roles only near a fire.
-export const ALWAYS_SHOWN = new Set(['rescue', 'police', 'medical']);
+export const ALWAYS_SHOWN = new Set(["rescue", "police", "medical"]);
 
-const BUNDLED = new URL('./aircraft-fleet.json', import.meta.url);
+const BUNDLED = new URL("./aircraft-fleet.json", import.meta.url);
 
 export function loadFleet(path = BUNDLED) {
-  return JSON.parse(readFileSync(path, 'utf8')).fleet;
+  return JSON.parse(readFileSync(path, "utf8")).fleet;
 }
 
 /** Entries with a hex code and a role; anything else in a stored list is dropped. */
 export function validFleet(list) {
   return Array.isArray(list)
     ? list.filter(
-        (a) => /^[0-9a-f]{6}$/.test(a?.hex) && typeof a.role === 'string',
+        (a) => /^[0-9a-f]{6}$/.test(a?.hex) && typeof a.role === "string",
       )
     : [];
 }
@@ -140,10 +163,10 @@ export function distanceKm([lat1, lon1], [lat2, lon2]) {
 
 /** Bush, grass, scrub and forest fires; not a house, car or alarm in town. */
 export function isLandscapeFire(incident) {
-  if (incident?.category !== 'fire' || !Array.isArray(incident.point))
+  if (incident?.category !== "fire" || !Array.isArray(incident.point))
     return false;
   return !/structure|building|house|residential|vehicle|car fire|truck|rubbish|chimney|alarm|smoke|electrical|non[- ]structure/i.test(
-    incident.title || '',
+    incident.title || "",
   );
 }
 
@@ -167,12 +190,13 @@ export function nearestFire(point, fires, maxKm = NEAR_FIRE_KM) {
 export class AircraftService {
   constructor({
     db = null,
-    key = process.env.HELI_ADSB_API_KEY || '',
+    key = process.env.HELI_ADSB_API_KEY || "",
     fetcher = fetch,
     fleet = null,
     fleetSource = () => fetchFleet(),
     activeFires = () => [],
-    budget = new Budget(),
+    perDay = budgetPerDay(),
+    budget = new Budget(30, perDay),
     tracking = false,
     onEvent = null,
     log = (o) => console.log(JSON.stringify({ aircraft: true, ...o })),
@@ -183,6 +207,7 @@ export class AircraftService {
     this.fleetSource = fleetSource;
     this.activeFires = activeFires;
     this.budget = budget;
+    this.pace = paceFor(budget.perDay);
     this.log = log;
     this.positions = new Map();
     this.lastView = -Infinity;
@@ -201,7 +226,7 @@ export class AircraftService {
     this.refreshingFleet = false;
     if (db) {
       db.exec(
-        'CREATE TABLE IF NOT EXISTS aircraft_state(key TEXT PRIMARY KEY, value TEXT NOT NULL)',
+        "CREATE TABLE IF NOT EXISTS aircraft_state(key TEXT PRIMARY KEY, value TEXT NOT NULL)",
       );
       const row = db
         .prepare("SELECT value FROM aircraft_state WHERE key='pausedUntil'")
@@ -212,7 +237,7 @@ export class AircraftService {
           String(
             db
               .prepare("SELECT value FROM aircraft_state WHERE key='budget'")
-              .get()?.value ?? 'null',
+              .get()?.value ?? "null",
           ),
         );
         if (saved) budget.restore(saved.tokens, saved.at);
@@ -226,14 +251,14 @@ export class AircraftService {
       // The newest of the last good rebuild and the bundled file.
       let bundled = { fleet: [], builtAt: 0 };
       try {
-        const raw = JSON.parse(readFileSync(BUNDLED, 'utf8'));
+        const raw = JSON.parse(readFileSync(BUNDLED, "utf8"));
         bundled = {
           fleet: validFleet(raw.fleet),
           builtAt: Date.parse(raw.built) || 0,
         };
       } catch (error) {
         this.log({
-          fleet: 'no bundled list',
+          fleet: "no bundled list",
           error: String(error).slice(0, 80),
         });
       }
@@ -254,9 +279,9 @@ export class AircraftService {
     // CC BY: name CASA whenever its register put an aircraft on the list.
     this.attribution =
       ATTRIBUTION +
-      (list.some((a) => a.source === 'casa')
-        ? ' Aircraft register: CASA (CC BY 4.0).'
-        : '');
+      (list.some((a) => a.source === "casa")
+        ? " Aircraft register: CASA (CC BY 4.0)."
+        : "");
   }
 
   #storedFleet() {
@@ -306,8 +331,8 @@ export class AircraftService {
       const list = validFleet(built?.fleet);
       if (list.length < Math.max(MIN_FLEET, 0.8 * this.fleet.size)) {
         this.log({
-          fleet: 'kept',
-          reason: 'new list too small',
+          fleet: "kept",
+          reason: "new list too small",
           size: list.length,
           current: this.fleet.size,
         });
@@ -321,11 +346,11 @@ export class AircraftService {
           JSON.stringify({ built: new Date(now).toISOString(), fleet: list }),
         );
       this.#useFleet(list, now);
-      this.log({ fleet: 'refreshed', size: list.length, roles: this.roles });
+      this.log({ fleet: "refreshed", size: list.length, roles: this.roles });
       return true;
     } catch (error) {
       this.log({
-        fleet: 'kept',
+        fleet: "kept",
         reason: String(error?.message || error).slice(0, 160),
       });
       return false;
@@ -369,7 +394,7 @@ export class AircraftService {
     const fast = [];
     const slow = [];
     for (const a of this.fleet.values()) {
-      if (a.role === 'medical') slow.push(a.hex);
+      if (a.role === "medical") slow.push(a.hex);
       else if (ALWAYS_SHOWN.has(a.role) || fires) fast.push(a.hex);
     }
     const room = (CHUNK - (fast.length % CHUNK)) % CHUNK;
@@ -389,14 +414,14 @@ export class AircraftService {
     const fleet = [...this.fleet.values()];
     if (fires.length)
       for (const a of fleet) if (isLargeAirTanker(a)) add(a.hex);
-    for (const a of fleet) if (a.role === 'rescue') add(a.hex);
+    for (const a of fleet) if (a.role === "rescue") add(a.hex);
     // With a fire the room goes to the firefighting aircraft, else to the
     // medical planes; whoever does not fit waits for a next round.
     const rest = fleet.filter(
       (a) =>
         TRACK_ROLES.has(a.role) &&
         !out.has(a.hex) &&
-        (fires.length ? !ALWAYS_SHOWN.has(a.role) : a.role === 'medical'),
+        (fires.length ? !ALWAYS_SHOWN.has(a.role) : a.role === "medical"),
     );
     const room = CHUNK - out.size;
     for (let i = 0; i < Math.min(room, rest.length); i++)
@@ -413,12 +438,14 @@ export class AircraftService {
     // one request for the flights, which leaves a reserve in the bucket.
     const viewed =
       now - this.lastView <= VIEW_WINDOW_MS &&
-      now - this.lastPoll >= CADENCE_MS;
+      now - this.lastPoll >= this.pace.cadence;
     const watch =
       !viewed &&
       this.tracker &&
       now - this.lastWatch >=
-        (this.tracker.airborne().length ? WATCH_ACTIVE_MS : WATCH_IDLE_MS);
+        (this.tracker.airborne().length
+          ? this.pace.watchActive
+          : this.pace.watchIdle);
     if (!viewed && !watch) return;
     if (watch && this.budget.level(now) - 1 < WATCH_RESERVE) return;
     let fires = [];
@@ -443,15 +470,15 @@ export class AircraftService {
     const events = [];
     try {
       for (const chunk of chunks) {
-        const res = await this.fetcher(API + chunk.join(','), {
-          headers: { 'x-api-key': this.key, Accept: 'application/json' },
+        const res = await this.fetcher(API + chunk.join(","), {
+          headers: { "x-api-key": this.key, Accept: "application/json" },
           signal: AbortSignal.timeout(15_000),
         });
         if (res.status === 429) {
           this.tooMany += 1;
           const wait = pauseAfter429(
             this.tooMany,
-            Number(res.headers.get('retry-after')) || 0,
+            Number(res.headers.get("retry-after")) || 0,
           );
           this.pausedUntil = now + wait;
           this.#savePause();
@@ -470,11 +497,11 @@ export class AircraftService {
         }
         const body = await res.json();
         for (const a of body.ac ?? []) {
-          const hex = String(a.hex || '').toLowerCase();
+          const hex = String(a.hex || "").toLowerCase();
           if (
             !this.fleet.has(hex) ||
-            typeof a.lat !== 'number' ||
-            typeof a.lon !== 'number'
+            typeof a.lat !== "number" ||
+            typeof a.lon !== "number"
           )
             continue;
           const seenAt =
@@ -484,11 +511,11 @@ export class AircraftService {
           const position = {
             lat: a.lat,
             lon: a.lon,
-            altFt: a.alt_baro === 'ground' ? 0 : Number(a.alt_baro) || null,
-            onGround: a.alt_baro === 'ground',
+            altFt: a.alt_baro === "ground" ? 0 : Number(a.alt_baro) || null,
+            onGround: a.alt_baro === "ground",
             gsKts: Number(a.gs) || null,
             track: Number(a.track) || null,
-            flight: String(a.flight || '').trim() || null,
+            flight: String(a.flight || "").trim() || null,
             seenAt,
           };
           this.positions.set(hex, position);
@@ -498,11 +525,11 @@ export class AircraftService {
                 this.fleet.get(hex),
                 {
                   ...position,
-                  gs: typeof a.gs === 'number' ? a.gs : null,
+                  gs: typeof a.gs === "number" ? a.gs : null,
                   climbFpm:
-                    typeof a.baro_rate === 'number'
+                    typeof a.baro_rate === "number"
                       ? a.baro_rate
-                      : typeof a.geom_rate === 'number'
+                      : typeof a.geom_rate === "number"
                         ? a.geom_rate
                         : null,
                 },
@@ -601,7 +628,7 @@ export class AircraftService {
         ...p,
         seenAt: new Date(p.seenAt).toISOString(),
         // A medical aircraft is shown as an aircraft only, next to nothing.
-        nearFire: a.role === 'medical' ? null : nearFire,
+        nearFire: a.role === "medical" ? null : nearFire,
         // Flight (flights.mjs): airborne, at_base, landed_elsewhere, landed,
         // unknown or null. Never where a rescue or medical aircraft landed.
         state: this.tracker?.state(hex, now) ?? null,

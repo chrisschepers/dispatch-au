@@ -74,6 +74,7 @@ Request budget: flights are followed without a viewer with one adsb.lol request 
 
 Switches (Railway variables):
 
+- `AIRCRAFT_BUDGET_PER_DAY` sets the day's adsb.lol requests (default 300, the free key; 700 on the shared feeder key, which also makes the layer poll every 2 minutes and flights every 4 to 8).
 - `AIRCRAFT_TRACKING=off` stops following flights; the layer then polls only while someone looks, as before. On by default.
 - `AIR_TANKER_PUSH=on` sends the large air tanker alert (docs/PUSH-API.md). Off by default.
 - `FLEET_CASA_REGISTER=on` adds Royal Flying Doctor Service aircraft from CASA's civil aircraft register (`https://services.casa.gov.au/CSV/acrftreg.csv`) to the nightly fleet rebuild; the attribution then names CASA (CC BY 4.0). Off by default: CASA's copyright page puts its website material under CC BY 4.0, but the terms on the page of the data files themselves were not read when this was built. Confirm those before switching it on. On 13-11-2026 it added 7 aircraft (88 to 95).
