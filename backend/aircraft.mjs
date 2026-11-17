@@ -42,6 +42,16 @@ import {
 } from "./flights.mjs";
 
 const API = "https://api.adsb.lol/v2/hex/";
+// Reserve since 17-11-2026: adsb.fi (permission from adsb.fi to Chris, also
+// for this app). Same answer format; several hexes per request, comma
+// separated. Its limit is 1 request a second, so requests keep RESERVE_GAP_MS
+// apart. The adsb.lol key never goes there.
+export const RESERVE_API = "https://opendata.adsb.fi/api/v2/icao/";
+export const RESERVE_GAP_MS = 1_100;
+// After adsb.lol fails (time-out, 5xx), it is tried again after this long;
+// until then every request goes to the reserve, outside the budget.
+export const LOL_RETRY_MS = 10 * 60_000;
+const USER_AGENT = "EmergenciesNearMe/1.0 (+https://emergenciesnearme.com.au)";
 // adsb.lol documents no limit on the hex list, so this stays at a modest 150.
 const CHUNK = 150;
 export const VIEW_WINDOW_MS = 5 * 60_000;
@@ -78,7 +88,7 @@ export function paceFor(perDay = DEFAULT_PER_DAY) {
       };
 }
 export const ATTRIBUTION =
-  "Aircraft positions: adsb.lol (ODbL). Call signs: NAFC. Aircraft lists: plane-alert-db (ODbL), tar1090-db.";
+  "Aircraft positions: adsb.lol (ODbL) and adsb.fi (https://adsb.fi). Call signs: NAFC. Aircraft lists: plane-alert-db (ODbL), tar1090-db.";
 
 /** Flight tracking is on unless AIRCRAFT_TRACKING says off. */
 export function trackingOn(env = process.env) {
@@ -199,6 +209,7 @@ export class AircraftService {
     budget = new Budget(30, perDay),
     tracking = false,
     onEvent = null,
+    reserveGapMs = RESERVE_GAP_MS,
     log = (o) => console.log(JSON.stringify({ aircraft: true, ...o })),
   } = {}) {
     this.db = db;
@@ -221,6 +232,11 @@ export class AircraftService {
     this.round = 0;
     this.tooMany = 0;
     this.pausedUntil = 0;
+    this.lolDownUntil = 0;
+    this.reserveOffUntil = 0;
+    this.lastReserveAt = -Infinity;
+    this.reserveGapMs = reserveGapMs;
+    this.reserveUsed = 0;
     this.lastError = null;
     this.fleetCheckedAt = -Infinity;
     this.refreshingFleet = false;
@@ -431,9 +447,86 @@ export class AircraftService {
     return [...out];
   }
 
+  /** adsb.lol is out (429 pause or a failure): ask adsb.fi instead. */
+  #viaReserve(now) {
+    return now < this.pausedUntil || now < this.lolDownUntil;
+  }
+
+  /** One request to adsb.fi, at most one a second. The body, or null. */
+  async #reserve(chunk, now) {
+    if (Date.now() < this.reserveOffUntil) return null;
+    const wait = this.lastReserveAt + this.reserveGapMs - Date.now();
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    this.lastReserveAt = Date.now();
+    this.reserveUsed += 1;
+    try {
+      const res = await this.fetcher(RESERVE_API + chunk.join(","), {
+        headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!res.ok) {
+        // A refusal or 429 there: leave adsb.fi alone for a while.
+        if (res.status === 403) this.reserveOffUntil = now + 3_600_000;
+        if (res.status === 429)
+          this.reserveOffUntil =
+            now +
+            Math.max(5 * 60_000, (Number(res.headers.get("retry-after")) || 0) * 1000);
+        this.lastError = `reserve HTTP ${res.status}`;
+        this.log({ reserve: true, status: res.status });
+        return null;
+      }
+      return await res.json();
+    } catch (error) {
+      this.lastError = `reserve ${String(error?.name || error).slice(0, 60)}`;
+      this.log({ reserve: true, error: this.lastError });
+      return null;
+    }
+  }
+
+  /** One chunk from adsb.lol, falling back to adsb.fi. The body, or null. */
+  async #fetchChunk(chunk, now) {
+    if (!this.#viaReserve(now)) {
+      try {
+        const res = await this.fetcher(API + chunk.join(","), {
+          headers: { "x-api-key": this.key, Accept: "application/json" },
+          signal: AbortSignal.timeout(15_000),
+        });
+        if (res.ok) {
+          this.tooMany = 0;
+          this.lolDownUntil = 0;
+          return await res.json();
+        }
+        if (res.status === 429) {
+          this.tooMany += 1;
+          const wait = pauseAfter429(
+            this.tooMany,
+            Number(res.headers.get("retry-after")) || 0,
+          );
+          this.pausedUntil = now + wait;
+          this.#savePause();
+          this.log({
+            status: 429,
+            pauseMin: Math.round(wait / 60_000),
+            inARow: this.tooMany,
+          });
+        } else {
+          this.lolDownUntil = now + LOL_RETRY_MS;
+          this.log({ status: res.status });
+        }
+      } catch (error) {
+        this.lolDownUntil = now + LOL_RETRY_MS;
+        this.log({ error: String(error?.name || error).slice(0, 80) });
+      }
+    }
+    return await this.#reserve(chunk, now);
+  }
+
   async tick(now = Date.now()) {
+    // No key means the layer is off, reserve included.
     if (!this.key || this.polling) return;
-    if (now < this.pausedUntil) return;
+    // While adsb.lol is out, adsb.fi carries it alone.
+    const reserve = this.#viaReserve(now);
+    if (reserve && now < this.reserveOffUntil) return;
     // For someone looking at the layer: everything, every 3 minutes. Otherwise
     // one request for the flights, which leaves a reserve in the bucket.
     const viewed =
@@ -447,7 +540,7 @@ export class AircraftService {
           ? this.pace.watchActive
           : this.pace.watchIdle);
     if (!viewed && !watch) return;
-    if (watch && this.budget.level(now) - 1 < WATCH_RESERVE) return;
+    if (!reserve && watch && this.budget.level(now) - 1 < WATCH_RESERVE) return;
     let fires = [];
     try {
       fires = this.activeFires().filter(isLandscapeFire);
@@ -459,8 +552,11 @@ export class AircraftService {
     for (let i = 0; i < hexes.length; i += CHUNK)
       chunks.push(hexes.slice(i, i + CHUNK));
     if (!chunks.length) return;
-    if (!this.budget.take(chunks.length, now)) return;
-    this.#saveBudget();
+    // The budget is for adsb.lol; adsb.fi has its own limit per second.
+    if (!reserve) {
+      if (!this.budget.take(chunks.length, now)) return;
+      this.#saveBudget();
+    }
     this.polling = true;
     this.lastWatch = now;
     if (viewed) {
@@ -470,32 +566,8 @@ export class AircraftService {
     const events = [];
     try {
       for (const chunk of chunks) {
-        const res = await this.fetcher(API + chunk.join(","), {
-          headers: { "x-api-key": this.key, Accept: "application/json" },
-          signal: AbortSignal.timeout(15_000),
-        });
-        if (res.status === 429) {
-          this.tooMany += 1;
-          const wait = pauseAfter429(
-            this.tooMany,
-            Number(res.headers.get("retry-after")) || 0,
-          );
-          this.pausedUntil = now + wait;
-          this.#savePause();
-          this.lastError = `429, pause ${Math.round(wait / 60_000)} min`;
-          this.log({
-            status: 429,
-            pauseMin: Math.round(wait / 60_000),
-            inARow: this.tooMany,
-          });
-          return;
-        }
-        if (!res.ok) {
-          this.lastError = `HTTP ${res.status}`;
-          this.log({ status: res.status });
-          return;
-        }
-        const body = await res.json();
+        const body = await this.#fetchChunk(chunk, now);
+        if (!body) return;
         for (const a of body.ac ?? []) {
           const hex = String(a.hex || "").toLowerCase();
           if (
@@ -539,7 +611,6 @@ export class AircraftService {
             );
         }
       }
-      this.tooMany = 0;
       this.lastSuccess = now;
       this.lastError = null;
       this.tracker?.afterPoll(new Set(hexes), now);
@@ -659,6 +730,9 @@ export class AircraftService {
             ? new Date(this.pausedUntil).toISOString()
             : null,
         error: this.lastError,
+        // adsb.lol out: everything comes from adsb.fi until it answers again.
+        reserve: this.#viaReserve(now),
+        reserveRequests: this.reserveUsed,
         fleetSize: this.fleet.size,
         fleetBuiltAt: this.fleetBuiltAt
           ? new Date(this.fleetBuiltAt).toISOString()

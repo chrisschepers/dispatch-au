@@ -11,6 +11,8 @@ import {
   CADENCE_MS,
   FLEET_REFRESH_MS,
   FLEET_RETRY_MS,
+  RESERVE_API,
+  LOL_RETRY_MS,
 } from "../aircraft.mjs";
 
 const fleet = [
@@ -453,4 +455,43 @@ void test("positions of an aircraft that left the fleet are dropped", async () =
     [list[1].hex],
   );
   assert.equal(s.positions.has(list[0].hex), false);
+});
+
+void test("adsb.lol down: adsb.fi takes over without the key, outside the budget, and adsb.lol is retried later", async () => {
+  const calls = [];
+  let lolUp = false;
+  const fetcher = async (url, init) => {
+    calls.push({ url, key: init?.headers?.["x-api-key"] });
+    if (url.startsWith(RESERVE_API))
+      return reply(200, {
+        ac: [{ hex: "7c5d89", lat: -33.9, lon: 151.2, alt_baro: 1200, seen_pos: 1 }],
+      });
+    if (!lolUp) throw new Error("TimeoutError");
+    return reply(200, { ac: [] });
+  };
+  const s = new AircraftService({ key: "k", fetcher, fleet, reserveGapMs: 0, log: () => {} });
+  const voor = s.budget.level(0);
+  s.request(0);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(calls.length, 2);
+  assert.match(calls[1].url, /^https:\/\/opendata\.adsb\.fi\/api\/v2\/icao\/7c5d89/);
+  assert.equal(calls[1].key, undefined, "the adsb.lol key never goes to adsb.fi");
+  assert.equal(s.snapshot(10).aircraft.length, 1);
+  assert.equal(s.snapshot(10).status.reserve, true);
+  // Next round within LOL_RETRY_MS: only adsb.fi, and the budget stays as it is.
+  const level = s.budget.level(CADENCE_MS);
+  s.request(CADENCE_MS);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(calls.length, 3);
+  assert.ok(calls[2].url.startsWith(RESERVE_API));
+  assert.ok(s.budget.level(CADENCE_MS) >= level);
+  assert.ok(voor > 0);
+  // After LOL_RETRY_MS adsb.lol gets a new try, and carries it again.
+  lolUp = true;
+  const t = LOL_RETRY_MS;
+  s.request(t);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.match(calls[3].url, /api\.adsb\.lol/);
+  assert.equal(calls.length, 4);
+  assert.equal(s.snapshot(t).status.reserve, false);
 });
