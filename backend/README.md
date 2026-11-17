@@ -74,6 +74,7 @@ Request budget: flights are followed without a viewer with one adsb.lol request 
 
 Switches (Railway variables):
 
+- **Primary is adsb.fi** since 17-11-2026 (wish Chris, permission from adsb.fi): the layer every 30 s while someone looks, flights every minute with one in the air and every 2 minutes otherwise, at most one request a second and outside the budget. When adsb.fi fails, that chunk goes to adsb.lol with the key, out of the budget. `AIRCRAFT_PRIMARY=adsblol` restores the order below, with adsb.fi as reserve. `status.primary` says which is first.
 - Reserve (17-11-2026, permission from adsb.fi): when adsb.lol fails (time-out, 5xx) or is paused after a 429, the same hex lists go to `https://opendata.adsb.fi/api/v2/icao/{list}`, without the key and outside the budget, at most one request a second. adsb.lol is tried again after 10 minutes. `status.reserve` on `/v1/aircraft` says when it is in use; a 403 or 429 from adsb.fi rests it for an hour or 5 minutes. The attribution names adsb.fi with a link, as its terms ask.
 - `AIRCRAFT_BUDGET_PER_DAY` sets the day's adsb.lol requests (default 300, the free key; 700 on the shared feeder key, which also makes the layer poll every 2 minutes and flights every 4 to 8).
 - `AIRCRAFT_TRACKING=off` stops following flights; the layer then polls only while someone looks, as before. On by default.

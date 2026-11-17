@@ -1,6 +1,8 @@
 // Firefighting, rescue, police and flying doctor aircraft over Australia (wish
 // Chris 08-11-2026).
 //
+// Since 17-11-2026 positions come first from adsb.fi (aircraftPrimary, FI_PACE),
+// with adsb.lol as reserve; what follows describes the adsb.lol-first order.
 // Positions come from adsb.lol (/v2/hex/{list}, several aircraft per request)
 // with HELI_ADSB_API_KEY. The free key allows 10,000 requests a month, so
 // (the day's budget and the pace are settable, see budgetPerDay and paceFor):
@@ -51,6 +53,20 @@ export const RESERVE_GAP_MS = 1_100;
 // After adsb.lol fails (time-out, 5xx), it is tried again after this long;
 // until then every request goes to the reserve, outside the budget.
 export const LOL_RETRY_MS = 10 * 60_000;
+// Primary source. Since 17-11-2026 adsb.fi (wish Chris: "poll much more
+// often, make it the primary"); adsb.lol with the key is then the reserve,
+// and only its requests come out of the budget. AIRCRAFT_PRIMARY=adsblol goes
+// back to adsb.lol first.
+export function aircraftPrimary(env = process.env) {
+  return String(env.AIRCRAFT_PRIMARY ?? "").trim().toLowerCase() === "adsblol"
+    ? "adsblol"
+    : "adsbfi";
+}
+// With adsb.fi first (1 request a second, no day limit): the layer every
+// 30 s while someone looks, flights every minute with one in the air and
+// every 2 minutes otherwise. That is about 720 to 1,440 requests a day without
+// a viewer, a few a minute with one; far below its limit.
+export const FI_PACE = { cadence: 30_000, watchActive: 60_000, watchIdle: 2 * 60_000 };
 const USER_AGENT = "EmergenciesNearMe/1.0 (+https://emergenciesnearme.com.au)";
 // adsb.lol documents no limit on the hex list, so this stays at a modest 150.
 const CHUNK = 150;
@@ -210,6 +226,7 @@ export class AircraftService {
     tracking = false,
     onEvent = null,
     reserveGapMs = RESERVE_GAP_MS,
+    primary = aircraftPrimary(),
     log = (o) => console.log(JSON.stringify({ aircraft: true, ...o })),
   } = {}) {
     this.db = db;
@@ -218,7 +235,8 @@ export class AircraftService {
     this.fleetSource = fleetSource;
     this.activeFires = activeFires;
     this.budget = budget;
-    this.pace = paceFor(budget.perDay);
+    this.primary = primary;
+    this.pace = primary === "adsbfi" ? FI_PACE : paceFor(budget.perDay);
     this.log = log;
     this.positions = new Map();
     this.lastView = -Infinity;
@@ -471,21 +489,38 @@ export class AircraftService {
           this.reserveOffUntil =
             now +
             Math.max(5 * 60_000, (Number(res.headers.get("retry-after")) || 0) * 1000);
-        this.lastError = `reserve HTTP ${res.status}`;
+        this.lastError = `adsb.fi HTTP ${res.status}`;
         this.log({ reserve: true, status: res.status });
         return null;
       }
       return await res.json();
     } catch (error) {
-      this.lastError = `reserve ${String(error?.name || error).slice(0, 60)}`;
+      this.lastError = `adsb.fi ${String(error?.name || error).slice(0, 60)}`;
       this.log({ reserve: true, error: this.lastError });
       return null;
     }
   }
 
-  /** One chunk from adsb.lol, falling back to adsb.fi. The body, or null. */
+  /** One chunk: the primary source first, the other as reserve. The body, or null. */
   async #fetchChunk(chunk, now) {
+    if (this.primary === "adsbfi") {
+      const body = await this.#reserve(chunk, now);
+      if (body) return body;
+      // adsb.fi failed: adsb.lol with the key, out of the budget.
+      if (this.#viaReserve(now) || !this.budget.take(1, now)) return null;
+      this.#saveBudget();
+      return await this.#lol(chunk, now);
+    }
     if (!this.#viaReserve(now)) {
+      const body = await this.#lol(chunk, now);
+      if (body) return body;
+    }
+    return await this.#reserve(chunk, now);
+  }
+
+  /** One request to adsb.lol with the key. The body, or null. */
+  async #lol(chunk, now) {
+    {
       try {
         const res = await this.fetcher(API + chunk.join(","), {
           headers: { "x-api-key": this.key, Accept: "application/json" },
@@ -518,15 +553,15 @@ export class AircraftService {
         this.log({ error: String(error?.name || error).slice(0, 80) });
       }
     }
-    return await this.#reserve(chunk, now);
+    return null;
   }
 
   async tick(now = Date.now()) {
     // No key means the layer is off, reserve included.
     if (!this.key || this.polling) return;
-    // While adsb.lol is out, adsb.fi carries it alone.
-    const reserve = this.#viaReserve(now);
-    if (reserve && now < this.reserveOffUntil) return;
+    // adsb.fi first, or adsb.lol out: then the budget plays no part up front.
+    const reserve = this.primary === "adsbfi" || this.#viaReserve(now);
+    if (reserve && now < this.reserveOffUntil && this.#viaReserve(now)) return;
     // For someone looking at the layer: everything, every 3 minutes. Otherwise
     // one request for the flights, which leaves a reserve in the bucket.
     const viewed =
@@ -731,7 +766,8 @@ export class AircraftService {
             : null,
         error: this.lastError,
         // adsb.lol out: everything comes from adsb.fi until it answers again.
-        reserve: this.#viaReserve(now),
+        primary: this.primary,
+        reserve: this.primary === "adsbfi" ? false : this.#viaReserve(now),
         reserveRequests: this.reserveUsed,
         fleetSize: this.fleet.size,
         fleetBuiltAt: this.fleetBuiltAt

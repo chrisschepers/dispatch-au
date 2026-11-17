@@ -1,4 +1,6 @@
 import test from 'node:test';
+// Existing tests: adsb.lol first (adsb.fi primary has its own tests).
+process.env.AIRCRAFT_PRIMARY = "adsblol";
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import {
