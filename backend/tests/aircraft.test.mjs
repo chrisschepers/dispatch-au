@@ -13,7 +13,11 @@ import {
   FLEET_RETRY_MS,
   RESERVE_API,
   LOL_RETRY_MS,
+  FI_PACE,
+  aircraftPrimary,
 } from "../aircraft.mjs";
+// Existing tests: adsb.lol first (adsb.fi primary has its own tests).
+process.env.AIRCRAFT_PRIMARY = "adsblol";
 
 const fleet = [
   {
@@ -494,4 +498,50 @@ void test("adsb.lol down: adsb.fi takes over without the key, outside the budget
   assert.match(calls[3].url, /api\.adsb\.lol/);
   assert.equal(calls.length, 4);
   assert.equal(s.snapshot(t).status.reserve, false);
+});
+
+void test("adsb.fi is the primary unless AIRCRAFT_PRIMARY=adsblol", () => {
+  assert.equal(aircraftPrimary({}), "adsbfi");
+  assert.equal(aircraftPrimary({ AIRCRAFT_PRIMARY: "adsblol" }), "adsblol");
+  assert.equal(aircraftPrimary({ AIRCRAFT_PRIMARY: "ADSBFI" }), "adsbfi");
+});
+
+void test("adsb.fi first: every 30 s, no key sent, budget untouched; adsb.lol only when adsb.fi fails", async () => {
+  const calls = [];
+  let fiUp = true;
+  const fetcher = async (url, init) => {
+    calls.push({ url, key: init?.headers?.["x-api-key"] });
+    if (url.startsWith(RESERVE_API)) {
+      if (!fiUp) return reply(502, {});
+      return reply(200, { ac: [{ hex: "7c5d89", lat: -33.9, lon: 151.2, seen_pos: 1 }] });
+    }
+    return reply(200, { ac: [] });
+  };
+  const s = new AircraftService({
+    key: "k", fetcher, fleet, primary: "adsbfi", reserveGapMs: 0, log: () => {},
+  });
+  assert.deepEqual(s.pace, FI_PACE);
+  const level = s.budget.level(0);
+  s.request(0);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(calls.length, 1);
+  assert.ok(calls[0].url.startsWith(RESERVE_API));
+  assert.equal(calls[0].key, undefined);
+  assert.equal(s.budget.level(0), level);
+  assert.equal(s.snapshot(10).status.primary, "adsbfi");
+  // Again after 30 s, not before.
+  s.request(FI_PACE.cadence - 1);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(calls.length, 1);
+  s.request(FI_PACE.cadence);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(calls.length, 2);
+  // adsb.fi fails: adsb.lol with the key, one token out of the budget.
+  fiUp = false;
+  s.request(2 * FI_PACE.cadence);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(calls.length, 4);
+  assert.match(calls[3].url, /api\.adsb\.lol/);
+  assert.equal(calls[3].key, "k");
+  assert.ok(s.budget.level(2 * FI_PACE.cadence) < level);
 });
