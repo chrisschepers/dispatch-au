@@ -25,6 +25,8 @@ import { useLive, type LiveStatus } from '../live';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlek, bepaalPlekSnel } from '../locatie';
 import { binnenGebied, binnenTekst, vlakKleur } from '../gebied';
+import { usePremium } from '../premiumPoort';
+import { geldigePlekken, type Plek } from '../premium';
 import { niveauVan, isAfgelopen } from '../kaartFilter';
 import { T, F, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
@@ -63,14 +65,27 @@ export default function BuurtScreen() {
   // Dezelfde plek als state: de balk 'je zit in dit gebied' tekent ermee.
   const [plekNu, setPlekNu] = useState<{ lat: number; lon: number } | null>(null);
 
+  // Premium: de lijst ook rond een van je extra plekken bekijken (thuis, het
+  // vakantiehuis). null = je eigen plek. Dit wisselt alleen de lijst; je
+  // meldingen gelden altijd voor al je plekken.
+  const { premium } = usePremium();
+  const extraPlekken = useMemo(() => (premium ? geldigePlekken(inst.extraPlekken) : []), [premium, inst.extraPlekken]);
+  const [kijkPlek, setKijkPlek] = useState<Plek | null>(null);
+  // De gekozen plek is weggehaald (of Premium is afgelopen): terug naar je eigen plek.
+  useEffect(() => {
+    if (kijkPlek && !extraPlekken.some((p) => p.naam === kijkPlek.naam && p.lat === kijkPlek.lat)) setKijkPlek(null);
+  }, [kijkPlek, extraPlekken]);
+
   const laad = useCallback(async () => {
     try {
       // Eerst de plek die we al weten, anders wacht dit scherm tot zes seconden
       // op een verse GPS-fix voordat het ook maar begint met ophalen (melding
       // Wilbert 24-08: dienst uitzetten "duurt vrij lang, je krijgt het idee
       // dat het niet werkt"). De verse fix komt hieronder alsnog.
-      const plek = (await bepaalPlekSnel(inst)) ?? (await bepaalPlek(inst));
-      setPlaatsLabel(plek.bron === 'handmatig' ? inst.handPlaats : null);
+      const plek = kijkPlek
+        ? { lat: kijkPlek.lat, lon: kijkPlek.lon, bron: 'handmatig' as const }
+        : (await bepaalPlekSnel(inst)) ?? (await bepaalPlek(inst));
+      setPlaatsLabel(kijkPlek ? kijkPlek.naam : plek.bron === 'handmatig' ? inst.handPlaats : null);
       setBuitenAu(plek.bron === 'buiten-au');
       plekRef.current = plek;
       setPlekNu((oud) => (oud && oud.lat === plek.lat && oud.lon === plek.lon ? oud : { lat: plek.lat, lon: plek.lon }));
@@ -99,7 +114,7 @@ export default function BuurtScreen() {
       setFout(true);
     }
     setLaden(false);
-  }, [inst]);
+  }, [inst, kijkPlek]);
 
   /** Trekken aan de lijst: het draaiertje staat tot de herlading klaar is. */
   const ververs = useCallback(async () => {
@@ -120,7 +135,7 @@ export default function BuurtScreen() {
     if (laden || meerBezig || eindeBereikt || rijen.length === 0) return;
     setMeerBezig(true);
     try {
-      const plek = await bepaalPlek(inst);
+      const plek = kijkPlek ?? await bepaalPlek(inst);
       const oudste = rijen[rijen.length - 1]!.m.timestamp;
       const ms = await haalMeldingenPerVenster({
         lat: plek.lat, lon: plek.lon, radiusKm: inst.straalKm,
@@ -143,7 +158,7 @@ export default function BuurtScreen() {
       });
     } catch { /* stil: volgende scroll probeert opnieuw */ }
     finally { setMeerBezig(false); }
-  }, [inst, rijen, laden, meerBezig, eindeBereikt]);
+  }, [inst, rijen, laden, meerBezig, eindeBereikt, kijkPlek]);
 
   useEffect(() => { laad(); }, [laad]);
 
@@ -260,6 +275,26 @@ export default function BuurtScreen() {
       <View style={styles.bovenRij}>
         <StatusPil status={liveStatus} />
       </View>
+      {/* Je plekken naast elkaar, alleen als je er meer dan één hebt. */}
+      {extraPlekken.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRij} contentContainerStyle={styles.chips}>
+          {[null, ...extraPlekken].map((p) => {
+            const aan = p === null ? kijkPlek === null : kijkPlek?.naam === p.naam && kijkPlek.lat === p.lat;
+            return (
+              <Drukbaar
+                key={p ? `${p.naam}-${p.lat}` : 'eigen'}
+                style={[styles.plekChip, aan && { backgroundColor: C.accent, borderColor: C.accent }]}
+                rol="button"
+                geselecteerd={aan}
+                label={p ? `Show incidents around ${p.naam}` : 'Show incidents around your own place'}
+                onPress={() => { setLaden(true); setKijkPlek(p); }}
+              >
+                <Text style={[styles.plekChipTekst, aan && { color: '#ffffff' }]} numberOfLines={1}>{p ? p.naam : 'My place'}</Text>
+              </Drukbaar>
+            );
+          })}
+        </ScrollView>
+      )}
       <Text style={styles.subkop}>
         {plaatsLabel ? `Around ${plaatsLabel}` : buitenAu ? 'Outside Australia, showing Melbourne' : 'Around your current location'} · {straalLabel}
       </Text>
@@ -438,6 +473,11 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     borderLeftWidth: 6, backgroundColor: C.accentSoft, gap: 2,
   },
   binnenKop: { ...T.kop, color: C.accentTekst },
+  plekChip: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, borderCurve: 'continuous',
+    borderWidth: 1, borderColor: C.border, backgroundColor: C.card, maxWidth: 200,
+  },
+  plekChipTekst: { ...T.klein, color: C.textPrimary, fontWeight: F.weightSemibold },
   binnenTitel: { ...T.rij, color: C.textPrimary },
   binnenActie: { ...T.klein, color: C.textSecondary },
   leegTekst: { ...T.body, color: C.textSecondary, textAlign: 'center', marginTop: 6 },
