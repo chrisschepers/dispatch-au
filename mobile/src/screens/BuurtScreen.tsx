@@ -12,12 +12,13 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, SectionList, RefreshControl, AppState, ScrollView, ActivityIndicator,
+  View, Text, StyleSheet, SectionList, RefreshControl, AppState, ScrollView, ActivityIndicator, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { haalMeldingenPerVenster, type Melding } from '../api';
+import { haalMeldingenPerVenster, haalBrandgevaar, type Melding } from '../api';
+import { ratingKleur, ratingTekst, isErnstig, gevaarZin, type Brandgevaar, type DagGevaar } from '../brandgevaar';
 import { periodeVan } from '../vertaal';
 import { afstandKm } from '../afstand';
 import { MeldingRij } from '../components/MeldingRij';
@@ -252,6 +253,29 @@ export default function BuurtScreen() {
       .slice(0, 3)
     : []), [rijen, plekNu]);
 
+  // Brandgevaar van het district rond de plek waar je naar kijkt. Verandert
+  // twee keer per dag, dus alleen opnieuw als de plek verandert.
+  const [gevaar, setGevaar] = useState<Brandgevaar | null>(null);
+  useEffect(() => {
+    if (!plekNu) return;
+    let geldig = true;
+    haalBrandgevaar(plekNu.lat, plekNu.lon).then((g) => { if (geldig) setGevaar(g); });
+    return () => { geldig = false; };
+  }, [plekNu]);
+
+  const gevaarDag = (naam: string, d: DagGevaar) => {
+    const k = ratingKleur(d.rating);
+    return (
+      <View style={styles.gevaarDag}>
+        <Text style={styles.gevaarNaam}>{naam}</Text>
+        <View style={[styles.gevaarPil, { backgroundColor: k.vlak }]}>
+          <Text style={[styles.gevaarPilTekst, { color: k.tekst }]}>{ratingTekst(d)}</Text>
+        </View>
+        {d.totalFireBan ? <Text style={styles.gevaarVerbod}>Total Fire Ban</Text> : null}
+      </View>
+    );
+  };
+
   const lijstKop = (
     <>
       {binnen.map(({ m }) => {
@@ -275,6 +299,22 @@ export default function BuurtScreen() {
       <View style={styles.bovenRij}>
         <StatusPil status={liveStatus} />
       </View>
+      {gevaar ? (
+        <Drukbaar
+          style={[styles.gevaar, (isErnstig(gevaar.vandaag) || isErnstig(gevaar.morgen)) && styles.gevaarErnstig]}
+          rol={gevaar.url ? 'link' : 'button'}
+          label={gevaarZin(gevaar)}
+          hint={gevaar.url ? `Opens ${gevaar.bron}` : undefined}
+          onPress={() => { if (gevaar.url) Linking.openURL(gevaar.url).catch(() => {}); }}
+        >
+          <Text style={styles.gevaarKop}>Fire danger · {gevaar.district}</Text>
+          <View style={styles.gevaarRij}>
+            {gevaarDag('Today', gevaar.vandaag)}
+            {gevaarDag('Tomorrow', gevaar.morgen)}
+          </View>
+          {gevaar.bron ? <Text style={styles.gevaarBron}>Source: {gevaar.bron}</Text> : null}
+        </Drukbaar>
+      ) : null}
       {/* Je plekken naast elkaar, alleen als je er meer dan één hebt. */}
       {extraPlekken.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRij} contentContainerStyle={styles.chips}>
@@ -473,6 +513,19 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     borderLeftWidth: 6, backgroundColor: C.accentSoft, gap: 2,
   },
   binnenKop: { ...T.kop, color: C.accentTekst },
+  gevaar: {
+    marginHorizontal: 16, marginTop: 8, padding: 12, borderRadius: 14, borderCurve: 'continuous',
+    backgroundColor: C.card, gap: 8,
+  },
+  gevaarErnstig: { borderWidth: 1.5, borderColor: '#F78100' },
+  gevaarKop: { ...T.klein, color: C.textSecondary },
+  gevaarRij: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  gevaarDag: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
+  gevaarNaam: { ...T.rij, color: C.textPrimary },
+  gevaarPil: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, borderCurve: 'continuous' },
+  gevaarPilTekst: { ...T.klein, fontWeight: F.weightBold },
+  gevaarVerbod: { ...T.klein, color: C.accentTekst, fontWeight: F.weightBold },
+  gevaarBron: { ...T.klein, color: C.textMuted },
   plekChip: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, borderCurve: 'continuous',
     borderWidth: 1, borderColor: C.border, backgroundColor: C.card, maxWidth: 200,

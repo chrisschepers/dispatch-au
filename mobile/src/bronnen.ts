@@ -9,7 +9,7 @@
  * licenties (CC BY) vragen daarnaast een naamsvermelding. Die teksten staan
  * letterlijk zo in backend/source-config.mjs.
  */
-import { regions, type Region } from './feed-model.ts';
+import { regions, type Region, type Credit } from './feed-model.ts';
 
 export type BronRegio = Exclude<Region, 'au'>;
 
@@ -33,6 +33,7 @@ const STAAT: Record<BronRegio, string> = {
   qld: 'Queensland',
   sa: 'South Australia',
   act: 'Australian Capital Territory',
+  wa: 'Western Australia',
 };
 
 const VERMELDING: Record<BronRegio, string> = {
@@ -41,6 +42,7 @@ const VERMELDING: Record<BronRegio, string> = {
   qld: '© State of Queensland (Queensland Fire Department), CC BY 4.0. Adapted for display.',
   sa: 'The Government of South Australia, CFS Current Incidents, https://www.cfs.sa.gov.au/warnings-restrictions/warnings/rss-feeds/. CC BY 4.0.',
   act: 'Data © ACT Emergency Services Agency, licensed under CC BY 4.0. Adapted for display.',
+  wa: 'Supplied by EmergencyWA. © Government of Western Australia (Department of Fire and Emergency Services). For current information go to www.emergency.wa.gov.au.',
 };
 
 // De licentie- of bronvermeldingspagina per bron. Victoria eist een link
@@ -51,6 +53,7 @@ const LICENTIE: Record<BronRegio, string> = {
   qld: 'https://www.data.qld.gov.au/dataset/queensland-fire-and-rescue-current-bushfire-incidents',
   sa: 'https://www.cfs.sa.gov.au/home/copyright/',
   act: 'https://data.esa.act.gov.au/be-emergency-ready/warnings-alerts',
+  wa: 'https://catalogue.data.wa.gov.au/dataset/dfes-emergencywa-incident-points-dfes-066',
 };
 
 /** "https://www.rfs.nsw.gov.au/fire-information/…" → "rfs.nsw.gov.au". */
@@ -73,5 +76,34 @@ export const BRONNEN: Bron[] = (
 
 /** De bron van een melding, op de regio uit het id ("vic:…"). */
 export function bronVan(regio: string | null | undefined): Bron | null {
-  return BRONNEN.find((b) => b.regio === regio) ?? null;
+  return BRONNEN.find((b) => b.regio === regio) ?? (regio === 'wa' ? extraBron('wa') : null);
+}
+
+/** Western Australia staat niet in de vaste lijst: de bron is er pas als de backend hem aanzet. */
+function extraBron(regio: BronRegio): Bron {
+  return {
+    regio, naam: regions[regio].source, staat: STAAT[regio], url: regions[regio].adviceUrl,
+    domein: domeinVan(regions[regio].adviceUrl), vermelding: VERMELDING[regio], licentieUrl: LICENTIE[regio],
+  };
+}
+
+/**
+ * De bronnen die de feed noemt en die niet in de vaste lijst staan (verkeer,
+ * extra waarschuwingen, Western Australia). Instellingen toont ze erbij,
+ * zodat elke bron die in de app te zien is ook met link genoemd wordt.
+ */
+export function extraBronnen(credits: Credit[] | undefined): Array<Omit<Bron, 'regio'> & { sleutel: string }> {
+  const vast = new Set(BRONNEN.map((b) => b.naam));
+  const gezien = new Set<string>();
+  const uit: Array<Omit<Bron, 'regio'> & { sleutel: string }> = [];
+  for (const c of credits ?? []) {
+    if (vast.has(c.name) || gezien.has(c.name)) continue;
+    gezien.add(c.name);
+    const staat = STAAT[c.sourceFeed.split('-')[0] as BronRegio] ?? 'Australia';
+    uit.push({
+      sleutel: c.sourceFeed, naam: c.name, staat, url: c.adviceUrl, domein: domeinVan(c.adviceUrl),
+      vermelding: c.attribution, licentieUrl: c.licenseUrl,
+    });
+  }
+  return uit;
 }

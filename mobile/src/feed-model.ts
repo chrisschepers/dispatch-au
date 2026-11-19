@@ -5,10 +5,26 @@ import {
   type Category as BaseCategory,
 } from './domain/incidents.ts';
 import { suggestedPlaces, type Place } from './domain/places.ts';
-export type Region = 'au' | 'vic' | 'act' | 'nsw' | 'qld' | 'sa';
+export type Region = 'au' | 'vic' | 'act' | 'nsw' | 'qld' | 'sa' | 'wa';
+/** De staten die de app kent. Een rij uit een onbekende staat wordt overgeslagen. */
+export const STATEN = ['vic', 'act', 'nsw', 'qld', 'sa', 'wa'] as const;
+/**
+ * Wie een rij publiceert, zoals de feed het zegt (`credits`, sinds 19-11-2026).
+ * Nodig sinds er meer dan één bron per staat kan zijn: een verkeersongeval van
+ * Live Traffic NSW mag niet "Source: NSW Rural Fire Service" krijgen.
+ */
+export type Credit = {
+  sourceFeed: string;
+  name: string;
+  attribution: string;
+  licenseUrl: string;
+  adviceUrl: string;
+};
 export type Category = BaseCategory | 'ambulance';
 export type Incident = Omit<BaseIncident, 'category'> & {
   category: Category;
+  /** De bron van precies deze rij, als de feed die noemt. */
+  credit?: Credit | null;
   firstSeen: string;
   lastSeen: string;
   listed: boolean;
@@ -17,6 +33,7 @@ export type Feed = {
   region: Region;
   incidents: Incident[];
   warnings: Incident[];
+  credits?: Credit[];
   source: string;
   attribution: string;
   licenseUrl: string;
@@ -50,6 +67,24 @@ export const regions = {
       longitudeDelta: 13,
     },
     places: [] as Place[],
+  },
+  wa: {
+    label: 'Western Australia',
+    all: 'All Western Australia',
+    source: 'Emergency WA',
+    adviceUrl: 'https://www.emergency.wa.gov.au/',
+    timeZone: 'Australia/Perth',
+    timeLabel: 'Western Australia time',
+    centre: {
+      latitude: -26,
+      longitude: 121,
+      latitudeDelta: 24,
+      longitudeDelta: 24,
+    },
+    places: [
+      { id: 'perth', name: 'Perth', lat: -31.9523, lng: 115.8613, radius: 25 },
+      { id: 'bunbury', name: 'Bunbury', lat: -33.3271, lng: 115.6414, radius: 25 },
+    ] as Place[],
   },
   au: {
     label: 'Australia',
@@ -240,6 +275,7 @@ regions.au.places = [
   ...regions.act.places,
   ...regions.nsw.places,
   ...regions.qld.places,
+  ...regions.wa.places,
 ];
 export function rowRegion(row: Incident): Exclude<Region, 'au'> {
   return row.id.split(':')[0] as Exclude<Region, 'au'>;
@@ -268,12 +304,18 @@ export function parseFeed(value: unknown, region: Region): Feed {
   )
     throw Error('Invalid coverage');
   if (![24, 72, 168].includes(f.historyHours)) throw Error('Invalid history');
+  const credits = parseCredits(f.credits);
+  // De landelijke feed mag een staat bevatten die deze versie nog niet kent:
+  // die rijen vallen weg in plaats van dat de hele feed wordt afgekeurd
+  // (tot 1.2.0 gooide één rij uit een nieuwe staat alles weg).
+  const bekend = (r: Incident) =>
+    region !== 'au' || (STATEN as readonly string[]).includes(String(r?.id ?? '').split(':')[0]);
   const parseRow = (r: Incident): Incident => {
     if (
       !r ||
       typeof r.id !== 'string' ||
       !(region === 'au'
-        ? ['vic', 'act', 'nsw', 'qld', 'sa'].includes(r.id.split(':')[0])
+        ? (STATEN as readonly string[]).includes(r.id.split(':')[0])
         : r.id.startsWith(region + ':')) ||
       ![
         'fire',
@@ -315,7 +357,8 @@ export function parseFeed(value: unknown, region: Region): Feed {
       geometry: safeGeometry(r.geometry),
       created: date(r.created) ? r.created : null,
       updated: date(r.updated) ? r.updated : null,
-      officialUrl: regions[rowRegion(r)].adviceUrl,
+      officialUrl: credits.get(r.sourceFeed)?.adviceUrl ?? regions[rowRegion(r)].adviceUrl,
+      credit: credits.get(r.sourceFeed) ?? null,
       action: typeof r.action === 'string' ? r.action.slice(0, 1000) : null,
       resources:
         Number.isInteger(r.resources) && r.resources! >= 0 ? r.resources : null,
@@ -328,12 +371,13 @@ export function parseFeed(value: unknown, region: Region): Feed {
     adviceUrl: regions[region].adviceUrl,
     staleAfterMs: ['nsw', 'qld'].includes(region)
       ? 2400000
-      : region === 'sa'
+      : ['sa', 'wa'].includes(region)
         ? 900000
         : 300000,
     sourceUpdated: date(f.sourceUpdated) ? f.sourceUpdated : null,
-    incidents: f.incidents.map(parseRow),
-    warnings: f.warnings.map(parseRow).filter((r) => r.listed),
+    credits: [...credits.values()],
+    incidents: f.incidents.filter(bekend).map(parseRow),
+    warnings: f.warnings.filter(bekend).map(parseRow).filter((r) => r.listed),
   };
 }
 export function incidentTime(row: Incident) {
@@ -350,19 +394,38 @@ export function isStale(feed: Feed, now = Date.now()) {
 function sourceLimit(region: Region) {
   return ['nsw', 'qld'].includes(region)
     ? 2400000
-    : region === 'sa'
+    : ['sa', 'wa'].includes(region)
       ? 900000
       : 300000;
 }
+/**
+ * De bronvermeldingen uit de feed, op `sourceFeed`. Alleen https-links en
+ * korte teksten; een oudere backend stuurt ze niet, dan is de lijst leeg en
+ * geldt de bron van de staat.
+ */
+function parseCredits(value: unknown): Map<string, Credit> {
+  const uit = new Map<string, Credit>();
+  if (!Array.isArray(value)) return uit;
+  const tekst = (v: unknown, max: number) => typeof v === 'string' && v.length > 0 && v.length <= max;
+  const link = (v: unknown) => tekst(v, 300) && /^https:\/\//.test(v as string);
+  for (const c of value.slice(0, 30) as Credit[]) {
+    if (!c || !tekst(c.sourceFeed, 40) || !tekst(c.name, 80) || !tekst(c.attribution, 400) || !link(c.licenseUrl) || !link(c.adviceUrl)) continue;
+    uit.set(c.sourceFeed, {
+      sourceFeed: c.sourceFeed, name: c.name, attribution: c.attribution,
+      licenseUrl: c.licenseUrl, adviceUrl: c.adviceUrl,
+    });
+  }
+  return uit;
+}
 function parseSourceStatus(value: unknown): Feed['sources'] {
   if (value === undefined) return undefined; // Compatible with older collector responses.
-  if (!Array.isArray(value) || value.length > 5)
+  if (!Array.isArray(value) || value.length > 12)
     throw Error('Invalid source status');
   const seen = new Set();
-  return value.map((s) => {
+  // Een staat die deze versie niet kent telt niet mee, en keurt niets af.
+  return value.filter((s) => (STATEN as readonly string[]).includes(s?.region)).map((s) => {
     if (
       !s ||
-      !['vic', 'act', 'nsw', 'qld', 'sa'].includes(s.region) ||
       seen.has(s.region) ||
       typeof s.ready !== 'boolean' ||
       typeof s.stale !== 'boolean' ||
