@@ -462,8 +462,13 @@ async function main() {
   // FIRE_DANGER_ENABLED is on. The sources are asked every 30 minutes.
   const fireDanger = fireDangerOn() ? new FireDangerService() : null;
   if (fireDanger) {
-    void fireDanger.refresh();
-    setInterval(() => void fireDanger.refresh(), TICK_MS).unref();
+    // After each round: the evening and morning alerts (push.mjs).
+    const round = async () => {
+      await fireDanger.refresh();
+      await push.fireDangerAlerts(fireDanger);
+    };
+    void round().catch(() => {});
+    setInterval(() => void round().catch(() => {}), TICK_MS).unref();
   }
   const server = createServer(
     store,

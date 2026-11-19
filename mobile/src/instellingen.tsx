@@ -54,6 +54,12 @@ export interface Instellingen {
    */
   verkeersongevallen: boolean;
   /**
+   * Melding als morgen (of vandaag) een Total Fire Ban of brandgevaar Extreme
+   * of hoger geldt in het district van een van je plekken. Gratis: dit is een
+   * officiële waarschuwing. Nu alleen New South Wales en de ACT.
+   */
+  brandgevaarMelding: boolean;
+  /**
    * Premium: extra plekken naast je eigen plek (thuis, vakantiehuis, ouders),
    * elk met dezelfde diensten en straal. Hooguit vijf (premium.ts).
    */
@@ -83,6 +89,7 @@ const STANDAARD: Instellingen = {
   blusvliegtuigen: false,
   notificaties: false,           // pas aan na de expliciete vraag in onboarding
   verkeersongevallen: false,
+  brandgevaarMelding: false,
   extraPlekken: [],
   thema: 'automatisch',          // volgt standaard het thema van de telefoon
   pro: false,

@@ -329,6 +329,14 @@ export default function InstellingenScreen() {
                     wissel: (v) => { if (!premium) { vraag('incidenten'); return; } zet('alleenGroot', v); },
                   }}
                 />
+                {/* Brandgevaar (19-11): gratis, want het is een officiële
+                    waarschuwing. Geldt voor elke plek die je volgt. */}
+                <Rij
+                  icoon="noodwaarschuwing" tegelKleur="#F78100" scheiding
+                  titel="Fire danger for tomorrow"
+                  sub="A Total Fire Ban, or Extreme and higher. New South Wales and the ACT for now"
+                  schakelaar={{ aan: inst.brandgevaarMelding, wissel: (v) => zet('brandgevaarMelding', v) }}
+                />
                 {/* Grote blusvliegtuigen (13-11): volgt je eigen filter voor
                     Fire, dus alleen zinvol met de gewone meldingen aan. */}
                 <Rij

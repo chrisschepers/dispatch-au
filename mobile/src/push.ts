@@ -90,6 +90,7 @@ function filterVelden(inst: Instellingen) {
     gripOnly: e.gripAlarm,
     airTankers: e.blusvliegtuigen,
     roadCrashes: e.verkeersongevallen,
+    fireDanger: e.brandgevaarMelding,
     places: e.extraPlekken.map((p) => ({ name: p.naam, lat: p.lat, lon: p.lon })),
   };
 }

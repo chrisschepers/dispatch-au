@@ -208,7 +208,7 @@ function Binnenkant() {
     const t = setTimeout(() => { werkPushFilterBij(inst).catch(() => {}); }, 400);
     return () => clearTimeout(t);
   }, [
-    onboarded, premiumBekend, abonnement.premium, inst.extraPlekken, inst.verkeersongevallen,
+    onboarded, premiumBekend, abonnement.premium, inst.extraPlekken, inst.verkeersongevallen, inst.brandgevaarMelding,
     inst.straalKm, inst.straalPerDienst,
     inst.disciplines, inst.alleenGroot, inst.gripAlarm, inst.blusvliegtuigen, inst.notificaties,
     inst.volgLocatie, inst.handLat, inst.handLon,

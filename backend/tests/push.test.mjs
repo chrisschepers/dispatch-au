@@ -11,6 +11,9 @@ import {
   messageFor,
   matchedPlace,
   placesOf,
+  fireDangerMoment,
+  fireDangerSerious,
+  fireDangerMessage,
 } from '../push.mjs';
 
 const MELBOURNE = { lat: -37.81, lon: 144.96 };
@@ -435,4 +438,49 @@ void test('a crash from a road feed is only pushed to a device that asked', () =
   const { push } = service();
   const id = device(push, { roadCrashes: true });
   assert.equal(push.devices().find((x) => x.id === id).filter.roadCrashes, true);
+});
+
+// 19-11-2026: "Tomorrow: Total Fire Ban" in the evening.
+const SYDNEY_EVENING = Date.parse('2026-11-19T07:00:00Z'); // 6 pm AEDT
+const districtFor = (tomorrow, today = { date: '2026-11-19', rating: 'Moderate', totalFireBan: false }) => ({
+  at: () => ({
+    district: { district: 'Greater Sydney Region', districtId: 'nsw:4', today, tomorrow, stale: false },
+  }),
+});
+
+void test('fire danger alerts go out in the evening and the morning, never at night', () => {
+  assert.equal(fireDangerMoment(SYDNEY_EVENING), 'tomorrow');
+  assert.equal(fireDangerMoment(Date.parse('2026-11-19T20:00:00Z')), 'today'); // 7 am
+  assert.equal(fireDangerMoment(Date.parse('2026-11-19T13:00:00Z')), null); // midnight
+  assert.equal(fireDangerMoment(Date.parse('2026-11-19T02:00:00Z')), null); // 1 pm
+  assert.equal(fireDangerSerious({ rating: 'High', totalFireBan: false }), false);
+  assert.equal(fireDangerSerious({ rating: 'High', totalFireBan: true }), true);
+  assert.equal(fireDangerSerious({ rating: 'Catastrophic', totalFireBan: false }), true);
+  assert.equal(fireDangerSerious(null), false);
+  const d = { district: 'Greater Sydney Region', districtId: 'nsw:4' };
+  assert.deepEqual(
+    fireDangerMessage(d, { rating: 'Extreme', totalFireBan: true }, 'tomorrow', 'Beach house'),
+    { title: 'Tomorrow: Total Fire Ban', body: 'Greater Sydney Region · Extreme fire danger · for Beach house', data: { fireDanger: 'nsw:4' } },
+  );
+  assert.equal(fireDangerMessage(d, { rating: 'Extreme', totalFireBan: false }, 'today').title, 'Today: Extreme fire danger');
+});
+
+void test('one fire danger alert per device, district and date, only for who asked', async () => {
+  const { push, sent } = service();
+  const id = device(push, { fireDanger: true });
+  const ban = { date: '2026-11-20', rating: 'Extreme', totalFireBan: true };
+  assert.equal((await push.fireDangerAlerts(districtFor(ban), SYDNEY_EVENING)).sent, 1);
+  assert.equal(sent[0].msg.title, 'Tomorrow: Total Fire Ban');
+  // Later that evening, and the next morning for the same date: not again.
+  assert.equal((await push.fireDangerAlerts(districtFor(ban), SYDNEY_EVENING + 3600_000)).sent, 0);
+  const morning = Date.parse('2026-11-19T20:00:00Z');
+  assert.equal((await push.fireDangerAlerts(districtFor(null, ban), morning)).sent, 0);
+  // A moderate day, the middle of the night, or a device that did not ask: nothing.
+  push.setFilter(id, { fireDanger: false });
+  const other = { date: '2026-11-21', rating: 'Catastrophic', totalFireBan: false };
+  assert.equal((await push.fireDangerAlerts(districtFor(other), SYDNEY_EVENING)).sent, 0);
+  push.setFilter(id, { fireDanger: true });
+  assert.equal((await push.fireDangerAlerts(districtFor({ date: '2026-11-21', rating: 'High', totalFireBan: false }), SYDNEY_EVENING)).sent, 0);
+  assert.equal((await push.fireDangerAlerts(districtFor(other), Date.parse('2026-11-19T13:00:00Z'))).sent, 0);
+  assert.equal((await push.fireDangerAlerts(districtFor(other), SYDNEY_EVENING)).sent, 1);
 });
