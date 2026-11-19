@@ -21,6 +21,7 @@ import { mapData } from './site-map.mjs';
 import { places } from './places.mjs';
 import { Dashboard } from './dashboard.mjs';
 import { DASHBOARD_CSP, DASHBOARD_HTML } from './dashboard-page.mjs';
+import { FireDangerService, fireDangerOn, TICK_MS } from './fire-danger.mjs';
 
 // Device routes for push alerts (docs/PUSH-API.md). Small JSON bodies only.
 function readJson(req, limit = 8192) {
@@ -123,6 +124,7 @@ export function createServer(
   articles = null,
   vessels = null,
   dashboard = null,
+  fireDanger = null,
 ) {
   const news = articles ?? new Articles(store.db);
   const pageCache = new Map();
@@ -236,6 +238,26 @@ export function createServer(
         res.setHeader('Cache-Control', 'public, max-age=30');
         return send(200, trips);
       }
+      // Fire Danger Ratings and Total Fire Bans per district (fire-danger.mjs),
+      // only with FIRE_DANGER_ENABLED on. With lat and lon: the district that
+      // point lies in; without: every district.
+      if (url.pathname === '/v1/fire-danger') {
+        if (!fireDanger)
+          return send(503, { error: 'Fire danger unavailable' });
+        res.setHeader('Cache-Control', 'public, max-age=300');
+        const q = url.searchParams;
+        if (!q.has('lat') && !q.has('lon')) return send(200, fireDanger.all());
+        const lat = Number(q.get('lat') || NaN);
+        const lon = Number(q.get('lon') || NaN);
+        if (
+          !Number.isFinite(lat) ||
+          !Number.isFinite(lon) ||
+          Math.abs(lat) > 90 ||
+          Math.abs(lon) > 180
+        )
+          return send(400, { error: 'Invalid lat or lon' });
+        return send(200, fireDanger.at(lat, lon));
+      }
       if (url.pathname === '/v1/config') {
         res.setHeader('Cache-Control', 'public, max-age=300');
         return send(200, appConfig());
@@ -320,6 +342,12 @@ export function createServer(
           // Only whether each push route has a usable key, never the key
           // itself: so a wrong FCM_SERVICE_ACCOUNT shows up here (15-11-2026).
           push: { apns: apnsConfigured(), fcm: fcmConfigured() },
+          // Fire danger per district; does not count towards `ok`, so a new
+          // optional source cannot take readiness down.
+          fireDanger: {
+            enabled: !!fireDanger,
+            sources: fireDanger ? fireDanger.status() : [],
+          },
         });
       }
       if (url.pathname !== '/v1/feed') return send(404, { error: 'Not found' });
@@ -430,6 +458,13 @@ async function main() {
   };
   snapshot();
   setInterval(snapshot, 3600_000).unref();
+  // Fire Danger Ratings and Total Fire Bans (fire-danger.mjs): off unless
+  // FIRE_DANGER_ENABLED is on. The sources are asked every 30 minutes.
+  const fireDanger = fireDangerOn() ? new FireDangerService() : null;
+  if (fireDanger) {
+    void fireDanger.refresh();
+    setInterval(() => void fireDanger.refresh(), TICK_MS).unref();
+  }
   const server = createServer(
     store,
     push,
@@ -437,6 +472,7 @@ async function main() {
     articles,
     vessels,
     dashboard,
+    fireDanger,
   );
   // Keeps the 3-minute rhythm while someone has the layer open.
   setInterval(() => void aircraft.tick(), 30_000).unref();
