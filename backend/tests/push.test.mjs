@@ -9,6 +9,8 @@ import {
   insideArea,
   levelRank,
   messageFor,
+  matchedPlace,
+  placesOf,
 } from '../push.mjs';
 
 const MELBOURNE = { lat: -37.81, lon: 144.96 };
@@ -381,4 +383,43 @@ void test('a critical APNs alert asks for full volume through silent mode', () =
   assert.deepEqual(p.aps.sound, { critical: 1, name: 'pager.wav', volume: 1 });
   assert.equal(p.aps['interruption-level'], 'critical');
   assert.equal(p.incidentId, 'vic:1');
+});
+
+// 19-11-2026: more than one watched place (a holiday house, a parent's home).
+test('an extra place gets the alert, named, with the distance from that place', () => {
+  const d = {
+    lat: -37.81, lon: 144.96,
+    filter: { notificationsEnabled: true, radiusKm: 20, places: [{ name: 'Beach house', lat: -37.3, lon: 144.96 }] },
+  };
+  assert.equal(placesOf(d).length, 2);
+  // 57 km from Melbourne, about 1 km from the beach house.
+  assert.equal(matchedPlace(d, row()).name, 'Beach house');
+  assert.equal(fits(d, row()), true);
+  assert.match(messageFor(row(), d).body, /km from Beach house|m from Beach house/);
+  // Without the extra place the same device hears nothing.
+  assert.equal(fits({ ...d, filter: { ...d.filter, places: [] } }, row()), false);
+  // Near the phone itself: no name in the text.
+  const dichtbij = row({ point: [-37.82, 144.97] });
+  assert.equal(matchedPlace(d, dichtbij).name, null);
+  assert.doesNotMatch(messageFor(dichtbij, d).body, /from/);
+});
+
+test('a device with only extra places and no place of its own still gets alerts', () => {
+  const d = { lat: null, lon: null, filter: { notificationsEnabled: true, radiusKm: 20, places: [{ name: 'Mum', lat: -37.3, lon: 144.96 }] } };
+  assert.equal(fits(d, row()), true);
+});
+
+test('setFilter keeps at most five valid, named places', () => {
+  const { push } = service();
+  const id = device(push, {});
+  const geldig = (i) => ({ name: `Place ${i}`, lat: -30 - i, lon: 140 + i });
+  push.setFilter(id, { places: [
+    ...[1, 2, 3, 4, 5, 6, 7].map(geldig),
+  ] });
+  assert.equal(push.devices().find((x) => x.id === id).filter.places.length, 5);
+  push.setFilter(id, { places: [{ name: '', lat: -30, lon: 140 }, { name: 'Bad', lat: 200, lon: 140 }, { name: ' Shack ', lat: -35, lon: 138.5 }, 'x', null] });
+  assert.deepEqual(push.devices().find((x) => x.id === id).filter.places, [{ name: 'Shack', lat: -35, lon: 138.5 }]);
+  // Not sent: the places stay as they are.
+  push.setFilter(id, { radiusKm: 30 });
+  assert.equal(push.devices().find((x) => x.id === id).filter.places.length, 1);
 });

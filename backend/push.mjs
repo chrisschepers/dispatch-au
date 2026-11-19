@@ -104,7 +104,32 @@ export function fits(device, row, { upgrade = false } = {}) {
  * The filter without "Emergency Warnings anywhere": is this about the
  * device's own place? Only such alerts may break through silent mode.
  */
-export function fitsPlace(device, row, { upgrade = false } = {}) {
+export function fitsPlace(device, row, opts = {}) {
+  return matchedPlace(device, row, opts) !== null;
+}
+
+/**
+ * The places a device watches: its own (where the phone is, or the fixed
+ * place) and up to five extra ones, such as a holiday house or a parent's
+ * home (19-11-2026). The official apps only watch inside their own state.
+ */
+export function placesOf(device) {
+  const own =
+    device.lat == null || device.lon == null
+      ? []
+      : [{ lat: device.lat, lon: device.lon, name: null }];
+  const extra = Array.isArray(device.filter?.places) ? device.filter.places : [];
+  return [...own, ...extra];
+}
+
+/** The first watched place this incident is about, or null. */
+export function matchedPlace(device, row, opts = {}) {
+  for (const place of placesOf(device))
+    if (fitsAt(device, row, place, opts)) return place;
+  return null;
+}
+
+function fitsAt(device, row, place, { upgrade = false } = {}) {
   const f = device.filter;
   const rank = levelRank(row.level);
   if (!f.notificationsEnabled) return false;
@@ -116,11 +141,10 @@ export function fitsPlace(device, row, { upgrade = false } = {}) {
   )
     return false;
   if (f.warningsOnly && rank === 0) return false;
-  if (device.lat == null || device.lon == null) return false;
   // A warning covers an area. Whoever is inside it must hear about it,
   // however far away its pin is, and also when it has no pin at all
   // (Queensland and SA warnings often only have the area).
-  if (rank >= 1 && insideArea(row.geometry, device.lat, device.lon))
+  if (rank >= 1 && insideArea(row.geometry, place.lat, place.lon))
     return true;
   if (!row.point) return false;
   const radius = Number(f.radiusPerService?.[service] ?? f.radiusKm ?? 20);
@@ -128,7 +152,7 @@ export function fitsPlace(device, row, { upgrade = false } = {}) {
   // An upgrade to Watch and Act or higher reaches a bit further than the
   // radius: people just outside it want to know too.
   const reach = upgrade && rank >= 2 ? radius * 1.5 : radius;
-  return distanceKm([device.lat, device.lon], row.point) <= reach;
+  return distanceKm([place.lat, place.lon], row.point) <= reach;
 }
 
 function suburb(location) {
@@ -145,18 +169,26 @@ export function messageFor(row, device, { upgrade = false } = {}) {
     upgrade && row.level
       ? `${row.level}: ${row.title}${place ? ` in ${place}` : ''}`
       : `${row.title}${place ? ` in ${place}` : ''}`;
+  // Distance from the place this alert is for; an extra place is named, so
+  // "3.2 km" is never read as 3.2 km from where you are now.
+  const watched =
+    (device.filter ? matchedPlace(device, row, { upgrade }) : null) ??
+    placesOf(device)[0];
   const km =
-    row.point && device.lat != null
-      ? distanceKm([device.lat, device.lon], row.point)
+    row.point && watched
+      ? distanceKm([watched.lat, watched.lon], row.point)
       : null;
+  const from = watched?.name ? ` from ${watched.name}` : '';
   const body = [
     row.location?.split(',').slice(0, -1).join(',').trim() || null,
     row.level || row.status || null,
     km != null
       ? km < 1
-        ? `${Math.round(km * 1000)} m`
-        : `${km.toFixed(1)} km`
-      : null,
+        ? `${Math.round(km * 1000)} m${from}`
+        : `${km.toFixed(1)} km${from}`
+      : watched?.name
+        ? `near ${watched.name}`
+        : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -466,7 +498,10 @@ const DEFAULT_FILTER = {
   critical: false,
   // A large air tanker on its way to a fire within the device's Fire radius.
   airTankers: false,
+  // Extra watched places: [{ name, lat, lon }], at most MAX_PLACES.
+  places: [],
 };
+export const MAX_PLACES = 5;
 
 export class PushService {
   constructor(db, { env = process.env, send } = {}) {
@@ -582,6 +617,16 @@ export class PushService {
     ]) {
       if (typeof body[k] === 'boolean') f[k] = body[k];
     }
+    if (Array.isArray(body.places))
+      f.places = body.places
+        .map((p) => {
+          const at = validPlace(p?.lat, p?.lon);
+          const name =
+            typeof p?.name === 'string' ? p.name.trim().slice(0, 40) : '';
+          return at && name ? { name, lat: at.lat, lon: at.lon } : null;
+        })
+        .filter(Boolean)
+        .slice(0, MAX_PLACES);
     if (typeof body.sound === 'string' && /^[a-z]{2,12}$/.test(body.sound))
       f.sound = body.sound;
     const place = validPlace(body.lat, body.lon);
