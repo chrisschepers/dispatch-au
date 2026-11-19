@@ -67,7 +67,7 @@ export function fireDangerMessage(district, day, when, placeName = null) {
   const body = [
     district.district,
     ban && rated ? `${String(day.rating)} fire danger` : null,
-    placeName ? `for ${placeName}` : null,
+    placeName ? 'for ' + String(placeName) : null,
   ]
     .filter(Boolean)
     .join(' · ');
