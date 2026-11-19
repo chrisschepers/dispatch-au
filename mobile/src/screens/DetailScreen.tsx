@@ -23,6 +23,8 @@ import { misschienVragen } from '../recensie';
 import { LookAround } from '../../modules/look-around';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlekSnel } from '../locatie';
+import { binnenGebied, binnenTekst, heeftVlak } from '../gebied';
+import { niveauVan } from '../kaartFilter';
 import {
   vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst, plaatsOnnauwkeurig,
 } from '../vertaal';
@@ -280,6 +282,18 @@ export default function DetailScreen() {
         </View>
       ) : null}
 
+      {/* The first question with a warning: is my place inside the area? */}
+      {mijnPlek && heeftVlak(melding.geometry) && !v.afgelopen ? (
+        binnenGebied(melding.geometry, mijnPlek.lat, mijnPlek.lon) ? (
+          <View style={styles.opschaling} accessibilityRole="alert">
+            <Icoon naam="waarschuwing" grootte={20} kleur={C.accent} />
+            <Text style={styles.opschalingTekst}>{binnenTekst(niveauVan(melding))}</Text>
+          </View>
+        ) : (
+          <Text style={styles.buitenGebied}>Your place is outside this area.</Text>
+        )
+      ) : null}
+
       {lat != null && lon != null && (
         // Tikken opent het kaarttabblad ingezoomd op dit incident: het
         // kaartje is een voorproefje, geen doodlopend plaatje (wens Chris).
@@ -304,7 +318,7 @@ export default function DetailScreen() {
             });
           }}
         >
-          <MiniKaart lat={lat} lon={lon} kleur={v.kleur} />
+          <MiniKaart lat={lat} lon={lon} kleur={v.kleur} gebied={v.afgelopen ? null : melding.geometry} niveau={niveauVan(melding)} />
           {/* Straatbeeld linksboven, zoals in de grote app. Alleen als de pin
               op een straat staat: een foto van "midden in de plaats" zegt
               niets en wekt de indruk dat het dáár is. */}
@@ -552,6 +566,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   },
   // accentTekst: het gewone accent haalt op accentSoft geen 4.5:1.
   opschalingTekst: { ...T.rij, color: C.accentTekst, flex: 1 },
+  buitenGebied: { ...T.klein, color: C.textSecondary, paddingHorizontal: 20, marginTop: 6 },
   rijIcoon: { width: 24 },
   rij: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, gap: 10 },
   scheiding: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.separator },

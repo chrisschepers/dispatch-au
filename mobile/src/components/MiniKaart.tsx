@@ -5,13 +5,19 @@
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polygon } from 'react-native-maps';
+import type { Geometry } from 'geojson';
+import { kaartVlakken, omvang, vlakKleur } from '../gebied';
 import { kaartStijlVoor, appleKaartVoor } from '../kaartstijl';
 import { T, type Palet } from '../theme';
 import { useThema, useStijlen } from '../thema';
 import { KAART_BESCHIKBAAR } from '../kaartBeschikbaar';
 
-export function MiniKaart({ lat, lon, kleur }: { lat: number; lon: number; kleur: string }) {
+export function MiniKaart({ lat, lon, kleur, gebied, niveau = 0 }: {
+  lat: number; lon: number; kleur: string;
+  /** Het gebied van de waarschuwing; het kaartje zoomt dan zo ver uit dat het past. */
+  gebied?: Geometry | null; niveau?: number;
+}) {
   const C = useThema();
   const styles = useStijlen(maak_styles);
   // Android zonder Maps-sleutel: geen kaart, want die crasht (zie kaartBeschikbaar).
@@ -22,16 +28,29 @@ export function MiniKaart({ lat, lon, kleur }: { lat: number; lon: number; kleur
       </View>
     );
   }
+  const vlakken = kaartVlakken(gebied);
+  const doos = omvang(gebied);
+  const k = vlakKleur(niveau);
+  // Met een gebied: het hele gebied in beeld, met een rand eromheen.
+  const regio = doos
+    ? {
+      latitude: (doos[0] + doos[2]) / 2, longitude: (doos[1] + doos[3]) / 2,
+      latitudeDelta: Math.max(0.02, (doos[2] - doos[0]) * 1.4), longitudeDelta: Math.max(0.02, (doos[3] - doos[1]) * 1.4),
+    }
+    : { latitude: lat, longitude: lon, latitudeDelta: 0.02, longitudeDelta: 0.02 };
   return (
     <MapView
       style={styles.kaart}
-      initialRegion={{ latitude: lat, longitude: lon, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
+      initialRegion={regio}
       scrollEnabled={false} zoomEnabled={false} pitchEnabled={false} rotateEnabled={false}
       toolbarEnabled={false}
       // Zelfde ondergrond als het kaarttabblad (Android; iOS = Apple Maps).
       customMapStyle={kaartStijlVoor(C.donker)}
       {...appleKaartVoor(C.donker)}
     >
+      {vlakken.map((v, i) => (
+        <Polygon key={i} coordinates={v.coordinates} holes={v.holes} strokeColor={k.rand} fillColor={k.vulling} strokeWidth={2} />
+      ))}
       <Marker coordinate={{ latitude: lat, longitude: lon }} anchor={{ x: 0.5, y: 0.5 }}>
         <View style={[styles.pin, { backgroundColor: kleur }]} />
       </Marker>

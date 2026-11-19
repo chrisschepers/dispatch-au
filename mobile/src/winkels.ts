@@ -160,7 +160,33 @@ function revenueCatWinkel(android: boolean): Winkel | null {
   };
 }
 
+/**
+ * Oefenwinkel voor de simulator: zonder abonnement, met een proef van 3 dagen;
+ * "kopen" zet Premium aan tot de app opnieuw start. Alleen in een
+ * ontwikkelbuild met EXPO_PUBLIC_TEST_NEPWINKEL=1, om het Premium-scherm en de
+ * sloten te bekijken zonder sandbox-account. In een release valt dit weg.
+ */
+function nepWinkel(): Winkel {
+  let actief = false;
+  const luisteraars = new Set<(g: Gebeurtenis) => void>();
+  const stand = (): Uitkomst => ({ toegang: actief ? 'actief' : 'geen', verlengt: actief });
+  return {
+    naam: 'the App Store', account: 'Apple Account', beheerUrl: '',
+    toestand: async () => stand(),
+    product: async () => ({ prijs: '$9.99', periode: 'P1Y', proefPeriode: 'P3D' }),
+    koop: async () => {
+      actief = true;
+      for (const cb of luisteraars) cb({ soort: 'uitkomst', u: stand(), volledig: true });
+    },
+    herstel: async () => stand(),
+    beheer: async () => {},
+    luister: (cb) => { luisteraars.add(cb); return () => { luisteraars.delete(cb); }; },
+    leesbaar: () => 'The store could not be reached.',
+  };
+}
+
 export function kiesWinkel(): Winkel | null {
+  if (__DEV__ && process.env.EXPO_PUBLIC_TEST_NEPWINKEL === '1') return nepWinkel();
   if (Platform.OS === 'ios') return revenueCatWinkel(false);
   if (Platform.OS === 'android') return revenueCatWinkel(true);
   return null;

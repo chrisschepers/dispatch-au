@@ -13,7 +13,10 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { parseFeed, type Feed, type Incident } from './feed-model';
+import type { Geometry } from 'geojson';
 import { vensters } from './diensten';
+import { binnenGebied, middenVan } from './gebied';
+import { niveauVan } from './kaartFilter';
 
 const BASE = String(Constants.expoConfig?.extra?.feedApiUrl || '').replace(/\/$/, '');
 let installToken: string | null = null;
@@ -44,6 +47,8 @@ export interface Melding {
   kind?: 'incident' | 'warning';
   level?: string | null;
   action?: string | null;
+  /** The area the agency published (a warning area or a fire ground), if any. */
+  geometry?: Geometry | null;
   sourceRegion?: string;
   /**
    * Still on the agency's official list? False = ended (kaartFilter.ts): the
@@ -115,7 +120,10 @@ function instantieNaam(code: string | undefined): string | undefined {
 
 function naarMelding(i: Incident, region: string): Melding {
   const { straat, plaats } = splitsPlek(i.location || '');
-  const [lat, lon] = i.point ?? [null, null];
+  // Only an area and no pin (Queensland and SA warnings): the pin goes in the
+  // middle, so the warning is on the map and in the list at all.
+  const midden = i.point ? null : middenVan(i.geometry);
+  const [lat, lon] = i.point ?? midden ?? [null, null];
   return {
     id: i.id,
     timestamp: i.created ?? i.firstSeen ?? i.updated ?? new Date().toISOString(),
@@ -125,7 +133,7 @@ function naarMelding(i: Incident, region: string): Melding {
     location: straat,
     rawMessage: [i.title, i.status].filter(Boolean).join(' · '),
     lat, lon,
-    geoPrecision: i.point ? 'street' : 'none',
+    geoPrecision: i.point ? 'street' : midden ? 'area' : 'none',
     title: i.title,
     status: i.status,
     agency: instantieNaam(i.agency),
@@ -135,6 +143,7 @@ function naarMelding(i: Incident, region: string): Melding {
     kind: i.kind,
     level: i.level,
     action: i.action,
+    geometry: i.geometry,
     sourceRegion: region,
     listed: i.listed,
     firstSeen: i.firstSeen,
@@ -196,6 +205,9 @@ export async function haalMeldingen(opts: {
     const t = +new Date(m.timestamp);
     if (opts.vanaf && t < opts.vanaf.getTime()) return false;
     if (opts.voor && t >= opts.voor.getTime()) return false;
+    // A warning you are inside of belongs in your list, however far away its
+    // pin is (same rule as the alerts, backend/push.mjs).
+    if (niveauVan(m) >= 1 && binnenGebied(m.geometry, opts.lat, opts.lon)) return true;
     if (m.lat == null || m.lon == null) return false;
     return afstandKm(opts.lat, opts.lon, m.lat, m.lon) <= opts.radiusKm;
   }).slice(0, opts.limit ?? 200);
@@ -343,6 +355,8 @@ export async function zetPushFilter(userId: string, filter: {
   gripOnly?: boolean;
   /** Melding als een groot blusvliegtuig opstijgt naar een brand binnen je eigen filter. */
   airTankers?: boolean;
+  /** Extra plekken (Premium); altijd meesturen, ook leeg, zodat weghalen aankomt. */
+  places?: Array<{ name: string; lat: number; lon: number }>;
 }): Promise<void> {
   const res = await fetch(`${BASE}/v1/devices/${userId}/filter`, {
     method: 'PATCH', headers: headers(),
@@ -356,6 +370,7 @@ export async function zetPushFilter(userId: string, filter: {
       sound: filter.geluid,
       notificationsEnabled: filter.notificationsEnabled,
       airTankers: filter.airTankers ?? false,
+      places: filter.places ?? [],
     }),
   });
   if (!res.ok) throw new Error(`filter → ${res.status}`);

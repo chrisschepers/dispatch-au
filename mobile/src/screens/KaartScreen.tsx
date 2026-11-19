@@ -14,7 +14,7 @@ import {
   View, Text, StyleSheet, Pressable, Platform, AccessibilityInfo, AppState, ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
-import MapView, { Marker, type Region } from 'react-native-maps';
+import MapView, { Marker, Polygon, type Region } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useIsFocused, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,7 +27,8 @@ import { bepaalPlek, bepaalPlekSnel } from '../locatie';
 import { DIENSTEN, ALLE_DIENSTKEYS } from '../diensten';
 import { kaartStijlVoor, appleKaartVoor } from '../kaartstijl';
 import { BrandendIcoon, BotsingIcoon, VlammenIcoon, type BrandendObject } from '../components/IncidentIcoon';
-import { opKaart, feedUren, filterActief, periodeVoluit, isAfgelopen } from '../kaartFilter';
+import { opKaart, feedUren, filterActief, periodeVoluit, isAfgelopen, niveauVan } from '../kaartFilter';
+import { kaartVlakken, vlakKleur, heeftVlak } from '../gebied';
 import { useKaartKeuze } from '../kaartKeuze';
 import { useLuchtBeeld } from '../vliegtuigen';
 import { inLagen, zonderSignaal, type Vliegtuig } from '../vliegtuigData';
@@ -358,6 +359,16 @@ function KaartMetMeldingen() {
   //
   // Eén keer per melding vertalen: groeperen en tekenen hebben allebei de
   // kleur en de grootte nodig.
+  // Waarschuwingsgebieden en brandterreinen: het vlak dat de dienst publiceert,
+  // in de kleuren van het Australian Warning System. Het laagste niveau
+  // onderop, zodat een Emergency Warning nooit onder een Advice verdwijnt.
+  // Afgelopen meldingen krijgen geen vlak: dat gebied geldt niet meer.
+  const gebieden = React.useMemo(() => meldingen
+    .filter((m) => heeftVlak(m.geometry) && !isAfgelopen(m))
+    .map((m) => ({ m, niveau: niveauVan(m), vlakken: kaartVlakken(m.geometry) }))
+    .sort((a, b) => a.niveau - b.niveau)
+    .slice(-80), [meldingen]);
+
   const vertaald = React.useMemo(() => {
     const per = new Map<string, VertaaldeMelding>();
     for (const m of meldingen) per.set(m.id, vertaalMelding(m));
@@ -527,6 +538,22 @@ function KaartMetMeldingen() {
         {/* De straalcirkel stond hier tot 18-08. Die hoorde bij een kaart die
             jouw meldingsinstellingen volgde; nu de kaart alles toont, tekende
             hij een grens die nergens meer over gaat (wens Chris). */}
+        {gebieden.flatMap(({ m, niveau, vlakken }) => {
+          const k = vlakKleur(niveau);
+          return vlakken.map((v, i) => (
+            <Polygon
+              key={`vlak-${m.id}-${i}`}
+              coordinates={v.coordinates}
+              holes={v.holes}
+              strokeColor={k.rand}
+              fillColor={k.vulling}
+              strokeWidth={niveau >= 2 ? 2.5 : 1.5}
+              zIndex={niveau}
+              tappable
+              onPress={() => navigation.navigate('Detail', { melding: m })}
+            />
+          ));
+        })}
         {groepen.map((g) => {
           const eerste = g.leden[0]!;
           const v = vertaald.get(eerste.id) ?? vertaalMelding(eerste);

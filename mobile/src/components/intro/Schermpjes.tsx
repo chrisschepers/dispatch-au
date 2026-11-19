@@ -489,10 +489,10 @@ export function SchermDetail() {
 /** Trial preview on the paywall: what you get today, during and after. */
 export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null; proefTekst: string }) {
   const stappen: Array<{ icoon: IcoonNaam; kleur: string; kop: string; tekst: string }> = [
-    { icoon: 'ontgrendeld', kleur: C.success, kop: 'Today', tekst: 'Everything unlocked, free.' },
+    { icoon: 'ontgrendeld', kleur: C.success, kop: 'Today', tekst: 'All of Premium unlocked, free.' },
     {
       icoon: PUSH_BESCHIKBAAR ? 'meldingen' : 'kaart', kleur: C.ambulance, kop: proefTekst === 'The trial' ? 'During the trial' : `For ${proefTekst}`,
-      tekst: PUSH_BESCHIKBAAR ? 'Alerts, the map and every incident near you.' : 'The map and every incident near you.',
+      tekst: PUSH_BESCHIKBAAR ? 'An alert for every incident, at every place you watch.' : 'Every place you watch, aircraft and rescue boats.',
     },
     { icoon: 'beoordelen', kleur: C.accent, kop: 'After that', tekst: prijsZin ? `${prijsZin}. Cancel any time.` : 'The yearly price. Cancel any time.' },
   ];
@@ -501,7 +501,7 @@ export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null;
       <View style={s.proefKop}>
         <Image source={require('../../../assets/icon.png')} style={s.proefIcoon} />
         <Text style={[s.schermTitel, { paddingTop: 10 }]}>Emergencies Near Me</Text>
-        <Text style={s.proefSub}>Free trial</Text>
+        <Text style={s.proefSub}>Premium</Text>
       </View>
       <View style={s.tijdlijn}>
         {stappen.map((st, i) => (
@@ -520,7 +520,7 @@ export function SchermProef({ prijsZin, proefTekst }: { prijsZin: string | null;
         ))}
       </View>
       <View style={s.voordelen}>
-        {['Live incidents near you', PUSH_BESCHIKBAAR ? 'Bushfire, flood and crash alerts' : 'Bushfires, floods and crashes', 'Every state in one app', 'No ads'].map((t) => (
+        {['Alerts for every incident', '5 extra places, in any state', 'Aircraft and rescue boats', 'Your own distance per service'].map((t) => (
           <View key={t} style={s.voordeel}>
             <Icoon naam="inbegrepen" grootte={17} kleur={C.success} />
             <Text style={s.voordeelTekst}>{t}</Text>

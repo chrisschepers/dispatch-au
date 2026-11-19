@@ -1,7 +1,8 @@
 /**
- * Jaarabonnement (overgenomen uit 112 Meldingen): zonder lopend abonnement of
- * proefperiode staat de app achter de betaalmuur (BetaalmuurScreen). Voor nu
- * alleen iOS, via de App Store en RevenueCat (winkels.ts).
+ * Jaarabonnement Premium. Tot 19-11-2026 stond de hele app achter de
+ * betaalmuur; nu is de app gratis en ontgrendelt het abonnement de
+ * Premium-functies (premium.ts, premiumPoort.tsx). Voor nu alleen iOS, via
+ * de App Store en RevenueCat (winkels.ts).
  *
  * Faalt zacht aan de goede kant: is er geen werkende winkel (oude build, web,
  * geen sleutel), dan is er geen muur. Is de winkel even onbereikbaar, dan geldt
@@ -12,6 +13,7 @@ import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { bewaardGeldig, type Bewaard, type Toegang, type Uitkomst } from './abonnementRegels';
 import { kiesWinkel, type Gebeurtenis, type Product } from './winkels';
+import { isPremium } from './premium';
 
 const SLEUTEL = 'dispatch.abonnement.v1';
 const TIJDSLIMIET_MS = 10_000;
@@ -24,8 +26,10 @@ const PRODUCT_WACHT_MS = 20_000;
 const winkel = __DEV__ && process.env.EXPO_PUBLIC_TEST_ZONDER_MUUR === '1' ? null : kiesWinkel();
 
 interface Ctx {
-  /** true = deze build vraagt een abonnement (er is een werkende winkel). */
+  /** true = deze build verkoopt Premium (er is een werkende winkel). */
   vereist: boolean;
+  /** Heeft deze gebruiker de Premium-functies? Zonder winkel: iedereen. */
+  premium: boolean;
   toegang: Toegang;
   /** false = opgezegd, loopt nog tot het einde van de periode. */
   verlengt: boolean;
@@ -48,7 +52,7 @@ interface Ctx {
 }
 
 const AbonnementContext = createContext<Ctx>({
-  vereist: false, toegang: 'actief', verlengt: true, wasActief: false,
+  vereist: false, premium: true, toegang: 'actief', verlengt: true, wasActief: false,
   product: null, productGeladen: false, fout: null, bezig: false,
   winkelNaam: '', account: '', beheerUrl: '',
   koop: async () => {}, herstel: async () => 'actief', beheer: async () => {},
@@ -212,7 +216,7 @@ export function AbonnementProvider({ children }: { children: React.ReactNode }) 
 
   return (
     <AbonnementContext.Provider value={{
-      vereist: !!winkel, toegang, verlengt, wasActief,
+      vereist: !!winkel, premium: isPremium(!!winkel, toegang, wasActief), toegang, verlengt, wasActief,
       product, productGeladen, fout, bezig, koop, herstel,
       winkelNaam: winkel?.naam ?? '', account: winkel?.account ?? '',
       beheerUrl: winkel?.beheerUrl ?? '',

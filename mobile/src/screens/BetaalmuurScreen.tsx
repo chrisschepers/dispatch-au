@@ -1,8 +1,9 @@
 /**
- * Trial and paywall (iOS), copied from 112 Meldingen: without a running yearly
- * subscription or trial you get no further than this screen. It comes after
- * the intro, in the same layout, so location and alerts are already granted
- * and someone who starts the trial has a working app straight away.
+ * The Premium screen (iOS). Until 19-11-2026 this was a wall in front of the
+ * whole app; now the app is free and this screen sells Premium. It opens from
+ * every locked feature with that feature on top (premiumPoort.tsx), once
+ * after the intro, and once when a subscription has ended. It can always be
+ * closed: the free app keeps working.
  *
  * The amount ALWAYS comes from the store (localised, right currency and GST).
  * No "$9.99" anywhere in the code: a price change in App Store Connect must
@@ -27,7 +28,7 @@ import { IntroSchil, INTRO } from '../components/intro/IntroSchil';
 import { SchermProef } from '../components/intro/Schermpjes';
 import { toonRevenueCatPaywall } from '../aankopen';
 import { revenueCatPaywallAan } from '../appConfig';
-import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
+import { functiesVoor, titelVoor, type PremiumReden } from '../premium';
 
 const SITE = 'https://emergenciesnearme.online';
 /** iOS: Apple's standard licence agreement, which App Store Connect uses too. */
@@ -36,7 +37,7 @@ const VOORWAARDEN = Platform.OS === 'ios'
   : `${SITE}/terms`;
 const PRIVACY = `${SITE}/privacy`;
 
-export default function BetaalmuurScreen() {
+export default function BetaalmuurScreen({ reden, onSluit }: { reden?: PremiumReden; onSluit?: () => void }) {
   const {
     toegang, wasActief, product, productGeladen, fout, bezig, koop, herstel,
     winkelNaam, account, beheer,
@@ -57,22 +58,21 @@ export default function BetaalmuurScreen() {
   const proef = product ? periodeTekst(product.proefPeriode) : null;
   const heeftProef = !!product?.proefPeriode;
   const prijsZin = product ? `${product.prijs} ${perPeriode(product.periode)}` : null;
-  const verlopen = wasActief && toegang === 'geen';
+  const verlopen = reden === 'verlopen' || (wasActief && toegang === 'geen' && reden === undefined);
+  const functies = functiesVoor(reden);
 
   async function herstelNu() {
     const t = await herstel();
-    if (t === 'actief') return;              // the wall disappears by itself
+    if (t === 'actief') return;              // the screen closes by itself
     Alert.alert(
       t === 'wacht' ? 'Payment in progress' : 'Nothing found',
       t === 'wacht'
-        ? `${Winkel} is still processing your payment. The app opens as soon as it is done.`
+        ? `${Winkel} is still processing your payment. Premium switches on as soon as it is done.`
         : `There is no running Emergencies Near Me subscription on this ${account}. Using a different ${account}? Switch there and try again.`,
     );
   }
 
-  const titel = verlopen
-    ? 'Your subscription has ended'
-    : heeftProef ? 'Start your free trial' : 'Subscribe';
+  const titel = titelVoor(verlopen ? 'verlopen' : reden, heeftProef);
 
   const knop = !productGeladen
     ? 'Loading…'
@@ -94,19 +94,32 @@ export default function BetaalmuurScreen() {
           {product ? <Text style={styles.abo}>Emergencies Near Me Premium · yearly subscription</Text> : null}
           <Text style={styles.tekst}>
             {verlopen
-              ? 'Renew to see what is happening near you again.'
+              ? 'The map and official warnings stay free. Renew to get everything below back.'
               : heeftProef
                 ? `The first ${proef ?? 'days'} are free. Cancel any time, also during the trial.`
-                : PUSH_BESCHIKBAAR
-                  ? 'Every incident, the map and alerts near you. Cancel any time.'
-                  : 'Every incident and the map near you. Cancel any time.'}
+                : 'The map and official warnings stay free. Premium adds everything below.'}
           </Text>
+          {/* What you get, with the reason you came here for on top. */}
+          <View style={styles.functies}>
+            {functies.map((f, i) => (
+              <View key={f.sleutel} style={[styles.functie, i === 0 && reden === f.sleutel && styles.functieUitgelicht]}>
+                <View style={styles.functieIcoon}>
+                  <Icoon naam={f.icoon} grootte={20} kleur="#ffffff" />
+                </View>
+                <View style={styles.functieTekstVak}>
+                  <Text style={styles.functieTitel}>{f.titel}</Text>
+                  <Text style={styles.functieTekst}>{f.tekst}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
       }
+      onTerug={onSluit}
       extra={
         <>
           {toegang === 'wacht' && (
-            <Regel icoon="wacht" tekst={`${Winkel} is still processing your payment. The app opens as soon as it is done.`} />
+            <Regel icoon="wacht" tekst={`${Winkel} is still processing your payment. Premium switches on as soon as it is done.`} />
           )}
           {fout ? <Regel icoon="fout" tekst={fout} /> : null}
         </>
@@ -120,6 +133,11 @@ export default function BetaalmuurScreen() {
           <Drukbaar style={styles.tekstKnop} onPress={herstelNu} disabled={bezig} trillen={false}>
             <Text style={styles.herstel}>Restore purchase</Text>
           </Drukbaar>
+          {onSluit ? (
+            <Drukbaar style={styles.tekstKnop} onPress={onSluit} disabled={bezig} trillen={false}>
+              <Text style={styles.herstel}>Not now</Text>
+            </Drukbaar>
+          ) : null}
           <Text style={styles.klein}>
             {heeftProef
               ? `After the trial the yearly amount is charged through ${winkelNaam}, unless you cancel at least 24 hours before it ends. `
@@ -156,6 +174,19 @@ const styles = StyleSheet.create({
   prijs: { fontSize: 21, fontWeight: F.weightBold, color: INTRO.tekst, textAlign: 'center', marginTop: 8 },
   abo: { fontSize: 13.5, color: INTRO.zacht, textAlign: 'center', marginTop: 2 },
   tekst: { fontSize: 15.5, lineHeight: 22, color: INTRO.zacht, textAlign: 'center', marginTop: 6 },
+  functies: { marginTop: 16, gap: 8 },
+  functie: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+    backgroundColor: INTRO.vlak, borderRadius: 14, borderCurve: 'continuous', padding: 12,
+  },
+  functieUitgelicht: { borderWidth: 1.5, borderColor: INTRO.knopRand },
+  functieIcoon: {
+    width: 34, height: 34, borderRadius: 9, borderCurve: 'continuous',
+    backgroundColor: INTRO.knop, alignItems: 'center', justifyContent: 'center',
+  },
+  functieTekstVak: { flex: 1 },
+  functieTitel: { fontSize: 15.5, fontWeight: F.weightSemibold, color: INTRO.tekst },
+  functieTekst: { fontSize: 13.5, lineHeight: 19, color: INTRO.zacht, marginTop: 2 },
   regel: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12,
     backgroundColor: INTRO.vlak, borderRadius: 12, padding: 12,

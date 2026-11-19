@@ -13,6 +13,8 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { StapelParams } from '../navigatie';
 import { useVaartBeeld, haalTochten } from '../vaartuigen';
+import { usePremium } from '../premiumPoort';
+import { Drukbaar } from '../components/Drukbaar';
 import {
   vaartuigRegel, vaartToestand, knopenTekst, lengteTekst, waterLaag, tochtMaat, tochtVerloop,
   type Tochten,
@@ -42,6 +44,7 @@ export default function VaartuigScreen() {
 
   // De tochten: bij het openen, en opnieuw als er een tocht begint of eindigt
   // of er een nieuwe positie is (het spoor van de lopende tocht groeit mee).
+  const { premium, vraag } = usePremium();
   const [tochten, setTochten] = useState<Tochten | null>(null);
   const [gekozen, setGekozen] = useState<number | null>(null);
   const loopt = v.tocht?.id ?? null;
@@ -128,6 +131,12 @@ export default function VaartuigScreen() {
           <View style={[kaartStijl, styles.blok]}>
             {lijst.length === 0 ? (
               <Text style={styles.leeg}>No trips seen in the last 7 days.</Text>
+            ) : !premium ? (
+              <Drukbaar onPress={() => vraag('vliegtuigen')} hint="Shows what Premium adds">
+                <Text style={styles.leeg}>
+                  {lijst.length === 1 ? '1 trip' : `${lijst.length} trips`} in the last 7 days, each with its route. See them with Premium.
+                </Text>
+              </Drukbaar>
             ) : lijst.map((t, i) => (
               <RitRij
                 key={t.id}
