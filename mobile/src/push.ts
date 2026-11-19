@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registreerGebruiker, zetPushFilter, zetInstallToken } from './api';
 import { bepaalPlek, bepaalPlekSnel } from './locatie';
 import type { Instellingen } from './instellingen';
+import { effectief } from './premium';
 import { GELUIDEN, STANDAARD_GELUID, geldigGeluid, kanaalVoor } from './geluiden';
 import { PUSH_BESCHIKBAAR } from './pushBeschikbaar';
 
@@ -69,6 +70,29 @@ export function zetNotificatieGedrag(): void {
   }
 }
 
+// Premium of niet: App.tsx zet dit zodra de winkel het weet. Tot die tijd
+// gaat er niets naar de server (werkPushFilterBij wacht erop), zodat het
+// filter van een betalende gebruiker nooit even wordt teruggeschroefd.
+let premiumNu: boolean | null = null;
+export function zetPremiumVoorPush(premium: boolean): void { premiumNu = premium; }
+
+/** Het filter zoals het naar de server gaat: zonder Premium alleen het gratis deel (premium.ts). */
+function filterVelden(inst: Instellingen) {
+  const e = effectief(inst, premiumNu === true);
+  return {
+    radius: e.straalKm,
+    radiusPerDienst: e.straalPerDienst,
+    disciplines: e.disciplines,
+    priorityLevel: e.alleenGroot ? 'p1' as const : 'all' as const,
+    geluid: geldigGeluid(e.geluid),
+    geluidPerDienst: e.geluidPerDienst,
+    notificationsEnabled: e.notificaties,
+    gripOnly: e.gripAlarm,
+    airTankers: e.blusvliegtuigen,
+    places: e.extraPlekken.map((p) => ({ name: p.naam, lat: p.lat, lon: p.lon })),
+  };
+}
+
 /**
  * Alleen de installatie aanmelden, zonder push-token. Nodig omdat we anders
  * niemand tellen die de app installeert maar geen meldingen aanzet: de
@@ -120,15 +144,7 @@ export async function registreerVoorPushMetInstellingen(inst: Instellingen): Pro
 
   await zetPushFilter(user.id, {
     ...plekVelden,
-    radius: inst.straalKm,
-    radiusPerDienst: inst.straalPerDienst,
-    disciplines: inst.disciplines,
-    priorityLevel: inst.alleenGroot ? 'p1' : 'all',
-    geluid: geldigGeluid(inst.geluid),
-    geluidPerDienst: inst.geluidPerDienst,
-    notificationsEnabled: inst.notificaties,
-    gripOnly: inst.gripAlarm,
-    airTankers: inst.blusvliegtuigen,
+    ...filterVelden(inst),
   });
   return true;
 }
@@ -163,6 +179,8 @@ export async function zorgVoorGebruiker(inst: Instellingen): Promise<string | nu
 export async function werkPushFilterBij(inst: Instellingen): Promise<void> {
   const userId = await AsyncStorage.getItem(USER_KEY);
   if (!userId) return;
+  // Nog niet bekend of dit Premium is: wachten, niet gokken.
+  if (premiumNu === null) return;
   // GEEN verse GPS-fix afwachten. bepaalPlek gunt zichzelf tot zes seconden
   // voor een fix, en pas dáárna ging het filter de deur uit. Wie de schakelaar
   // omzette en meteen zijn telefoon wegleefde, bevroor de app voordat het
@@ -179,14 +197,6 @@ export async function werkPushFilterBij(inst: Instellingen): Promise<void> {
   const plekVelden = !plek || plek.bron === 'geen' || plek.bron === 'buiten-au' ? {} : { lat: plek.lat, lon: plek.lon };
   await zetPushFilter(userId, {
     ...plekVelden,
-    radius: inst.straalKm,
-    radiusPerDienst: inst.straalPerDienst,
-    disciplines: inst.disciplines,
-    priorityLevel: inst.alleenGroot ? 'p1' : 'all',
-    geluid: geldigGeluid(inst.geluid),
-    geluidPerDienst: inst.geluidPerDienst,
-    notificationsEnabled: inst.notificaties,
-    gripOnly: inst.gripAlarm,
-    airTankers: inst.blusvliegtuigen,
+    ...filterVelden(inst),
   });
 }

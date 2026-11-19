@@ -11,6 +11,7 @@
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Plek } from './premium';
 
 export interface Instellingen {
   volgLocatie: boolean;          // true = live volgen bij openen
@@ -47,6 +48,11 @@ export interface Instellingen {
   blusvliegtuigen: boolean;
   notificaties: boolean;
   /**
+   * Premium: extra plekken naast je eigen plek (thuis, vakantiehuis, ouders),
+   * elk met dezelfde diensten en straal. Hooguit vijf (premium.ts).
+   */
+  extraPlekken: Plek[];
+  /**
    * Uiterlijk: 'automatisch' volgt de telefoon, 'licht'/'donker' zetten het
    * vast. Standaard automatisch, want wie zijn toestel 's avonds op donker
    * zet wil dat hier ook (wens Chris 24-08).
@@ -70,6 +76,7 @@ const STANDAARD: Instellingen = {
   gripAlarm: false,
   blusvliegtuigen: false,
   notificaties: false,           // pas aan na de expliciete vraag in onboarding
+  extraPlekken: [],
   thema: 'automatisch',          // volgt standaard het thema van de telefoon
   pro: false,
   userId: null,

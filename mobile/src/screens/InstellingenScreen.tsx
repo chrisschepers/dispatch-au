@@ -37,6 +37,8 @@ import { Icoon, DienstIcoon } from '../components/Icoon';
 import type { IcoonNaam } from '../iconen';
 import { openRecensiePagina } from '../recensie';
 import { useAbonnement } from '../abonnement';
+import { usePremium } from '../premiumPoort';
+import { MAX_EXTRA_PLEKKEN, metPlek, geldigePlekken, type PremiumReden } from '../premium';
 import { BRONNEN } from '../bronnen';
 import { tikSchakel } from '../trilling';
 import { useInhoudMaat } from '../inhoudMaat';
@@ -78,6 +80,15 @@ export default function InstellingenScreen() {
   const styles = useStijlen(maak_styles);
   const kaartStijl = useKaartStijl();
   const { inst, zet, zetVeel } = useInstellingen();
+  const { premium, vraag } = usePremium();
+  // Een Premium-schakelaar zonder Premium: niet omzetten, maar laten zien wat
+  // je ervoor krijgt. Staat hij aan (van een eerdere proef), dan mag hij uit.
+  const metSlot = (reden: PremiumReden, wissel: (v: boolean) => void) => (v: boolean) => {
+    if (v && !premium) { vraag(reden); return; }
+    wissel(v);
+  };
+  const extraPlekken = geldigePlekken(inst.extraPlekken);
+  const [plekToevoegen, setPlekToevoegen] = useState(false);
   const navigation = useNavigation<Nav>();
   // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
   const { marge, kolom } = useInhoudMaat();
@@ -189,7 +200,8 @@ export default function InstellingenScreen() {
     zet('disciplines', wisselDienst(inst.disciplines, key));
   }
 
-  const perDienstAan = Object.keys(inst.straalPerDienst).length > 0;
+  // Zonder Premium geldt de ene hoofdstraal, ook als er nog eigen stralen bewaard zijn.
+  const perDienstAan = premium && Object.keys(inst.straalPerDienst).length > 0;
 
   /** Aanzetten vult elke dienst met de huidige straal, zodat er niets
    *  verspringt; uitzetten wist alles en de hoofdschuif geldt weer. */
@@ -287,8 +299,13 @@ export default function InstellingenScreen() {
                 <Rij
                   icoon="alleenWaarschuwingen" tegelKleur={systeemKleur('systemOrange')} scheiding
                   titel="Warnings only"
-                  sub="Only Advice, Watch and Act or Emergency Warning"
-                  schakelaar={{ aan: inst.alleenGroot, wissel: (v) => zet('alleenGroot', v) }}
+                  sub={premium
+                    ? 'Only Advice, Watch and Act or Emergency Warning'
+                    : 'Free: official warnings. Premium adds every incident near you'}
+                  schakelaar={{
+                    aan: premium ? inst.alleenGroot : true,
+                    wissel: (v) => { if (!premium) { vraag('incidenten'); return; } zet('alleenGroot', v); },
+                  }}
                 />
                 {/* Grote blusvliegtuigen (13-11): volgt je eigen filter voor
                     Fire, dus alleen zinvol met de gewone meldingen aan. */}
@@ -298,7 +315,7 @@ export default function InstellingenScreen() {
                   sub={inst.disciplines.includes('Fire')
                     ? 'When one heads to a bushfire within your Fire radius'
                     : 'Switch on Fire under "Alerts for" to get these'}
-                  schakelaar={{ aan: inst.blusvliegtuigen, wissel: toggleBlusvliegtuigen }}
+                  schakelaar={{ aan: premium && inst.blusvliegtuigen, wissel: metSlot('vliegtuigen', toggleBlusvliegtuigen) }}
                 />
               </>
             )}
@@ -311,7 +328,7 @@ export default function InstellingenScreen() {
               icoon="noodwaarschuwing" tegelKleur="#f59e0b" scheiding
               titel="Emergency Warnings anywhere"
               sub="An alert for every Emergency Warning in Australia"
-              schakelaar={{ aan: inst.gripAlarm, wissel: toggleGrip }}
+              schakelaar={{ aan: premium && inst.gripAlarm, wissel: metSlot('landelijk', toggleGrip) }}
             />
           </View>
         </>
@@ -358,7 +375,7 @@ export default function InstellingenScreen() {
           icoon="perDienst" tegelKleur={systeemKleur('systemIndigo')} scheiding
           titel="Set per service"
           sub="For example bushfires 100 km and road crashes 10 km"
-          schakelaar={{ aan: perDienstAan, wissel: zetPerDienst }}
+          schakelaar={{ aan: perDienstAan, wissel: metSlot('straal', zetPerDienst) }}
         />
         {perDienstAan && DIENSTEN.map((d) => {
           const km = live[d.key] ?? straalVoor(d.key, inst.straalKm, inst.straalPerDienst);
@@ -454,6 +471,58 @@ export default function InstellingenScreen() {
           </View>
         )}
       </View>
+
+      {/* Extra plekken (Premium, 19-11-2026): thuis, het vakantiehuis, je
+          ouders. Elke plek krijgt dezelfde diensten en straal als je eigen
+          plek; de melding noemt de plek erbij. De officiële apps kunnen dit
+          alleen binnen hun eigen staat. */}
+      <GroepKop>Places you watch</GroepKop>
+      <View style={kaartStijl}>
+        {extraPlekken.map((p, i) => (
+          <Rij
+            key={`${p.naam}-${p.lat}`}
+            icoon="plaats" tegelKleur={systeemKleur('systemTeal')} scheiding={i > 0}
+            titel={p.naam}
+            sub={premium ? 'Alerts for this place too' : 'Paused: needs Premium'}
+            label={`${p.naam}. Tap to remove this place`}
+            onPress={() => {
+              Alert.alert(`Remove ${p.naam}?`, 'You will no longer get alerts for this place.', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Remove', style: 'destructive', onPress: () => zet('extraPlekken', extraPlekken.filter((x) => x !== p)) },
+              ]);
+            }}
+            rechts={<Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />}
+          />
+        ))}
+        {extraPlekken.length < MAX_EXTRA_PLEKKEN && (
+          plekToevoegen && premium ? (
+            <View style={[styles.rij, extraPlekken.length > 0 && styles.scheiding, { flexDirection: 'column', alignItems: 'stretch' }]}>
+              <PlaatsZoeker
+                waarde={null}
+                onKies={(k) => {
+                  zet('extraPlekken', metPlek(extraPlekken, { naam: k.naam, lat: k.lat, lon: k.lon }));
+                  setPlekToevoegen(false);
+                }}
+                onWis={() => setPlekToevoegen(false)}
+              />
+            </View>
+          ) : (
+            <Rij
+              icoon="plaats" tegelKleur={C.accent} scheiding={extraPlekken.length > 0}
+              titel="Add a place"
+              sub={premium
+                ? 'A suburb or town anywhere in Australia'
+                : 'Home, the beach house, your parents. With Premium'}
+              onPress={() => { if (!premium) { vraag('plekken'); return; } setPlekToevoegen(true); }}
+            />
+          )
+        )}
+      </View>
+      <Text style={styles.voetnoot}>
+        {PUSH_BESCHIKBAAR
+          ? `Up to ${MAX_EXTRA_PLEKKEN} places next to your own, with the same services and distance.`
+          : `Up to ${MAX_EXTRA_PLEKKEN} places next to your own. Alerts for them start when push arrives on Android.`}
+      </Text>
 
       {/* Uiterlijk. "Automatisch" staat voorop en is de standaard: wie zijn
           telefoon 's avonds op donker zet, wil dat hier ook. De twee andere
@@ -618,6 +687,17 @@ export default function InstellingenScreen() {
           opzeggen. Op iOS opent dit het eigen blad van Apple; alleen dat
           blad toont ook TestFlight-abonnementen. Android opent de
           abonnementenpagina van Google Play. */}
+      {abonnement.vereist && !premium ? (
+        <View style={kaartStijl}>
+          <Rij
+            icoon="abonnement" tegelKleur={C.accent}
+            titel="Emergencies Near Me Premium"
+            sub="Every incident, 5 extra places, aircraft and rescue boats"
+            onPress={() => vraag('intro')}
+            rechts={<Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />}
+          />
+        </View>
+      ) : null}
       {abonnement.vereist && abonnement.toegang === 'actief' ? (
         <View style={kaartStijl}>
           <Rij

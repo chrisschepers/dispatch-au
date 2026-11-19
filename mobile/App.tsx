@@ -5,7 +5,7 @@
  * short introduction with the two permission questions, and a detail screen
  * in every tab.
  */
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { View, Text, ActivityIndicator, Appearance } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -17,10 +17,10 @@ import { InstellingenProvider, useInstellingen } from './src/instellingen';
 import { ThemaProvider, useThema } from './src/thema';
 import { T, PALET_LICHT, PALET_DONKER, type Palet } from './src/theme';
 import { vraagLocatiePermissie } from './src/locatie';
-import { laadInstallToken, zetNotificatieGedrag, meldInstallatie, registreerVoorPushMetInstellingen, werkPushFilterBij } from './src/push';
+import { laadInstallToken, zetNotificatieGedrag, meldInstallatie, registreerVoorPushMetInstellingen, werkPushFilterBij, zetPremiumVoorPush } from './src/push';
 import { laadAppConfig } from './src/appConfig';
 import IntroScreen from './src/screens/IntroScreen';
-import BetaalmuurScreen from './src/screens/BetaalmuurScreen';
+import { PremiumPoort, usePremium } from './src/premiumPoort';
 import { AbonnementProvider, useAbonnement } from './src/abonnement';
 import { navRef, luisterNaarMeldingTikken } from './src/meldingOpenen';
 import { telOpening } from './src/recensie';
@@ -130,6 +130,32 @@ function navThemaVoor(C: Palet) {
   };
 }
 
+const AANBOD_KEY = 'dispatch.premiumAanbod.v1';
+
+/**
+ * Het Premium-scherm uit zichzelf tonen, op twee momenten en verder nooit:
+ * één keer na het startscherm (de proefperiode aanbieden), en één keer als
+ * een abonnement is afgelopen. Daarna alleen nog als iemand zelf op een
+ * vergrendelde functie tikt.
+ */
+function PremiumAanbod() {
+  const abonnement = useAbonnement();
+  const { vraag } = usePremium();
+  const gedaan = useRef(false);
+  useEffect(() => {
+    if (gedaan.current || !abonnement.vereist || abonnement.premium) return;
+    if (abonnement.toegang === 'onbekend' || !abonnement.productGeladen) return;
+    gedaan.current = true;
+    const soort = abonnement.wasActief ? 'verlopen' : 'intro';
+    AsyncStorage.getItem(AANBOD_KEY).then((v) => {
+      if (v === soort) return;
+      AsyncStorage.setItem(AANBOD_KEY, soort).catch(() => {});
+      vraag(soort);
+    }).catch(() => {});
+  }, [abonnement.vereist, abonnement.premium, abonnement.toegang, abonnement.productGeladen, abonnement.wasActief, vraag]);
+  return null;
+}
+
 function Binnenkant() {
   const C = useThema();
   // Statusbalk mee: donkere letters op licht, lichte op donker.
@@ -170,12 +196,19 @@ function Binnenkant() {
    * Kort uitstellen zodat een reeks wijzigingen (plaatsnaam, breedte, lengte)
    * één verzoek wordt in plaats van drie.
    */
+  // Premium of niet bepaalt wat er naar de server gaat (premium.ts). Pas
+  // doorgeven als de winkel het weet; tot dan blijft het filter zoals het was.
+  const premiumBekend = !abonnement.vereist || abonnement.toegang !== 'onbekend' || abonnement.premium;
   useEffect(() => {
-    if (!onboarded) return;
+    if (premiumBekend) zetPremiumVoorPush(abonnement.premium);
+  }, [premiumBekend, abonnement.premium]);
+
+  useEffect(() => {
+    if (!onboarded || !premiumBekend) return;
     const t = setTimeout(() => { werkPushFilterBij(inst).catch(() => {}); }, 400);
     return () => clearTimeout(t);
   }, [
-    onboarded,
+    onboarded, premiumBekend, abonnement.premium, inst.extraPlekken,
     inst.straalKm, inst.straalPerDienst,
     inst.disciplines, inst.alleenGroot, inst.gripAlarm, inst.blusvliegtuigen, inst.notificaties,
     inst.volgLocatie, inst.handLat, inst.handLon,
@@ -186,11 +219,9 @@ function Binnenkant() {
   // startscherm, de eerste keer is geen "keer openen".
   useEffect(() => { if (onboarded) telOpening(); }, [onboarded]);
 
-  // Zonder abonnement of proef is de app dicht (abonnement.tsx). Tijdens de
-  // eerste controle het laadscherm, niet even de muur: anders flitst hij bij
-  // elke start voor een betalende gebruiker.
-  const muurLaden = abonnement.vereist && abonnement.toegang === 'onbekend';
-  const opstarten = !geladen || onboarded === null || (onboarded && muurLaden);
+  // De app is gratis (19-11-2026); Premium is een scherm dat je kunt sluiten
+  // (premiumPoort.tsx). Opstarten wacht dus niet meer op de winkel.
+  const opstarten = !geladen || onboarded === null;
 
   // Klaar met opstarten: het opstartscherm weg, het eerste scherm staat er.
   useEffect(() => {
@@ -201,16 +232,15 @@ function Binnenkant() {
   if (!onboarded) {
     return <IntroScreen klaar={() => { AsyncStorage.setItem(ONBOARD_KEY, '1'); setOnboarded(true); }} />;
   }
-  if (abonnement.vereist && abonnement.toegang !== 'actief') {
-    return <BetaalmuurScreen />;
-  }
-
   return (
-    <NavigationContainer theme={navThema} ref={navRef}>
-      {/* Eén navigatietaal (audit 20-08): elk subscherm dezelfde native kop
-          als Detail, in plaats van losse chevron-knopjes per scherm. */}
-      <TabNavigatie />
-    </NavigationContainer>
+    <PremiumPoort>
+      <PremiumAanbod />
+      <NavigationContainer theme={navThema} ref={navRef}>
+        {/* Eén navigatietaal (audit 20-08): elk subscherm dezelfde native kop
+            als Detail, in plaats van losse chevron-knopjes per scherm. */}
+        <TabNavigatie />
+      </NavigationContainer>
+    </PremiumPoort>
   );
 }
 

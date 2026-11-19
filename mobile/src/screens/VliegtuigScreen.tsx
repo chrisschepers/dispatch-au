@@ -21,6 +21,7 @@ import type { StapelParams } from '../navigatie';
 import { haalMelding } from '../api';
 import { useLuchtBeeld } from '../vliegtuigen';
 import { haalVluchten } from '../vluchten';
+import { usePremium } from '../premiumPoort';
 import {
   rolTekst, hoogteTekst, snelheidTekst, minutenStil, zonderSignaal, type Toestel, type Vliegtuig,
 } from '../vliegtuigData';
@@ -63,6 +64,7 @@ export default function VliegtuigScreen() {
 
   // Vluchten: niet voor politie (die volgt de backend niet). Opnieuw ophalen
   // als de vlucht of de toestand verandert; faalt het, dan geen blok.
+  const { premium, vraag } = usePremium();
   const [vluchten, setVluchten] = useState<Vluchten | null>(null);
   const [gekozen, setGekozen] = useState<string | null>(params.vlucht ?? null);
   const volgbaar = t.role !== 'police';
@@ -233,6 +235,13 @@ export default function VliegtuigScreen() {
           <View style={[kaartStijl, styles.blok]}>
             {lijst.length === 0 ? (
               <Text style={styles.leeg}>No flights seen in the last 7 days.</Text>
+            ) : !premium ? (
+              // Zien is gratis, volgen is Premium (zelfde lijn als de grote app).
+              <Drukbaar onPress={() => vraag('vliegtuigen')} hint="Shows what Premium adds">
+                <Text style={styles.leeg}>
+                  {lijst.length === 1 ? '1 flight' : `${lijst.length} flights`} in the last 7 days, with the fires it worked on. See them with Premium.
+                </Text>
+              </Drukbaar>
             ) : lijst.map((v, i) => (
               <RitRij
                 key={v.id}
