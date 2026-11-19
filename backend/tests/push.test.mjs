@@ -386,7 +386,7 @@ void test('a critical APNs alert asks for full volume through silent mode', () =
 });
 
 // 19-11-2026: more than one watched place (a holiday house, a parent's home).
-test('an extra place gets the alert, named, with the distance from that place', () => {
+void test('an extra place gets the alert, named, with the distance from that place', () => {
   const d = {
     lat: -37.81, lon: 144.96,
     filter: { notificationsEnabled: true, radiusKm: 20, places: [{ name: 'Beach house', lat: -37.3, lon: 144.96 }] },
@@ -404,18 +404,16 @@ test('an extra place gets the alert, named, with the distance from that place', 
   assert.doesNotMatch(messageFor(dichtbij, d).body, /from/);
 });
 
-test('a device with only extra places and no place of its own still gets alerts', () => {
+void test('a device with only extra places and no place of its own still gets alerts', () => {
   const d = { lat: null, lon: null, filter: { notificationsEnabled: true, radiusKm: 20, places: [{ name: 'Mum', lat: -37.3, lon: 144.96 }] } };
   assert.equal(fits(d, row()), true);
 });
 
-test('setFilter keeps at most five valid, named places', () => {
+void test('setFilter keeps at most five valid, named places', () => {
   const { push } = service();
   const id = device(push, {});
   const geldig = (i) => ({ name: `Place ${i}`, lat: -30 - i, lon: 140 + i });
-  push.setFilter(id, { places: [
-    ...[1, 2, 3, 4, 5, 6, 7].map(geldig),
-  ] });
+  push.setFilter(id, { places: [1, 2, 3, 4, 5, 6, 7].map(geldig) });
   assert.equal(push.devices().find((x) => x.id === id).filter.places.length, 5);
   push.setFilter(id, { places: [{ name: '', lat: -30, lon: 140 }, { name: 'Bad', lat: 200, lon: 140 }, { name: ' Shack ', lat: -35, lon: 138.5 }, 'x', null] });
   assert.deepEqual(push.devices().find((x) => x.id === id).filter.places, [{ name: 'Shack', lat: -35, lon: 138.5 }]);
