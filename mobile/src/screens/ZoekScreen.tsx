@@ -1,10 +1,9 @@
 /**
- * Zoeken, als eigen tabblad met het zoekveld van het systeem in de kop: op
- * iOS onder de grote titel (of los naast de tabbalk op iOS 26), op Android
- * achter het vergrootglas in de kopbalk. Eerder zat het in de zelfgebouwde
- * zwevende tabbalk (wens Chris 27-09, naar het voorbeeld van de iOS-zoekbalk);
- * sinds de systeemtabbalk is dit de plek die beide platforms zelf voor
- * zoeken hebben.
+ * Zoeken, met het zoekveld van het systeem in de kop. iOS: een eigen
+ * tabblad, het veld onder de grote titel (of los naast de tabbalk op iOS 26).
+ * Android: een scherm in de stapel van Buurt, geopend met het vergrootglas
+ * bovenin Nearby (19-11, zoals Alarmeringen P2000). Eerder zat het in de
+ * zelfgebouwde zwevende tabbalk (wens Chris 27-09).
  *
  * Geen suggesties of uitleg vooraf: je typt en de lijst volgt. Een leeg veld
  * toont gewoon de nieuwste meldingen, zodat er nooit een leeg scherm staat.
@@ -14,8 +13,9 @@
  * "Use my radius and services" = jouw straal en de diensten van de lijst.
  * Standaard uit: wie zoekt, zoekt meestal iets wat hij elders hoorde.
  *
- * Het toetsenbord komt pas als je in het veld tikt: eerst zien waar je bent,
- * dan typen (TestFlight-ronde 27-09).
+ * iOS: het toetsenbord komt pas als je in het veld tikt: eerst zien waar je
+ * bent, dan typen (TestFlight-ronde 27-09). Android: je tikte al op zoeken,
+ * dus het veld staat meteen open met het toetsenbord erbij (autoFocus).
  */
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Keyboard, AccessibilityInfo } from 'react-native';
@@ -68,6 +68,8 @@ export default function ZoekScreen() {
         placeholder: 'Search suburbs, streets or incidents',
         autoCapitalize: 'none',
         hideWhenScrolling: false,
+        // Alleen Android kent deze optie; zie de kop van dit bestand.
+        autoFocus: !isIOS,
         tintColor: C.accent,
         textColor: C.textPrimary,
         // Android: de plaatshouder in onSurfaceVariant; textMuted haalde op

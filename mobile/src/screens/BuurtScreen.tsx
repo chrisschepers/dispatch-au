@@ -29,15 +29,16 @@ import { binnenGebied, binnenTekst, vlakKleur } from '../gebied';
 import { usePremium } from '../premiumPoort';
 import { geldigePlekken, type Plek } from '../premium';
 import { niveauVan, isAfgelopen } from '../kaartFilter';
-import { T, F, type Palet } from '../theme';
+import { T, F, isIOS, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { DIENSTEN, wisselDienst, straalVoor, straalTekst, LANDELIJK_KM } from '../diensten';
 import { Drukbaar } from '../components/Drukbaar';
+import { Icoon } from '../components/Icoon';
 import { DienstChip } from '../components/DienstChip';
 import { useInhoudMaat } from '../inhoudMaat';
 import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
 
-type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding } }>;
+type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding }; Zoeken: undefined }>;
 
 interface Rij { m: Melding; km: number | null }
 
@@ -294,10 +295,21 @@ export default function BuurtScreen() {
           </Drukbaar>
         );
       })}
-      {/* Verbonden-status, zoals in de grote app (wens Chris 27-09). Zoeken
-          is sindsdien een eigen tabblad in de systeemtabbalk. */}
+      {/* Verbonden-status, zoals in de grote app (wens Chris 27-09). Android:
+          rechts het vergrootglas, want de M3-balk heeft geen zoektab (19-11,
+          zoals Alarmeringen P2000). iOS zoekt via de tabbalk. */}
       <View style={styles.bovenRij}>
         <StatusPil status={liveStatus} />
+        {!isIOS && (
+          <Drukbaar
+            style={styles.zoekKnop}
+            rol="button"
+            label="Search incidents"
+            onPress={() => navigation.navigate('Zoeken')}
+          >
+            <Icoon naam="zoeken" grootte={24} kleur={C.textSecondary} />
+          </Drukbaar>
+        )}
       </View>
       {gevaar ? (
         <Drukbaar
@@ -484,6 +496,8 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     paddingHorizontal: 11, paddingVertical: 6,
   },
   pilStip: { width: 8, height: 8, borderRadius: 4 },
+  // M3-icoonknop: raakvlak 48 dp, ronde drukstaat.
+  zoekKnop: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginVertical: -8, marginRight: -8 },
   pilTekst: { ...T.klein, fontWeight: F.weightSemibold, color: C.textPrimary },
   kop: { ...T.display, color: C.textPrimary, paddingHorizontal: 20, paddingTop: 8 },
   // marginBottom 2 + de 8 bovenin de chiprij = dezelfde 10 als voorheen.

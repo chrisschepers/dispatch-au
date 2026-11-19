@@ -17,9 +17,11 @@ interface Ctx {
   premium: boolean;
   /** Opent het Premium-scherm; doet niets voor wie al Premium heeft. */
   vraag: (reden?: PremiumReden) => void;
+  /** Voor wie Premium heeft: hetzelfde overzicht, zonder koopknop. */
+  toonOverzicht: () => void;
 }
 
-const PoortContext = createContext<Ctx>({ premium: true, vraag: () => {} });
+const PoortContext = createContext<Ctx>({ premium: true, vraag: () => {}, toonOverzicht: () => {} });
 
 export function usePremium(): Ctx {
   return useContext(PoortContext);
@@ -28,6 +30,8 @@ export function usePremium(): Ctx {
 export function PremiumPoort({ children }: { children: React.ReactNode }) {
   const { premium, vereist } = useAbonnement();
   const [reden, setReden] = useState<PremiumReden | null>(null);
+  const [overzicht, setOverzicht] = useState(false);
+  const toonOverzicht = useCallback(() => setOverzicht(true), []);
 
   const vraag = useCallback((r: PremiumReden = 'intro') => {
     if (premium || !vereist) return;
@@ -38,8 +42,16 @@ export function PremiumPoort({ children }: { children: React.ReactNode }) {
   useEffect(() => { if (premium) setReden(null); }, [premium]);
 
   return (
-    <PoortContext.Provider value={{ premium, vraag }}>
+    <PoortContext.Provider value={{ premium, vraag, toonOverzicht }}>
       {children}
+      <Modal
+        visible={overzicht}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setOverzicht(false)}
+      >
+        {overzicht ? <BetaalmuurScreen overzicht onSluit={() => setOverzicht(false)} /> : null}
+      </Modal>
       <Modal
         visible={reden !== null}
         animationType="slide"

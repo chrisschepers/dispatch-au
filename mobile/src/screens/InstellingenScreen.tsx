@@ -81,7 +81,7 @@ export default function InstellingenScreen() {
   const styles = useStijlen(maak_styles);
   const kaartStijl = useKaartStijl();
   const { inst, zet, zetVeel } = useInstellingen();
-  const { premium, vraag } = usePremium();
+  const { premium, vraag, toonOverzicht } = usePremium();
   // Een Premium-schakelaar zonder Premium: niet omzetten, maar laten zien wat
   // je ervoor krijgt. Staat hij aan (van een eerdere proef), dan mag hij uit.
   const metSlot = (reden: PremiumReden, wissel: (v: boolean) => void) => (v: boolean) => {
@@ -297,6 +297,18 @@ export default function InstellingenScreen() {
             titel="Emergencies Near Me Premium"
             sub="Every incident, 5 extra places, aircraft and rescue boats"
             onPress={() => vraag('intro')}
+            rechts={<Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />}
+          />
+        </View>
+      ) : null}
+      {/* Wie betaalt, wil kunnen terugzien wat hij ervoor krijgt (19-11). */}
+      {abonnement.vereist && premium ? (
+        <View style={kaartStijl}>
+          <Rij
+            icoon="abonnement" tegelKleur={C.accent}
+            titel="What's in Premium"
+            sub="Everything your subscription adds"
+            onPress={toonOverzicht}
             rechts={<Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />}
           />
         </View>
