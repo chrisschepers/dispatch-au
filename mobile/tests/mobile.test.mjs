@@ -196,9 +196,42 @@ void test('Australia view accepts supported regions, retains source links and re
     parseFeed(raw, 'au').incidents[0].officialUrl,
     regions.nsw.adviceUrl,
   );
-  assert.throws(() =>
-    parseFeed({ ...raw, incidents: [{ ...row, id: 'wa:incident:1' }] }, 'au'),
+  // Western Australia is a state the app knows since 19-11-2026.
+  assert.equal(
+    parseFeed({ ...raw, incidents: [{ ...row, id: 'wa:incident:1' }] }, 'au')
+      .incidents[0].officialUrl,
+    regions.wa.adviceUrl,
   );
+  // A state this version does not know is left out; it no longer costs the
+  // whole feed (up to 1.2.0 one such row rejected everything).
+  const metOnbekend = parseFeed(
+    { ...raw, incidents: [row, { ...row, id: 'tas:incident:1' }] },
+    'au',
+  );
+  assert.deepEqual(metOnbekend.incidents.map((r) => r.id), ['nsw:incident:1']);
+  // A row from a second source in a state gets that source's own credit.
+  const verkeer = parseFeed(
+    {
+      ...raw,
+      incidents: [{ ...row, id: 'nsw:incident:lt-1', sourceFeed: 'nsw-traffic' }, row],
+      credits: [
+        {
+          sourceFeed: 'nsw-traffic',
+          name: 'Live Traffic NSW',
+          attribution: 'Transport for NSW, CC BY 4.0.',
+          licenseUrl: 'https://opendata.transport.nsw.gov.au/datalicence',
+          adviceUrl: 'https://www.livetraffic.com/',
+        },
+        { sourceFeed: 'bad', name: 'Bad', attribution: 'x', licenseUrl: 'javascript:1', adviceUrl: 'https://x.test' },
+      ],
+    },
+    'au',
+  );
+  assert.equal(verkeer.incidents[0].credit.name, 'Live Traffic NSW');
+  assert.equal(verkeer.incidents[0].officialUrl, 'https://www.livetraffic.com/');
+  assert.equal(verkeer.incidents[1].credit, null);
+  assert.equal(verkeer.incidents[1].officialUrl, regions.nsw.adviceUrl);
+  assert.equal(verkeer.credits.length, 1);
 });
 
 void test('unknown call times use the source update before collector startup time for ordering', async () => {

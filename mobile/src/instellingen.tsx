@@ -48,6 +48,12 @@ export interface Instellingen {
   blusvliegtuigen: boolean;
   notificaties: boolean;
   /**
+   * Meldingen voor verkeersongevallen uit de feed van een wegbeheerder (Live
+   * Traffic NSW en dergelijke). In een stad zijn dat er tientallen per dag,
+   * dus standaard uit (keuze 19-11-2026).
+   */
+  verkeersongevallen: boolean;
+  /**
    * Premium: extra plekken naast je eigen plek (thuis, vakantiehuis, ouders),
    * elk met dezelfde diensten en straal. Hooguit vijf (premium.ts).
    */
@@ -76,6 +82,7 @@ const STANDAARD: Instellingen = {
   gripAlarm: false,
   blusvliegtuigen: false,
   notificaties: false,           // pas aan na de expliciete vraag in onboarding
+  verkeersongevallen: false,
   extraPlekken: [],
   thema: 'automatisch',          // volgt standaard het thema van de telefoon
   pro: false,

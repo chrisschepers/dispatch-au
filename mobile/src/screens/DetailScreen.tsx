@@ -214,7 +214,9 @@ export default function DetailScreen() {
   }
   const afstand = mijnPlek ? afstandTekst(afstandKm(mijnPlek.lat, mijnPlek.lon, melding)) : null;
   const plaatsNaam = melding.city ? nettePlaats(melding.city) : null;
-  const bron = bronVan(melding.sourceRegion);
+  // De bron van precies deze rij als de feed die noemt (verkeer, WA), anders
+  // de bron van de staat.
+  const bron = melding.bron ?? bronVan(melding.sourceRegion);
   // Rijen van het blok "From the agency" hieronder.
   const vanDeDienst: Array<{ icoon: IcoonNaam; titel: string; sub: string | null }> = [
     { icoon: 'bron', titel: melding.agency || 'Emergency services', sub: bron ? `Source: ${bron.naam}` : melding.sourceRegion ? melding.sourceRegion.toUpperCase() : null },

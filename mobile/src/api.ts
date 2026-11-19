@@ -16,6 +16,7 @@ import { parseFeed, type Feed, type Incident } from './feed-model';
 import type { Geometry } from 'geojson';
 import { vensters } from './diensten';
 import { binnenGebied, middenVan } from './gebied';
+import { leesBrandgevaar, type Brandgevaar } from './brandgevaar';
 import { niveauVan } from './kaartFilter';
 
 const BASE = String(Constants.expoConfig?.extra?.feedApiUrl || '').replace(/\/$/, '');
@@ -42,6 +43,8 @@ export interface Melding {
   status?: string;
   agency?: string;
   officialUrl?: string;
+  /** Wie deze rij publiceert, als de feed dat per rij zegt (feed-model.ts, Credit). */
+  bron?: { naam: string; vermelding: string; licentieUrl: string; sleutel: string } | null;
   updated?: string | null;
   resources?: number | null;
   kind?: 'incident' | 'warning';
@@ -138,6 +141,9 @@ function naarMelding(i: Incident, region: string): Melding {
     status: i.status,
     agency: instantieNaam(i.agency),
     officialUrl: i.officialUrl,
+    bron: i.credit
+      ? { naam: i.credit.name, vermelding: i.credit.attribution, licentieUrl: i.credit.licenseUrl, sleutel: i.credit.sourceFeed }
+      : null,
     updated: i.updated,
     resources: i.resources,
     kind: i.kind,
@@ -170,7 +176,9 @@ export async function haalFeed(uren = 24): Promise<{ meldingen: Melding[]; feed:
   if (lopend) return lopend;
   const p = (async () => {
     if (!/^https:\/\//.test(BASE)) throw new Error('Feed service unavailable');
-    const res = await fetch(`${BASE}/v1/feed?region=au&hours=${h}`, { headers: { Accept: 'application/json' } });
+    // extra=wa: Western Australia erbij zodra de backend hem aan heeft; een
+    // oudere versie van de app kent die staat niet en vraagt er dus niet om.
+    const res = await fetch(`${BASE}/v1/feed?region=au&hours=${h}&extra=wa`, { headers: { Accept: 'application/json' } });
     if (!res.ok) throw new Error(`feed → ${res.status}`);
     const feed = parseFeed(await res.json(), 'au');
     const meldingen = [...feed.incidents, ...feed.warnings]
@@ -355,6 +363,8 @@ export async function zetPushFilter(userId: string, filter: {
   gripOnly?: boolean;
   /** Melding als een groot blusvliegtuig opstijgt naar een brand binnen je eigen filter. */
   airTankers?: boolean;
+  /** Meldingen voor ongevallen uit de feed van een wegbeheerder. */
+  roadCrashes?: boolean;
   /** Extra plekken (Premium); altijd meesturen, ook leeg, zodat weghalen aankomt. */
   places?: Array<{ name: string; lat: number; lon: number }>;
 }): Promise<void> {
@@ -371,9 +381,26 @@ export async function zetPushFilter(userId: string, filter: {
       notificationsEnabled: filter.notificationsEnabled,
       airTankers: filter.airTankers ?? false,
       places: filter.places ?? [],
+      roadCrashes: filter.roadCrashes ?? false,
     }),
   });
   if (!res.ok) throw new Error(`filter → ${res.status}`);
+}
+
+/**
+ * Fire Danger Rating and Total Fire Ban for the district around a point.
+ * Null when the place is not covered or the route is not there: the row then
+ * simply does not show.
+ */
+export async function haalBrandgevaar(lat: number, lon: number): Promise<Brandgevaar | null> {
+  try {
+    if (!/^https:\/\//.test(BASE)) return null;
+    const res = await fetch(`${BASE}/v1/fire-danger?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}`, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return null;
+    return leesBrandgevaar(await res.json());
+  } catch {
+    return null;
+  }
 }
 
 export const API_BASE = BASE;

@@ -73,6 +73,7 @@ export interface MeldingInstellingen {
   straalPerDienst: Record<string, number>;
   gripAlarm: boolean;
   blusvliegtuigen: boolean;
+  verkeersongevallen: boolean;
   geluidPerDienst: Record<string, string>;
   extraPlekken: Plek[];
 }
@@ -90,6 +91,7 @@ export function effectief<T extends MeldingInstellingen>(inst: T, premium: boole
     straalPerDienst: {},
     gripAlarm: false,
     blusvliegtuigen: false,
+    verkeersongevallen: false,
     geluidPerDienst: {},
     extraPlekken: [],
   };

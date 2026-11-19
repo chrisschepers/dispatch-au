@@ -12,6 +12,7 @@
 //     Expo tokens. No Expo account is needed for the APNs route.
 //
 // Everything lives in the same SQLite database as the incidents.
+import { optionalSources } from './source-config.mjs';
 import http2 from 'node:http2';
 import crypto from 'node:crypto';
 import { canonicalVIC } from './regional.mjs';
@@ -29,6 +30,11 @@ const NATIONWIDE_KM = 5000;
 // Only incidents that started recently get an alert; a feed that suddenly
 // lists something from yesterday is not news.
 const FRESH_MS = 2 * 3600_000;
+
+/** A row from a road authority's feed, not from a fire or rescue service. */
+export function isRoadCrash(row) {
+  return optionalSources[row?.sourceFeed]?.traffic === true;
+}
 
 export function serviceOf(row) {
   return SERVICE_OF_CATEGORY[row.category] ?? 'Other';
@@ -141,6 +147,9 @@ function fitsAt(device, row, place, { upgrade = false } = {}) {
   )
     return false;
   if (f.warningsOnly && rank === 0) return false;
+  // Crashes from a road authority's feed (Live Traffic NSW and the like):
+  // dozens a day in a city, so only for who asked (19-11-2026).
+  if (isRoadCrash(row) && f.roadCrashes !== true) return false;
   // A warning covers an area. Whoever is inside it must hear about it,
   // however far away its pin is, and also when it has no pin at all
   // (Queensland and SA warnings often only have the area).
@@ -500,6 +509,8 @@ const DEFAULT_FILTER = {
   airTankers: false,
   // Extra watched places: [{ name, lat, lon }], at most MAX_PLACES.
   places: [],
+  // Alerts for crashes from a road authority's feed. Off unless asked.
+  roadCrashes: false,
 };
 export const MAX_PLACES = 5;
 
@@ -614,6 +625,7 @@ export class PushService {
       'notificationsEnabled',
       'critical',
       'airTankers',
+      'roadCrashes',
     ]) {
       if (typeof body[k] === 'boolean') f[k] = body[k];
     }

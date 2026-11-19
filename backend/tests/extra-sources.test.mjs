@@ -472,7 +472,15 @@ void test('Western Australia only travels in the national feed when asked', () =
   assert.ok(asked.attribution.length <= 1000);
   assert.ok(asked.credits.some((c) => c.sourceFeed === 'wa-warnings'));
   // Why it must be asked for: the app up to 1.2.0 rejects the whole feed.
-  assert.throws(() => parseFeed(asked, 'au'));
+  // The app up to 1.2.0 rejected a feed with a state it did not know, which is
+  // why WA only travels when asked. From the next version the app knows WA,
+  // asks for it, and keeps the rows with their own credit.
+  const inApp = parseFeed(asked, 'au');
+  assert.equal(inApp.incidents.length, asked.incidents.length);
+  assert.equal(
+    inApp.incidents.find((r) => r.id.startsWith('wa:')).credit.name,
+    'Emergency WA',
+  );
   // A WA that is not there yet never delays the five states.
   const fresh = new IncidentStore(':memory:', { env: ALL_ON });
   for (const region of Object.keys(sources))

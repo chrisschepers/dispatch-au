@@ -39,7 +39,8 @@ import { openRecensiePagina } from '../recensie';
 import { useAbonnement } from '../abonnement';
 import { usePremium } from '../premiumPoort';
 import { MAX_EXTRA_PLEKKEN, metPlek, geldigePlekken, type PremiumReden } from '../premium';
-import { BRONNEN } from '../bronnen';
+import { BRONNEN, extraBronnen } from '../bronnen';
+import { haalFeed } from '../api';
 import { tikSchakel } from '../trilling';
 import { useInhoudMaat } from '../inhoudMaat';
 import { leesbaar } from '../kleur';
@@ -88,6 +89,15 @@ export default function InstellingenScreen() {
     wissel(v);
   };
   const extraPlekken = geldigePlekken(inst.extraPlekken);
+  // Bronnen die de backend erbij heeft gezet (verkeer, Western Australia): uit
+  // de feed, zodat de lijst altijd klopt met wat de app toont.
+  const [extra, setExtra] = useState<ReturnType<typeof extraBronnen>>([]);
+  useEffect(() => {
+    let geldig = true;
+    haalFeed(24).then(({ feed }) => { if (geldig) setExtra(extraBronnen(feed.credits)); }).catch(() => {});
+    return () => { geldig = false; };
+  }, []);
+  const heeftVerkeer = extra.some((b) => b.sleutel.endsWith('-traffic'));
   const [plekToevoegen, setPlekToevoegen] = useState(false);
   const navigation = useNavigation<Nav>();
   // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
@@ -449,6 +459,16 @@ export default function InstellingenScreen() {
                 />
               );
             })}
+            {/* Alleen als de backend een verkeersbron aan heeft: anders is
+                dit een schakelaar zonder iets erachter. */}
+            {heeftVerkeer && (
+              <Rij
+                icoon="perDienst" tegelKleur={systeemKleur('systemGray')} scheiding
+                titel="Road crashes from traffic services"
+                sub="Many a day in a city. Crashes the fire service attends always come under Rescue"
+                schakelaar={{ aan: premium && inst.verkeersongevallen, wissel: metSlot('incidenten', (v) => zet('verkeersongevallen', v)) }}
+              />
+            )}
           </View>
           <Text style={styles.voetnoot}>
             Coverage depends on what each state publishes. Victoria publishes the most;
@@ -614,6 +634,18 @@ export default function InstellingenScreen() {
             rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
           />
         ))}
+        {extra.map((b) => (
+          <Rij
+            key={b.sleutel}
+            icoon="bron" tegelKleur={systeemKleur('systemGreen')} scheiding
+            titel={b.naam}
+            sub={`${b.staat} · ${b.domein}`}
+            onPress={() => { Linking.openURL(b.url).catch(() => {}); }}
+            rol="link"
+            label={`${b.naam}, ${b.domein}. Opens the official website`}
+            rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
+          />
+        ))}
       </View>
       <Text style={styles.voetnoot}>
         Emergencies Near Me is an independent app and does not represent any government or
@@ -628,6 +660,17 @@ export default function InstellingenScreen() {
         {BRONNEN.map((b) => (
           <Drukbaar
             key={b.regio}
+            style={styles.vermelding}
+            rol="link"
+            markeer
+            onPress={() => { Linking.openURL(b.licentieUrl).catch(() => {}); }}
+          >
+            <Text style={styles.vermeldingTekst}>{b.vermelding}</Text>
+          </Drukbaar>
+        ))}
+        {extra.map((b) => (
+          <Drukbaar
+            key={b.sleutel}
             style={styles.vermelding}
             rol="link"
             markeer

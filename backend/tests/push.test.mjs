@@ -421,3 +421,18 @@ void test('setFilter keeps at most five valid, named places', () => {
   push.setFilter(id, { radiusKm: 30 });
   assert.equal(push.devices().find((x) => x.id === id).filter.places.length, 1);
 });
+
+// 19-11-2026: crashes from a road authority's feed are opt-in.
+void test('a crash from a road feed is only pushed to a device that asked', () => {
+  const verkeer = row({ sourceFeed: 'nsw-traffic', category: 'rescue', point: [-37.82, 144.97] });
+  const brandweer = row({ sourceFeed: 'nsw', category: 'rescue', point: [-37.82, 144.97] });
+  const d = (roadCrashes) => ({ ...MELBOURNE, filter: { notificationsEnabled: true, radiusKm: 20, roadCrashes } });
+  assert.equal(fits(d(false), verkeer), false);
+  assert.equal(fits(d(undefined), verkeer), false);
+  assert.equal(fits(d(true), verkeer), true);
+  // A rescue from the fire service itself is not affected.
+  assert.equal(fits(d(false), brandweer), true);
+  const { push } = service();
+  const id = device(push, { roadCrashes: true });
+  assert.equal(push.devices().find((x) => x.id === id).filter.roadCrashes, true);
+});

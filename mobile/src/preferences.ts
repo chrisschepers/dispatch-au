@@ -48,7 +48,7 @@ export function parsePreferences(raw: string | null): Preferences {
         : [],
       active: validPlace(p.active) ? p.active : null,
       includePlanned: p.includePlanned === true,
-      region: ['au', 'vic', 'act', 'nsw', 'qld', 'sa'].includes(p.region)
+      region: ['au', 'vic', 'act', 'nsw', 'qld', 'sa', 'wa'].includes(p.region)
         ? p.region
         : 'au',
       historyHours: [24, 72, 168].includes(p.historyHours)
