@@ -365,6 +365,8 @@ export async function zetPushFilter(userId: string, filter: {
   airTankers?: boolean;
   /** Meldingen voor ongevallen uit de feed van een wegbeheerder. */
   roadCrashes?: boolean;
+  /** Melding bij een Total Fire Ban of brandgevaar Extreme en hoger. */
+  fireDanger?: boolean;
   /** Extra plekken (Premium); altijd meesturen, ook leeg, zodat weghalen aankomt. */
   places?: Array<{ name: string; lat: number; lon: number }>;
 }): Promise<void> {
@@ -382,6 +384,7 @@ export async function zetPushFilter(userId: string, filter: {
       airTankers: filter.airTankers ?? false,
       places: filter.places ?? [],
       roadCrashes: filter.roadCrashes ?? false,
+      fireDanger: filter.fireDanger ?? false,
     }),
   });
   if (!res.ok) throw new Error(`filter → ${res.status}`);

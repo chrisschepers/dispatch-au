@@ -31,6 +31,49 @@ const NATIONWIDE_KM = 5000;
 // lists something from yesterday is not news.
 const FRESH_MS = 2 * 3600_000;
 
+/** Worth an alert: a Total Fire Ban, or Extreme fire danger and up. */
+export function fireDangerSerious(day) {
+  return (
+    day?.totalFireBan === true ||
+    day?.rating === 'Extreme' ||
+    day?.rating === 'Catastrophic'
+  );
+}
+
+/**
+ * Which day to alert about at this moment: tomorrow in the evening (4 pm to
+ * 9 pm, once the agencies have issued it), today in the morning (5 am to
+ * 10 am, for a ban declared overnight). Otherwise null: no alerts at night.
+ */
+export function fireDangerMoment(now, timeZone = 'Australia/Sydney') {
+  const hour = Number(
+    new Intl.DateTimeFormat('en-AU', {
+      timeZone,
+      hour: 'numeric',
+      hourCycle: 'h23',
+    }).format(new Date(now)),
+  );
+  if (hour >= 16 && hour < 21) return 'tomorrow';
+  if (hour >= 5 && hour < 10) return 'today';
+  return null;
+}
+
+export function fireDangerMessage(district, day, when, placeName = null) {
+  const ban = day.totalFireBan === true;
+  const rated = day.rating && day.rating !== 'No Rating';
+  const title = `${when === 'tomorrow' ? 'Tomorrow' : 'Today'}: ${
+    ban ? 'Total Fire Ban' : `${day.rating} fire danger`
+  }`;
+  const body = [
+    district.district,
+    ban && rated ? `${day.rating} fire danger` : null,
+    placeName ? `for ${placeName}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return { title, body, data: { fireDanger: district.districtId } };
+}
+
 /** A row from a road authority's feed, not from a fire or rescue service. */
 export function isRoadCrash(row) {
   return optionalSources[row?.sourceFeed]?.traffic === true;
@@ -511,6 +554,8 @@ const DEFAULT_FILTER = {
   places: [],
   // Alerts for crashes from a road authority's feed. Off unless asked.
   roadCrashes: false,
+  // An alert when tomorrow brings a Total Fire Ban or Extreme fire danger.
+  fireDanger: false,
 };
 export const MAX_PLACES = 5;
 
@@ -626,6 +671,7 @@ export class PushService {
       'critical',
       'airTankers',
       'roadCrashes',
+      'fireDanger',
     ]) {
       if (typeof body[k] === 'boolean') f[k] = body[k];
     }
@@ -772,6 +818,51 @@ export class PushService {
    * (`airTankers`) and whose own filter fits that fire, and once per flight:
    * the flight is claimed here before anything is sent.
    */
+  /**
+   * Fire danger alerts (19-11-2026): "Tomorrow: Total Fire Ban" in the
+   * evening, for every place a device watches. One alert per device,
+   * district and date: a ban that was announced in the evening is not sent
+   * again the next morning, and a ban declared overnight still arrives.
+   * `fireDanger` is the FireDangerService; call after each of its refreshes.
+   */
+  async fireDangerAlerts(fireDanger, now = Date.now()) {
+    const when = fireDangerMoment(now);
+    if (!when) return { sent: 0, reason: 'not now' };
+    const at = new Date(now).toISOString();
+    const markSent = this.db.prepare(
+      'INSERT INTO push_sent VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
+    );
+    const items = [];
+    for (const d of this.devices()) {
+      if (d.filter.fireDanger !== true || !d.filter.notificationsEnabled)
+        continue;
+      for (const place of placesOf(d)) {
+        const district = fireDanger.at(place.lat, place.lon)?.district;
+        const day = district?.[when];
+        if (!district || district.stale || !fireDangerSerious(day)) continue;
+        const id = `firedanger:${district.districtId}:${day.date}`;
+        if (markSent.run(d.id, id, 0, at).changes === 0) continue;
+        items.push({
+          device: d.id,
+          token: d.push_token,
+          sound: d.filter.sound,
+          critical: false,
+          msg: fireDangerMessage(district, day, when, place.name),
+        });
+      }
+    }
+    if (!items.length) return { sent: 0, reason: 'nobody' };
+    const dead = await this.send(items);
+    const clear = this.db.prepare(
+      'UPDATE devices SET push_token=NULL WHERE push_token=?',
+    );
+    for (const t of dead) clear.run(t);
+    console.log(
+      JSON.stringify({ push: 'fire danger', when, alerts: items.length }),
+    );
+    return { sent: items.length };
+  }
+
   async airTanker(event, now = Date.now()) {
     if (!airTankerPushOn(this.env)) return { sent: 0, reason: 'off' };
     if (!event?.flightId || !event.fire?.id)

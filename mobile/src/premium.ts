@@ -74,6 +74,7 @@ export interface MeldingInstellingen {
   gripAlarm: boolean;
   blusvliegtuigen: boolean;
   verkeersongevallen: boolean;
+  brandgevaarMelding: boolean;
   geluidPerDienst: Record<string, string>;
   extraPlekken: Plek[];
 }

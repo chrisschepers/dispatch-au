@@ -5,7 +5,7 @@ import {
 } from '../src/premium.ts';
 
 const inst = {
-  alleenGroot: false, straalPerDienst: { Fire: 100 }, gripAlarm: true, blusvliegtuigen: true, verkeersongevallen: true,
+  alleenGroot: false, straalPerDienst: { Fire: 100 }, gripAlarm: true, blusvliegtuigen: true, verkeersongevallen: true, brandgevaarMelding: true,
   geluidPerDienst: { Fire: 'sirene' }, extraPlekken: [{ naam: 'Beach house', lat: -38.3, lon: 144.3 }],
   straalKm: 20,
 };
@@ -17,6 +17,8 @@ test('without Premium only official warnings at your own place go to the server'
   assert.equal(e.gripAlarm, false);
   assert.equal(e.blusvliegtuigen, false);
   assert.equal(e.verkeersongevallen, false);
+  // Free: an official warning, like the warning levels.
+  assert.equal(e.brandgevaarMelding, true);
   assert.deepEqual(e.extraPlekken, []);
   assert.equal(e.straalKm, 20);
   // The settings on the phone are untouched: they come back with Premium.
