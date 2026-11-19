@@ -1,0 +1,196 @@
+{
+ "warnings": [
+  {
+   "geo-source": {
+    "features": [
+     {
+      "geometry": {
+       "coordinates": [
+        116.88790749402185,
+        -35.04371438521511
+       ],
+       "type": "Point"
+      },
+      "id": "206d7564720c57d2286ffd003123e971",
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-bushfire--advice",
+       "stroke-width": 2,
+       "fill": "#FBE032",
+       "fill-opacity": 0.25,
+       "stroke": "#FBE032",
+       "priority": 11
+      }
+     },
+     {
+      "geometry": {
+       "coordinates": [
+        [
+         [
+          116.93437851765339,
+          -35.023165625934496
+         ],
+         [
+          116.92153724928727,
+          -35.02309208763279
+         ],
+         [
+          116.91731669255108,
+          -35.02500406197694
+         ],
+         [
+          116.91085115882976,
+          -35.02463637807654
+         ],
+         [
+          116.90698979841187,
+          -35.0269895264672
+         ],
+         [
+          116.88570741657497,
+          -35.02618063934801
+         ],
+         [
+          116.87942148101126,
+          -35.02816607526194
+         ],
+         [
+          116.87322534452721,
+          -35.02787193965051
+         ],
+         [
+          116.86469443197677,
+          -35.026033568102555
+         ],
+         [
+          116.85822889825397,
+          -35.03147502795469
+         ],
+         [
+          116.8382037035297,
+          -35.038974824764765
+         ],
+         [
+          116.84786987784929,
+          -35.043782367229795
+         ],
+         [
+          116.93437851765339,
+          -35.023165625934496
+         ]
+        ]
+       ],
+       "type": "Polygon"
+      },
+      "id": "F8ACazKNgASf3S4DE9O9An6G3zRQ1Mhe",
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-bushfire--advice",
+       "stroke-width": 2,
+       "fill": "#FBE032",
+       "fill-opacity": 0.25,
+       "stroke": "#FBE032",
+       "priority": 11
+      }
+     }
+    ],
+    "type": "FeatureCollection"
+   },
+   "suburbs": [
+    "BOW BRIDGE",
+    "NORNALUP",
+    "PEACEFUL BAY"
+   ],
+   "entityType": "warnings",
+   "entitySubType": "warnings_bushfire--advice",
+   "lga": [
+    "SHIRE OF DENMARK"
+   ],
+   "sorting-priority": 29,
+   "cap-urgency": "Future - act in near future",
+   "publishing-status": "Published",
+   "cap-event-type": [
+    "Bushfire"
+   ],
+   "alert-line": "<p>A Bushfire Advice is in place for people south of Ficifolia Road and Conspicuous Cliffs Road, and west of Peaceful Bay Road in WALPOLE NORNALUP NATIONAL PARK in parts of NORNALUP and PEACEFUL BAY in the SHIRE OF DENMARK.</p>",
+   "cap-certainty": "Observed - occurred or ongoing",
+   "published-date-time": "2026-11-17T15:43:32.768+08:00",
+   "what-to-do-note": "<ul><li><p>Stay alert and monitor your surroundings.</p></li><li><p>Read through your plan and decide what you will do if the situation gets worse. If you do not have a plan, make one now on <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://emergency.wa.gov.au/plan\">Emergency WA</a>, or in the <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://emergency.wa.gov.au/app/plan\">Emergency WA app</a>.</p></li><li><p>Watch for signs of a bushfire, especially smoke and flames.</p></li><li><p>Close all doors and windows, and turn off evaporative air conditioners but keep water running through the system if possible.</p></li><li><p>If you have a respiratory condition and you have been affected by smoke you should contact your local doctor or call 1800MEDICARE (<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"tel:1800633422\">1800 633 422</a>).</p></li></ul><p><strong>If driving</strong></p><ul><li><p>Turn your headlights on and drive slowly.</p></li><li><p>Watch for emergency services personnel and follow their directions.</p></li><li><p>If you cannot see clearly, pull over, keep your headlights and hazard lights on, and wait until the smoke clears.</p></li><li><p>If you have a respiratory condition and you have been affected by smoke you should contact your local doctor or call 1800MEDICARE (<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"tel:1800633422\">1800 633 422</a>).</p></li></ul>",
+   "cap-severity": "Minor - minimal threat",
+   "name": "Bushfire Advice",
+   "location": {
+    "latitude": -35.038548,
+    "value": "Peaceful Bay, Western Australia",
+    "longitude": 116.93193
+   },
+   "id": "6afabba287d7b7040d09506a",
+   "event": "6afaa669bdb330f221858f13",
+   "action-statement--type": "De-escalating",
+   "headline": "WALPOLE NORNALUP NATIONAL PARK",
+   "action-statement": "Avoid the area",
+   "cap-category": "Fire",
+   "updatedAt": "2026-11-17T07:43:34.277Z",
+   "warning-type": "Bushfire Advice",
+   "title": "AVOID THE AREA - WALPOLE NORNALUP NATIONAL PARK",
+   "issued-date-time": "2026-11-19T16:03:22.315+08:00"
+  },
+  {
+   "geo-source": {
+    "features": [
+     {
+      "geometry": {
+       "coordinates": [
+        116.7323,
+        -34.977974
+       ],
+       "type": "Point"
+      },
+      "id": "96d9b35cbe8bdf98a7a6832d0bbfaade",
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-smoke-alert",
+       "stroke-width": 2,
+       "fill": "#939393",
+       "fill-opacity": 0.25,
+       "stroke": "#939393",
+       "priority": 4
+      }
+     }
+    ],
+    "type": "FeatureCollection"
+   },
+   "suburbs": [
+    "WALPOLE"
+   ],
+   "entityType": "warnings",
+   "entitySubType": "warnings_smoke-alert",
+   "lga": [
+    "SHIRE OF MANJIMUP"
+   ],
+   "cap-urgency": "Immediate - act now",
+   "publishing-status": "Published",
+   "cap-event-type": [
+    "Smoke"
+   ],
+   "cap-certainty": "Observed - occurred or ongoing",
+   "published-date-time": "2026-11-19T15:22:29.180+08:00",
+   "description-note": "<ul><li><p>A Smoke Alert has been issued for people in for WALPOLE and surrounds in the SHIRE OF MANJIMUP.</p></li><li><p>The smoke is the result of prescribed burning being carried out in the area.</p></li><li><p>The smoke is expected to clear overnight. </p></li></ul>",
+   "what-to-do-note": "<ul><li>Shut doors and windows and turn off air-conditioners.</li><li>If driving through the area, turn on headlights and drive slowly. If you cannot see clearly, pull over to the left, keep your headlights and hazard lights on, and wait until the smoke clears.</li><li>People with asthma and pre-existing respiratory or cardiovascular illnesses should follow their pre-prepared treatment plan.</li><li>If affected by smoke contact your doctor or call 1800MEDICARE (<a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"tel:1800633422\">1800 633 422</a>).</li><li>Watch for emergency services personnel and follow their directions.</li></ul>",
+   "cap-severity": "Minor - minimal threat",
+   "name": "Smoke Alert",
+   "location": {
+    "latitude": -34.977974,
+    "value": "Walpole, Western Australia, Australia",
+    "longitude": 116.7323
+   },
+   "id": "6afea353e374e0c55c2923bb",
+   "event": "6afea31be374e0c55c2923a2",
+   "headline": "for WALPOLE and surrounds in the SHIRE OF MANJIMUP",
+   "cap-category": "Fire",
+   "updatedAt": "2026-11-19T07:22:28.914Z",
+   "warning-type": "Smoke Alert",
+   "title": "FOR WALPOLE AND SURROUNDS IN THE SHIRE OF MANJIMUP",
+   "issued-date-time": "2026-11-19T15:22:29.180+08:00"
+  }
+ ]
+}

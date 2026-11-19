@@ -1,0 +1,529 @@
+{
+ "incidents": [
+  {
+   "geo-source": {
+    "features": [
+     {
+      "geometry": {
+       "coordinates": [
+        115.21428837,
+        -33.72044747
+       ],
+       "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-other-burn-off",
+       "stroke-width": 2,
+       "fill": "#000000",
+       "fill-opacity": 0.25,
+       "stroke": "#000000"
+      }
+     }
+    ],
+    "type": "FeatureCollection"
+   },
+   "suburbs": [
+    "NORTH JINDONG"
+   ],
+   "start-date-time": "2026-11-19T17:47:11.000+08:00",
+   "entityType": "incidents",
+   "entitySubType": "incidents_other",
+   "lga": [
+    "CITY OF BUSSELTON"
+   ],
+   "publishing-status": "Published",
+   "updated-date-time": "2026-11-19T17:47:11.000+08:00",
+   "published-date-time": "2026-11-19T17:47:53.950+08:00",
+   "dfes-regions": [
+    "LOWER SOUTH WEST"
+   ],
+   "incident-type": "Other Incident",
+   "incident-icon": "ew-other-burn-off",
+   "incident-status": "Active",
+   "cad-id": "831530",
+   "name": "Burn Off",
+   "offloadedProperties": null,
+   "location": {
+    "latitude": -33.72044747,
+    "value": "TAYLOR RD",
+    "longitude": 115.21428837
+   },
+   "id": "6afec5ca22dce31fc8072408",
+   "event": "6afec5ca22dce31fc8072400",
+   "updatedAt": "2026-11-19T09:47:54.747Z",
+   "issued-date-time": "2026-11-19T17:47:11.000+08:00"
+  },
+  {
+   "geo-source": {
+    "features": [
+     {
+      "geometry": {
+       "coordinates": [
+        115.9784,
+        -31.7697
+       ],
+       "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-bushfire",
+       "stroke-width": 2,
+       "fill": "#000000",
+       "fill-opacity": 0.25,
+       "stroke": "#000000"
+      }
+     },
+     {
+      "geometry": {
+       "coordinates": [
+        [
+         [
+          115.9837115,
+          -31.7686578
+         ],
+         [
+          115.9836244,
+          -31.7690083
+         ],
+         [
+          115.983419,
+          -31.7693367
+         ],
+         [
+          115.9827049,
+          -31.7690965
+         ],
+         [
+          115.9825878,
+          -31.7689565
+         ],
+         [
+          115.9825299,
+          -31.7689584
+         ],
+         [
+          115.9824184,
+          -31.7689139
+         ],
+         [
+          115.9823532,
+          -31.7688538
+         ],
+         [
+          115.9822645,
+          -31.7688301
+         ],
+         [
+          115.9821703,
+          -31.768818
+         ],
+         [
+          115.9821523,
+          -31.7687658
+         ],
+         [
+          115.9820279,
+          -31.7687762
+         ],
+         [
+          115.9837115,
+          -31.7686578
+         ]
+        ]
+       ],
+       "type": "Polygon"
+      },
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-other-incident",
+       "date-time": "2026-11-16T11:38:36.000+08:00",
+       "stroke-width": 2,
+       "fill": "#000000",
+       "fill-opacity": 0.25,
+       "stroke": "#000000"
+      }
+     }
+    ],
+    "type": "FeatureCollection"
+   },
+   "suburbs": [
+    "ELLENBROOK"
+   ],
+   "start-date-time": "2026-11-13T18:15:18.000+08:00",
+   "entityType": "incidents",
+   "entitySubType": "incidents_bushfire",
+   "lga": [
+    "CITY OF SWAN"
+   ],
+   "publishing-status": "Published",
+   "updated-date-time": "2026-11-18T19:10:04.000+08:00",
+   "published-date-time": "2026-11-18T19:10:47.548+08:00",
+   "dfes-regions": [
+    "METRO NORTH EAST"
+   ],
+   "incident-type": "Bushfire",
+   "incident-status": "Monitoring",
+   "cad-id": "830565",
+   "nearest-cross-street": {
+    "latitude": -31.7697,
+    "value": "ARDMORE PDE",
+    "longitude": 115.9784
+   },
+   "name": "Bushfire",
+   "location": {
+    "latitude": -31.7697,
+    "value": "FLEETWOOD LINK",
+    "longitude": 115.9784
+   },
+   "id": "6af6e37c260435f966591ca9",
+   "event": "6af6e37b260435f966591ca1",
+   "updatedAt": "2026-11-18T11:10:47.940Z",
+   "issued-date-time": "2026-11-18T19:10:04.000+08:00"
+  },
+  {
+   "geo-source": {
+    "features": [
+     {
+      "geometry": {
+       "coordinates": [
+        114.66129,
+        -28.85054
+       ],
+       "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-bushfire",
+       "stroke-width": 2,
+       "fill": "#000000",
+       "fill-opacity": 0.25,
+       "stroke": "#000000"
+      }
+     }
+    ],
+    "type": "FeatureCollection"
+   },
+   "suburbs": [
+    "RUDDS GULLY"
+   ],
+   "start-date-time": "2026-11-19T17:08:14.000+08:00",
+   "entityType": "incidents",
+   "entitySubType": "incidents_bushfire",
+   "lga": [
+    "CITY OF GREATER GERALDTON"
+   ],
+   "publishing-status": "Published",
+   "updated-date-time": "2026-11-19T17:46:21.000+08:00",
+   "published-date-time": "2026-11-19T17:46:57.814+08:00",
+   "dfes-regions": [
+    "MIDWEST GASCOYNE"
+   ],
+   "incident-type": "Bushfire",
+   "incident-status": "On scene",
+   "cad-id": "831512",
+   "nearest-cross-street": {
+    "latitude": -28.85054,
+    "value": "SCOTT RD",
+    "longitude": 114.66129
+   },
+   "name": "Bushfire",
+   "location": {
+    "latitude": -28.85054,
+    "value": "RUDDS GULLY RD",
+    "longitude": 114.66129
+   },
+   "id": "6afebce122dce31fc80722b9",
+   "event": "6afebce122dce31fc80722b1",
+   "updatedAt": "2026-11-19T09:46:58.260Z",
+   "issued-date-time": "2026-11-19T17:46:21.000+08:00",
+   "issue-status": "Updated"
+  },
+  {
+   "geo-source": {
+    "features": [
+     {
+      "geometry": {
+       "coordinates": [
+        115.81108822,
+        -31.69884964
+       ],
+       "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-hazardous-materials",
+       "stroke-width": 2,
+       "fill": "#000000",
+       "fill-opacity": 0.25,
+       "stroke": "#000000"
+      }
+     }
+    ],
+    "type": "FeatureCollection"
+   },
+   "suburbs": [
+    "BANKSIA GROVE"
+   ],
+   "start-date-time": "2026-11-19T17:21:42.000+08:00",
+   "entityType": "incidents",
+   "entitySubType": "incidents_hazardous-materials",
+   "lga": [
+    "CITY OF WANNEROO"
+   ],
+   "publishing-status": "Published",
+   "updated-date-time": "2026-11-19T17:35:47.000+08:00",
+   "published-date-time": "2026-11-19T17:36:21.945+08:00",
+   "dfes-regions": [
+    "METRO NORTH COASTAL"
+   ],
+   "incident-type": "Hazardous Materials",
+   "incident-status": "On scene",
+   "cad-id": "831519",
+   "name": "Hazardous Materials",
+   "location": {
+    "latitude": -31.69884964,
+    "value": "CANOPY CT",
+    "longitude": 115.81108822
+   },
+   "id": "6afec0e022dce31fc8072326",
+   "event": "6afec0df22dce31fc807231e",
+   "updatedAt": "2026-11-19T09:36:22.348Z",
+   "issued-date-time": "2026-11-19T17:35:47.000+08:00",
+   "issue-status": "Updated"
+  },
+  {
+   "geo-source": {
+    "features": [
+     {
+      "geometry": {
+       "coordinates": [
+        115.96515,
+        -32.03276
+       ],
+       "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-other-road-crash",
+       "stroke-width": 2,
+       "fill": "#000000",
+       "fill-opacity": 0.25,
+       "stroke": "#000000"
+      }
+     }
+    ],
+    "type": "FeatureCollection"
+   },
+   "suburbs": [
+    "BECKENHAM"
+   ],
+   "start-date-time": "2026-11-19T15:25:23.000+08:00",
+   "entityType": "incidents",
+   "entitySubType": "incidents_other",
+   "lga": [
+    "CITY OF GOSNELLS"
+   ],
+   "publishing-status": "Published",
+   "updated-date-time": "2026-11-19T15:37:12.000+08:00",
+   "published-date-time": "2026-11-19T15:38:00.773+08:00",
+   "dfes-regions": [
+    "METRO SOUTH EAST"
+   ],
+   "incident-type": "Other Incident",
+   "incident-icon": "ew-other-road-crash",
+   "incident-status": "On scene",
+   "cad-id": "831485",
+   "nearest-cross-street": {
+    "latitude": -32.03276,
+    "value": "ALBANY HWY",
+    "longitude": 115.96515
+   },
+   "name": "Road Crash",
+   "location": {
+    "latitude": -32.03276,
+    "value": "ROE HWY",
+    "longitude": 115.96515
+   },
+   "id": "6afea488e374e0c55c2923e5",
+   "event": "6afea487e374e0c55c2923dd",
+   "updatedAt": "2026-11-19T07:38:01.646Z",
+   "issued-date-time": "2026-11-19T15:37:12.000+08:00",
+   "issue-status": "Updated"
+  },
+  {
+   "geo-source": {
+    "features": [
+     {
+      "geometry": {
+       "coordinates": [
+        115.37129974,
+        -20.97872925
+       ],
+       "type": "Point"
+      },
+      "id": "bad5f53c-8c90-4677-9187-4b6efd41e11f",
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-earthquake",
+       "stroke-width": 2,
+       "fill": "#000000",
+       "fill-opacity": 0.25,
+       "stroke": "#000000"
+      }
+     },
+     {
+      "geometry": {
+       "coordinates": [
+        [
+         [
+          115.37129974,
+          -20.933763231813774
+         ],
+         [
+          115.3665808167579,
+          -20.933979690545033
+         ],
+         [
+          115.36190729870255,
+          -20.934626983989364
+         ],
+         [
+          115.3573241553009,
+          -20.935698883884992
+         ],
+         [
+          115.35287548871713,
+          -20.937185076227667
+         ],
+         [
+          115.34860411046547,
+          -20.939071260256394
+         ],
+         [
+          115.34455113032328,
+          -20.9413392857147
+         ],
+         [
+          115.34075556141684,
+          -20.943967327083335
+         ],
+         [
+          115.33725394524505,
+          -20.946930093127843
+         ],
+         [
+          115.33408000022379,
+          -20.950199069767734
+         ],
+         [
+          115.33126429711758,
+          -20.95374279395483
+         ],
+         [
+          115.32883396447862,
+          -20.95752715595112
+         ],
+         [
+          115.37129974,
+          -20.933763231813774
+         ]
+        ]
+       ],
+       "type": "Polygon"
+      },
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-earthquake",
+       "stroke-width": 2,
+       "fill": "#000000",
+       "fill-opacity": 0.25,
+       "stroke": "#000000"
+      }
+     }
+    ],
+    "type": "FeatureCollection"
+   },
+   "suburbs": [],
+   "submit-felt-report-note": "<p>Felt the earthquake? Submit a felt report <a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://earthquakes.ga.gov.au/feltreport/ga2026wwosof\">here</a></p>",
+   "start-date-time": "2026-11-19T05:50:22.094+08:00",
+   "entityType": "incidents",
+   "entitySubType": "incidents_earthquake",
+   "lga": [
+    "ASHBURTON, SHIRE OF"
+   ],
+   "publishing-status": "Published",
+   "updated-date-time": "2026-11-19T08:04:07.768+08:00",
+   "incident-id": "707580",
+   "published-date-time": "2026-11-19T08:06:37.819+08:00",
+   "dfes-regions": [],
+   "incident-type": "Earthquake",
+   "earthquake-magnitude": 2.95854599545108,
+   "name": "Earthquake",
+   "location": {
+    "latitude": -20.97872925,
+    "value": "Offshore, 26 km S of Flacourt Bay, Barrow Island, WA",
+    "longitude": 115.37129974
+   },
+   "id": "6afe2135c96d7dd036d4f815",
+   "event": "6afe2133c96d7dd036d4f80f",
+   "earthquake-depth": 10,
+   "updatedAt": "2026-11-19T00:06:39.316Z",
+   "issued-date-time": "2026-11-19T08:04:07.768+08:00",
+   "issue-status": "Updated"
+  },
+  {
+   "geo-source": {
+    "features": [
+     {
+      "geometry": {
+       "coordinates": [
+        115.86258724,
+        -32.15762824
+       ],
+       "type": "Point"
+      },
+      "type": "Feature",
+      "properties": {
+       "icon-name": "ew-structure-fire",
+       "stroke-width": 2,
+       "fill": "#000000",
+       "fill-opacity": 0.25,
+       "stroke": "#000000"
+      }
+     }
+    ],
+    "type": "FeatureCollection"
+   },
+   "suburbs": [
+    "AUBIN GROVE"
+   ],
+   "start-date-time": "2026-11-19T17:25:59.000+08:00",
+   "entityType": "incidents",
+   "entitySubType": "incidents_structure-fire",
+   "lga": [
+    "CITY OF COCKBURN"
+   ],
+   "publishing-status": "Published",
+   "updated-date-time": "2026-11-19T17:35:31.000+08:00",
+   "published-date-time": "2026-11-19T17:36:02.092+08:00",
+   "dfes-regions": [
+    "METRO SOUTH COASTAL"
+   ],
+   "incident-type": "Structure Fire",
+   "incident-status": "Responding",
+   "cad-id": "831523",
+   "name": "Structure Fire",
+   "location": {
+    "latitude": -32.15762824,
+    "value": "GIBBS RD",
+    "longitude": 115.86258724
+   },
+   "id": "6afec13f22dce31fc8072359",
+   "event": "6afec13f22dce31fc8072351",
+   "updatedAt": "2026-11-19T09:36:02.563Z",
+   "issued-date-time": "2026-11-19T17:35:31.000+08:00",
+   "issue-status": "Updated"
+  }
+ ]
+}

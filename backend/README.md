@@ -8,6 +8,14 @@ Standalone public read-only API for the native preview. This is separate from th
 - Run one replica with serverless sleeping disabled. Each source polls independently: VIC/ACT after 60 seconds, NSW/QLD after two minutes (their feeds change more often than the documented 30 minutes), and SA after five minutes. Source-specific freshness limits are applied. Failed/invalid/stale snapshots cannot erase the last good records.
 - `/health` checks process availability. `/v1/status` separately reports source readiness/freshness and the last bounded source error.
 - `/v1/feed?region=au|vic|act|nsw|qld|sa&hours=24|72|168` returns current records plus records last seen within the selected window. History starts with the first successful collection; it is not a backfill. Removed records retain the last known source status. Only currently listed warnings are returned.
+- Optional sources (`source-config.mjs`, `optionalSources`; parsers in `extra-sources.mjs`) are off until their switch is set. Without it a source is never requested and never listed as failed. `/v1/status` lists every switch under `optionalSources` (`enabled`, and its health once on); they never decide `ok`.
+  - `LIVETRAFFIC_API_KEY`: crashes from Live Traffic NSW (official Transport for NSW API), in the NSW feed as `rescue`.
+  - `QLDTRAFFIC_API_KEY`: crashes from QLDTraffic. `VIC_ROADS_API_KEY`: crashes from Victoria's Unplanned Disruptions - Road. Both parsers were written from the published specification, without a live response; check the first snapshots in `/v1/status`.
+  - `QLD_WARNINGS=on`: Queensland storm, flood and cyclone warnings (CAP-AU), with their areas.
+  - `WA_ENABLED=on`: Emergency WA incidents as a new region `wa`; `WA_WARNINGS=on` adds its warnings (CC BY-ND: shown as published).
+  - Road feeds keep crashes only. A crash within 500 m and 30 minutes of a `rescue` row from another source in the same state is left out (`IncidentStore.withoutDuplicates`). A road feed that stops answering leaves the state feed after its `staleAfter` instead of marking the state stale.
+  - Rows carry the state in their id (`nsw:incident:livetraffic-1`) and the source key in `sourceFeed`; `credits[]` in the feed has the attribution and licence per `sourceFeed`.
+  - `/v1/feed?region=wa` exists only while WA is on. The national feed carries WA only with `&extra=wa`: apps up to 1.2.0 reject a feed with a state they do not know.
 - Seven days of unlisted records are retained. Source failure pauses cleanup until the next valid snapshot. `firstSeen` and `lastSeen` describe our observations, not an incident's start or resolution.
 - Data collection and client filtering do not send the user's location to the server. Traffic metadata may still be processed by the hosting platform.
 

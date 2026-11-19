@@ -7,8 +7,9 @@ import { SyntaxValidator } from 'fast-xml-validator';
 import { parseNSW, parseQLD, normalizeVICIdentity } from './regional.mjs';
 import { normalizeFeed, categoryFor } from '../lib/incidents.ts';
 
-import { sources } from './source-config.mjs';
+import { sources, allSources } from './source-config.mjs';
 import { skipCounter } from './skipped.mjs';
+import { optionalParsers } from './extra-sources.mjs';
 export { sources } from './source-config.mjs';
 
 const text = (v, max = 300) =>
@@ -111,15 +112,28 @@ export function parseACT(xml, now = new Date().toISOString()) {
   };
 }
 
-export async function fetchSource(region, fetcher = fetch, now = new Date()) {
-  const config = sources[region];
-  const response = await fetcher(config.url, {
+// `region` is a source key: one of the five states, or an optional source
+// that is switched on (source-config.mjs). A key or token only ever travels
+// in the request; errors carry the HTTP status, never the URL.
+export async function fetchSource(
+  region,
+  fetcher = fetch,
+  now = new Date(),
+  env = process.env,
+) {
+  const config = allSources[region];
+  if (!config) throw Error('Unknown source');
+  const url = typeof config.url === 'function' ? config.url(env) : config.url;
+  const response = await fetcher(url, {
     signal: AbortSignal.timeout(15000),
     headers: {
-      Accept: ['act', 'sa'].includes(region)
-        ? 'application/xml'
-        : 'application/json',
+      Accept:
+        config.accept ??
+        (['act', 'sa'].includes(region)
+          ? 'application/xml'
+          : 'application/json'),
       'User-Agent': 'Dispatch/0.1 (public incident feed)',
+      ...config.headers?.(env),
     },
   });
   if (!response.ok) throw Error(`Source HTTP ${response.status}`);
@@ -143,8 +157,9 @@ export async function fetchSource(region, fetcher = fetch, now = new Date()) {
     reader.releaseLock();
   }
   const body = Buffer.concat(chunks).toString('utf8');
-  const feed =
-    region === 'sa'
+  const feed = optionalParsers[region]
+    ? optionalParsers[region](body, now.toISOString())
+    : region === 'sa'
       ? parseSA(body, now.toISOString())
       : region === 'act'
         ? parseACT(body, now.toISOString())
