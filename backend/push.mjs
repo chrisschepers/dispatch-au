@@ -61,9 +61,9 @@ export function fireDangerMoment(now, timeZone = 'Australia/Sydney') {
 export function fireDangerMessage(district, day, when, placeName = null) {
   const ban = day.totalFireBan === true;
   const rated = day.rating && day.rating !== 'No Rating';
-  const title = `${when === 'tomorrow' ? 'Tomorrow' : 'Today'}: ${
-    ban ? 'Total Fire Ban' : `${String(day.rating)} fire danger`
-  }`;
+  const dayName = when === 'tomorrow' ? 'Tomorrow' : 'Today';
+  const what = ban ? 'Total Fire Ban' : String(day.rating) + ' fire danger';
+  const title = dayName + ': ' + what;
   const body = [
     district.district,
     ban && rated ? `${String(day.rating)} fire danger` : null,
