@@ -62,11 +62,11 @@ export function fireDangerMessage(district, day, when, placeName = null) {
   const ban = day.totalFireBan === true;
   const rated = day.rating && day.rating !== 'No Rating';
   const title = `${when === 'tomorrow' ? 'Tomorrow' : 'Today'}: ${
-    ban ? 'Total Fire Ban' : `${day.rating} fire danger`
+    ban ? 'Total Fire Ban' : `${String(day.rating)} fire danger`
   }`;
   const body = [
     district.district,
-    ban && rated ? `${day.rating} fire danger` : null,
+    ban && rated ? `${String(day.rating)} fire danger` : null,
     placeName ? `for ${placeName}` : null,
   ]
     .filter(Boolean)
@@ -840,7 +840,7 @@ export class PushService {
         const district = fireDanger.at(place.lat, place.lon)?.district;
         const day = district?.[when];
         if (!district || district.stale || !fireDangerSerious(day)) continue;
-        const id = `firedanger:${district.districtId}:${day.date}`;
+        const id = `firedanger:${String(district.districtId)}:${String(day.date)}`;
         if (markSent.run(d.id, id, 0, at).changes === 0) continue;
         items.push({
           device: d.id,
