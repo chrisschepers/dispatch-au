@@ -279,6 +279,18 @@ export default function InstellingenScreen() {
           die meldingen beloven, alleen één eerlijke regel. "Receive alerts"
           antwoordde daar "Alerts are coming soon" en "Emergency Warnings
           anywhere" kon stil aan gaan (controle 01-11). */}
+      {/* Premium bovenaan zolang je het niet hebt: hier kijkt iedereen. */}
+      {abonnement.vereist && !premium ? (
+        <View style={kaartStijl}>
+          <Rij
+            icoon="abonnement" tegelKleur={C.accent}
+            titel="Emergencies Near Me Premium"
+            sub="Every incident, 5 extra places, aircraft and rescue boats"
+            onPress={() => vraag('intro')}
+            rechts={<Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />}
+          />
+        </View>
+      ) : null}
       {PUSH_BESCHIKBAAR ? (
         <>
           <GroepKop>Alerts</GroepKop>
@@ -687,17 +699,6 @@ export default function InstellingenScreen() {
           opzeggen. Op iOS opent dit het eigen blad van Apple; alleen dat
           blad toont ook TestFlight-abonnementen. Android opent de
           abonnementenpagina van Google Play. */}
-      {abonnement.vereist && !premium ? (
-        <View style={kaartStijl}>
-          <Rij
-            icoon="abonnement" tegelKleur={C.accent}
-            titel="Emergencies Near Me Premium"
-            sub="Every incident, 5 extra places, aircraft and rescue boats"
-            onPress={() => vraag('intro')}
-            rechts={<Icoon naam="chevron" grootte={20} kleur={C.textMuted} gewicht="semibold" />}
-          />
-        </View>
-      ) : null}
       {abonnement.vereist && abonnement.toegang === 'actief' ? (
         <View style={kaartStijl}>
           <Rij

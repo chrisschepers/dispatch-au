@@ -30,7 +30,7 @@ export const PREMIUM_FUNCTIES: PremiumFunctie[] = [
   {
     sleutel: 'incidenten', icoon: 'meldingen',
     titel: 'An alert for every incident',
-    tekst: 'Fire trucks, crashes, storm damage and hazmat near you, minutes before it becomes an official warning.',
+    tekst: 'Fire trucks, crashes, storm damage and hazmat near you, often before there is an official warning.',
   },
   {
     sleutel: 'plekken', icoon: 'plaats',
