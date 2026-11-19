@@ -24,6 +24,8 @@ import { MeldingRij } from '../components/MeldingRij';
 import { useLive, type LiveStatus } from '../live';
 import { useInstellingen } from '../instellingen';
 import { bepaalPlek, bepaalPlekSnel } from '../locatie';
+import { binnenGebied, binnenTekst, vlakKleur } from '../gebied';
+import { niveauVan, isAfgelopen } from '../kaartFilter';
 import { T, F, type Palet } from '../theme';
 import { useThema, useStijlen, useKaartStijl } from '../thema';
 import { DIENSTEN, wisselDienst, straalVoor, straalTekst, LANDELIJK_KM } from '../diensten';
@@ -58,6 +60,8 @@ export default function BuurtScreen() {
   const [eindeBereikt, setEindeBereikt] = useState(false);
   // Laatst gebruikte plek: de live-verbinding toetst daar nieuwe meldingen aan.
   const plekRef = useRef<{ lat: number; lon: number } | null>(null);
+  // Dezelfde plek als state: de balk 'je zit in dit gebied' tekent ermee.
+  const [plekNu, setPlekNu] = useState<{ lat: number; lon: number } | null>(null);
 
   const laad = useCallback(async () => {
     try {
@@ -69,6 +73,7 @@ export default function BuurtScreen() {
       setPlaatsLabel(plek.bron === 'handmatig' ? inst.handPlaats : null);
       setBuitenAu(plek.bron === 'buiten-au');
       plekRef.current = plek;
+      setPlekNu((oud) => (oud && oud.lat === plek.lat && oud.lon === plek.lon ? oud : { lat: plek.lat, lon: plek.lon }));
       // Geen tijdvenster in de lijst (keuze Chris 16-08): het venster is er om
       // de kaart behapbaar te houden, hier wil je gewoon terug kunnen scrollen.
       // strikt: zonder dat wordt een mislukt verzoek stilletjes een lege
@@ -222,8 +227,34 @@ export default function BuurtScreen() {
    * brandweer volgt gebruikt ze dagelijks, dus verstoppen in Instellingen is
    * geen verbetering. Bij aankomst zichtbaar, bij lezen uit de weg.
    */
+  // Waarschuwingen waar je plek ín ligt, de zwaarste eerst. Dit is het
+  // belangrijkste op het scherm en staat daarom boven alles, niet tussen de
+  // autobranden van vanochtend.
+  const binnen = React.useMemo(() => (plekNu
+    ? rijen
+      .filter((r) => !isAfgelopen(r.m) && niveauVan(r.m) >= 1 && binnenGebied(r.m.geometry, plekNu.lat, plekNu.lon))
+      .sort((a, b) => niveauVan(b.m) - niveauVan(a.m))
+      .slice(0, 3)
+    : []), [rijen, plekNu]);
+
   const lijstKop = (
     <>
+      {binnen.map(({ m }) => {
+        const niveau = niveauVan(m);
+        return (
+          <Drukbaar
+            key={`binnen-${m.id}`}
+            style={[styles.binnen, { borderLeftColor: vlakKleur(niveau).rand }]}
+            label={`${binnenTekst(niveau)}. ${m.title ?? ''}`}
+            hint="Opens the warning"
+            onPress={() => navigation.navigate('Detail', { melding: m })}
+          >
+            <Text style={styles.binnenKop}>{binnenTekst(niveau)}</Text>
+            <Text style={styles.binnenTitel} numberOfLines={2}>{m.title}</Text>
+            {m.action ? <Text style={styles.binnenActie} numberOfLines={2}>{m.action}</Text> : null}
+          </Drukbaar>
+        );
+      })}
       {/* Verbonden-status, zoals in de grote app (wens Chris 27-09). Zoeken
           is sindsdien een eigen tabblad in de systeemtabbalk. */}
       <View style={styles.bovenRij}>
@@ -402,6 +433,13 @@ const maak_styles = (C: Palet) => StyleSheet.create({
 
   leeg: { padding: 24, alignItems: 'center', marginTop: 12 },
   leegTitel: { ...T.kop, color: C.textPrimary },
+  binnen: {
+    marginHorizontal: 16, marginTop: 8, padding: 14, borderRadius: 14, borderCurve: 'continuous',
+    borderLeftWidth: 6, backgroundColor: C.accentSoft, gap: 2,
+  },
+  binnenKop: { ...T.kop, color: C.accentTekst },
+  binnenTitel: { ...T.rij, color: C.textPrimary },
+  binnenActie: { ...T.klein, color: C.textSecondary },
   leegTekst: { ...T.body, color: C.textSecondary, textAlign: 'center', marginTop: 6 },
   // Tekstknop in de accentkleur; de ronding staat op de Drukbaar zelf, zodat
   // de Android-drukstaat dezelfde vorm heeft.
