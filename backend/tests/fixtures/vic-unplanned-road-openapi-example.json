@@ -1,0 +1,78 @@
+{
+  "meta": { "total_records": 4, "total_pages": 1, "page": 1, "limit": 1000, "count": 4 },
+  "data": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": { "type": "Point", "coordinates": [144.9631, -37.8136] },
+        "properties": {
+          "eventId": "RID-900001",
+          "impactId": "900001-1",
+          "eventLocationStatus": "Active",
+          "numberLanesImpacted": "1",
+          "roadAccessType": "Lane closed",
+          "created": "2026-11-19T09:05:00Z",
+          "lastUpdated": "2026-11-19T09:15:00Z",
+          "closedRoadName": "Swanston Street",
+          "declaredRoadName": null,
+          "reference": { "localRoadName": "Swanston Street", "startIntersectionRoadName": "Collins Street", "startIntersectionLocality": "MELBOURNE", "localGovernmentArea": "MELBOURNE" },
+          "id": "900001",
+          "source": { "sourceName": "RID", "sourceId": "900001" },
+          "status": "Active",
+          "eventType": "Incident",
+          "eventSubType": "Collision",
+          "impact": { "direction": "Northbound", "impactType": "Lane closed" },
+          "description": "Collision, one lane closed northbound."
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": { "type": "LineString", "coordinates": [[144.97, -37.82], [144.971, -37.821]] },
+        "properties": {
+          "eventId": "RID-900001",
+          "impactId": "900001-2",
+          "eventLocationStatus": "Active",
+          "created": "2026-11-19T09:05:00Z",
+          "lastUpdated": "2026-11-19T09:15:00Z",
+          "closedRoadName": "Flinders Street",
+          "reference": { "startIntersectionLocality": "MELBOURNE" },
+          "eventType": "Incident",
+          "eventSubType": "Collision",
+          "impact": { "direction": "Eastbound", "impactType": "Road closed" }
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": { "type": "Point", "coordinates": [145.1, -37.9] },
+        "properties": {
+          "eventId": "RID-900002",
+          "eventLocationStatus": "Inactive",
+          "created": "2026-11-19T06:00:00Z",
+          "lastUpdated": "2026-11-19T07:00:00Z",
+          "closedRoadName": "Princes Highway",
+          "reference": { "startIntersectionLocality": "CLAYTON" },
+          "eventType": "Incident",
+          "eventSubType": "Collision",
+          "impact": { "direction": "Both", "impactType": "Lane closed" }
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": { "type": "Point", "coordinates": [144.3, -38.1] },
+        "properties": {
+          "eventId": "RID-900003",
+          "eventLocationStatus": "Active",
+          "created": "2026-11-19T08:00:00Z",
+          "lastUpdated": "2026-11-19T08:30:00Z",
+          "closedRoadName": "Barwon Heads Road",
+          "reference": { "startIntersectionLocality": "GEELONG" },
+          "eventType": "Hazard",
+          "eventSubType": "Flooding",
+          "impact": { "direction": "Both", "impactType": "Road closed" }
+        }
+      }
+    ]
+  },
+  "links": []
+}

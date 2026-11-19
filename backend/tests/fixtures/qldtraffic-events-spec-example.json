@@ -1,0 +1,104 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          { "type": "LineString", "coordinates": [[153.0258962, -27.3399828], [153.02596, -27.34007], [153.026028, -27.3401745]] },
+          { "type": "Point", "coordinates": [153.02596, -27.34007] }
+        ]
+      },
+      "properties": {
+        "id": 4101,
+        "status": "Published",
+        "published": "2026-11-19T19:12:00+10:00",
+        "source": { "source_name": "EPS", "source_id": null, "account": null, "provided_by": null, "provided_by_url": "Department of Transport and Main Roads" },
+        "url": "http://api.qldtraffic.qld.gov.au/v1/events/4101",
+        "event_type": "Crash",
+        "event_subtype": "Multi-vehicle",
+        "event_due_to": null,
+        "impact": { "direction": "Southbound", "towards": "Brisbane", "impact_type": "Lanes blocked", "impact_subtype": "Right lane blocked", "delay": "Delays expected" },
+        "duration": { "start": "2026-11-19T19:05:00+10:00", "end": null, "active_days": [], "recurrences": [] },
+        "event_priority": "High",
+        "description": "Multi-vehicle crash",
+        "advice": "Proceed with caution",
+        "information": null,
+        "road_summary": { "road_name": "Gympie Arterial Road", "locality": "Fitzgibbon", "postcode": "4018", "local_government_area": "BRISBANE CITY", "district": "Metropolitan" },
+        "last_updated": "2026-11-19T19:20:19.448257+10:00",
+        "next_inspection": null,
+        "web_link": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "GeometryCollection", "geometries": [{ "type": "Point", "coordinates": [152.9, -27.5] }] },
+      "properties": {
+        "id": 4102,
+        "status": "Reopened",
+        "published": "2026-11-19T17:00:00+10:00",
+        "source": { "source_name": "EPS", "source_id": null, "account": null, "provided_by": null, "provided_by_url": "Department of Transport and Main Roads" },
+        "event_type": "Crash",
+        "event_subtype": "Single vehicle",
+        "impact": { "direction": "Both", "towards": null, "impact_type": "No blockage", "impact_subtype": null, "delay": null },
+        "duration": { "start": "2026-11-19T16:50:00+10:00", "end": null },
+        "road_summary": { "road_name": "Moggill Road", "locality": "Kenmore", "postcode": "4069", "local_government_area": "BRISBANE CITY", "district": "Metropolitan" },
+        "last_updated": "2026-11-19T18:01:00.000000+10:00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "GeometryCollection", "geometries": [{ "type": "Point", "coordinates": [153.55, -28.2] }] },
+      "properties": {
+        "id": 4103,
+        "status": "Published",
+        "published": "2026-11-19T19:00:00+10:00",
+        "source": { "source_name": "TfNSW", "source_id": "77", "account": null, "provided_by": "Transport for NSW", "provided_by_url": "https://www.livetraffic.com" },
+        "event_type": "Crash",
+        "event_subtype": "Multi-vehicle",
+        "impact": { "direction": "Northbound", "towards": null, "impact_type": "Lanes blocked", "impact_subtype": null, "delay": null },
+        "duration": { "start": "2026-11-19T18:55:00+10:00", "end": null },
+        "road_summary": { "road_name": "Pacific Motorway", "locality": "Tweed Heads", "postcode": "2485", "local_government_area": null, "district": null },
+        "last_updated": "2026-11-19T19:02:00.000000+10:00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "GeometryCollection", "geometries": [{ "type": "Point", "coordinates": [153.0, -27.4] }] },
+      "properties": {
+        "id": 155,
+        "status": "Published",
+        "published": "2026-11-13T12:19:00+10:00",
+        "source": { "source_name": "EPS", "source_id": null, "account": null, "provided_by": null, "provided_by_url": "Department of Transport and Main Roads" },
+        "event_type": "Roadworks",
+        "event_subtype": "Planned roadworks",
+        "impact": { "direction": "Southbound", "towards": "Station", "impact_type": "Lanes blocked", "impact_subtype": "Right lane blocked", "delay": "No delays expected" },
+        "duration": { "start": "2026-11-13T12:13:00+10:00", "end": "2026-11-27T12:18:00+10:00" },
+        "road_summary": { "road_name": "Kuringgai Parkway", "locality": "Fitzgibbon", "postcode": "4018", "local_government_area": "BRISBANE CITY", "district": "Metropolitan" },
+        "last_updated": "2026-11-18T11:37:19.448257+10:00"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "GeometryCollection", "geometries": [] },
+      "properties": {
+        "id": 4104,
+        "status": "Published",
+        "published": "2026-11-19T19:10:00+10:00",
+        "source": { "source_name": "EPS", "provided_by": null, "provided_by_url": "Department of Transport and Main Roads" },
+        "event_type": "Crash",
+        "event_subtype": "N/A",
+        "duration": { "start": "2026-11-19T19:08:00+10:00", "end": null },
+        "road_summary": { "road_name": "Bruce Highway", "locality": "Caboolture" },
+        "last_updated": "2026-11-19T19:10:00.000000+10:00"
+      }
+    }
+  ],
+  "published": "2026-11-19T19:21:12.9418832+10:00",
+  "rights": {
+    "owner": "As per the respective provided_by details contained in the feed: Department of Transport and Main Roads, Transport for NSW, or the respective Local Government Authority.",
+    "disclaimer": "The State of Queensland makes no statements, representations or warranties about the accuracy, currency, reliability or completeness of the information contained in this feed.",
+    "copyright": "Copyright in material within this feed is owned by the State of Queensland or other entities which provide material for the website by arrangement."
+  }
+}

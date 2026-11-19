@@ -4,6 +4,11 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { fetchSource, sources } from './feeds.mjs';
+import {
+  allSources,
+  optionalSources,
+  activeSources,
+} from './source-config.mjs';
 import { skippedByRegion } from './skipped.mjs';
 import { appConfig } from './app-config.mjs';
 import { IncidentStore } from './store.mjs';
@@ -291,11 +296,27 @@ export function createServer(
           skipped: skippedByRegion.get(r) ?? null,
         }));
         const ok = health.every((s) => !s.stale);
+        // Optional sources: every switch and whether it is on, and the
+        // health of the ones that are. They never decide `ok`: a road feed
+        // that is down must not make the service look down.
+        const on = store.optional ?? [];
         res.setHeader('Cache-Control', 'no-store');
         return send(url.pathname === '/health/ready' && !ok ? 503 : 200, {
           ok,
           checkedAt,
           sources: health,
+          optionalSources: Object.keys(optionalSources).map((key) => ({
+            source: key,
+            name: optionalSources[key].name,
+            switch: optionalSources[key].switch,
+            enabled: on.includes(key),
+            ...(on.includes(key)
+              ? {
+                  ...store.health(key, Date.parse(checkedAt)),
+                  skipped: skippedByRegion.get(key) ?? null,
+                }
+              : {}),
+          })),
           // Only whether each push route has a usable key, never the key
           // itself: so a wrong FCM_SERVICE_ACCOUNT shows up here (15-11-2026).
           push: { apns: apnsConfigured(), fcm: fcmConfigured() },
@@ -305,18 +326,27 @@ export function createServer(
       const region = url.searchParams.get('region') || 'vic';
       const hours = Number(url.searchParams.get('hours') || 24);
       if (
-        (region !== 'au' && !Object.hasOwn(sources, region)) ||
+        (region !== 'au' &&
+          !Object.hasOwn(sources, region) &&
+          !store.extraRegions?.includes(region)) ||
         ![24, 72, 168].includes(hours)
       )
         return send(400, { error: 'Invalid region or time window' });
-      const key = `${region}|${hours}`;
+      // `extra=wa`: new states in the national feed, for apps that know
+      // them. Unknown or switched-off names are ignored, never an error.
+      const asked = (url.searchParams.get('extra') || '').split(',');
+      const extra =
+        region === 'au'
+          ? (store.extraRegions ?? []).filter((r) => asked.includes(r))
+          : [];
+      const key = `${region}|${hours}|${extra.join(',')}`;
       let hit = feedCache.get(key);
       if (
         !hit ||
         hit.version !== store.version ||
         Date.now() - hit.at > FEED_CACHE_MS
       ) {
-        const result = store.feed(region, hours);
+        const result = store.feed(region, hours, Date.now(), { extra });
         if (!result)
           return send(503, {
             error: 'Waiting for the first valid source update',
@@ -416,7 +446,10 @@ async function main() {
   const timers = new Set();
   const collect = async (region) => {
     try {
-      const feed = await fetchSource(region);
+      let feed = await fetchSource(region);
+      // A crash a fire service in the same state already lists is left out.
+      if (allSources[region].traffic && !stopping)
+        feed = store.withoutDuplicates(region, feed);
       skippedByRegion.set(
         region,
         feed.skipped ? { ...feed.skipped, at: new Date().toISOString() } : null,
@@ -467,13 +500,13 @@ async function main() {
         const timer = setTimeout(() => {
           timers.delete(timer);
           void collect(region);
-        }, sources[region].interval);
+        }, allSources[region].interval);
         timers.add(timer);
       }
     }
   };
   server.listen(Number(process.env.PORT || 8080), '0.0.0.0');
-  for (const region of Object.keys(sources)) void collect(region);
+  for (const region of activeSources()) void collect(region);
   const stop = () => {
     stopping = true;
     for (const timer of timers) clearTimeout(timer);

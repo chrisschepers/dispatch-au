@@ -1,11 +1,55 @@
 import { DatabaseSync } from 'node:sqlite';
 import { canonicalVIC } from './regional.mjs';
 import { sources } from './feeds.mjs';
+import {
+  allSources,
+  optionalSources,
+  enabledOptional,
+  regionOf,
+} from './source-config.mjs';
 import { sourceHealth } from './health.mjs';
 import { History } from './history.mjs';
+import { distanceKm } from '../lib/incidents.ts';
+
+// In the order the coverage note names them.
+const STATE_NAMES = {
+  vic: 'Victoria',
+  act: 'ACT',
+  nsw: 'NSW',
+  qld: 'Queensland',
+  sa: 'South Australia',
+  wa: 'Western Australia',
+};
+// A crash on a road feed is the same call as a fire service's rescue when
+// it lies within this distance and started within this time of it.
+const SAME_CRASH_KM = 0.5;
+const SAME_CRASH_MS = 30 * 60_000;
+
+// The app rejects a feed whose attribution is longer than 1000 characters.
+// The five states always fit. Optional sources are added in full while they
+// fit; the rest are named in a closing line, and `credits` has them in full.
+function fitAttribution(credits, max = 1000) {
+  const lines = credits.map((c) => c.attribution);
+  const rest = [];
+  const text = () =>
+    [
+      ...lines,
+      ...(rest.length ? [`More sources: ${rest.join(', ')}.`] : []),
+    ].join('\n');
+  while (text().length > max && lines.length > 1) {
+    lines.pop();
+    rest.unshift(credits[lines.length].name);
+  }
+  return text();
+}
 
 export class IncidentStore {
-  constructor(path = ':memory:') {
+  // `env` decides which optional sources (source-config.mjs) are part of
+  // the feeds; without their switch they are not read from the database.
+  constructor(path = ':memory:', { env = process.env } = {}) {
+    this.optional = enabledOptional(env);
+    // States beyond the original five that are switched on (wa).
+    this.extraRegions = this.optional.filter((key) => regionOf(key) === key);
     this.db = new DatabaseSync(path, { timeout: 5000 });
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
       CREATE TABLE IF NOT EXISTS sources(region TEXT PRIMARY KEY, started_at TEXT NOT NULL, fetched_at TEXT, updated_at TEXT, stale INTEGER NOT NULL DEFAULT 1, error TEXT);
@@ -133,9 +177,13 @@ export class IncidentStore {
       }
       // The website's history may never cost the app its update: a failure
       // there (a full disk, a bug) is rolled back on its own and logged.
+      // An optional source inside a state (road crashes, extra warnings)
+      // stays out of it: the history ends what a state's update no longer
+      // lists, so two sources for one state would end each other's rows.
       this.db.exec('SAVEPOINT history');
       try {
-        this.history?.record(region, rows, now);
+        if (regionOf(region) === region)
+          this.history?.record(region, rows, now);
         this.db.exec('RELEASE history');
       } catch (error) {
         this.db.exec('ROLLBACK TO history');
@@ -179,11 +227,56 @@ export class IncidentStore {
       error=excluded.error`)
       .run(region, at, error ? 1 : 0, error ? at : null, error);
   }
+  /**
+   * Drops the crashes of a road feed that a fire service in the same state
+   * already lists as a rescue: the same place (500 m) and the same half
+   * hour. The fire service's row stays, it says who is responding; the
+   * road row is left out and forgotten. Call before ingest and push.
+   */
+  withoutDuplicates(region, feed, now = Date.now()) {
+    const state = regionOf(region);
+    const others = this.db
+      .prepare(
+        'SELECT payload, first_seen FROM incidents WHERE region!=? AND id LIKE ? AND (listed=1 OR last_seen>=?)',
+      )
+      .all(
+        region,
+        state + ':incident:%',
+        new Date(now - 2 * SAME_CRASH_MS).toISOString(),
+      )
+      .map((r) => ({ ...JSON.parse(r.payload), firstSeen: r.first_seen }))
+      .filter(
+        (r) =>
+          r.kind !== 'warning' &&
+          r.category === 'rescue' &&
+          Array.isArray(r.point),
+      );
+    if (!others.length) return feed;
+    const forget = this.db.prepare(
+      'DELETE FROM incidents WHERE id=? AND region=?',
+    );
+    const incidents = feed.incidents.filter((row) => {
+      const at = Date.parse(row.created || '') || now;
+      const same = others.some(
+        (o) =>
+          Array.isArray(row.point) &&
+          distanceKm(row.point, o.point) <= SAME_CRASH_KM &&
+          // A fire service often gives no call time: then the moment we
+          // first saw its row, which never moves.
+          Math.abs(at - Date.parse(o.created || o.firstSeen)) <= SAME_CRASH_MS,
+      );
+      if (same) forget.run(row.id, region);
+      return !same;
+    });
+    return incidents.length === feed.incidents.length
+      ? feed
+      : { ...feed, incidents };
+  }
   health(region, now = Date.now()) {
-    if (!sources[region]) throw Error('Unknown region');
+    if (!allSources[region]) throw Error('Unknown region');
     return sourceHealth(
       region,
-      sources[region],
+      allSources[region],
       this.db.prepare('SELECT * FROM sources WHERE region=?').get(region),
       this.db
         .prepare('SELECT * FROM source_attempts WHERE region=?')
@@ -201,11 +294,25 @@ export class IncidentStore {
       .prepare('UPDATE sources SET stale=1,error=? WHERE region=?')
       .run(message, region);
   }
-  feed(region, hours = 24, now = Date.now()) {
+  /**
+   * `extra`: states beyond the original five (wa) to add to the national
+   * feed. Apps up to 1.2.0 reject a feed with a state they do not know, so
+   * the national feed only carries them when the request asks.
+   */
+  feed(region, hours = 24, now = Date.now(), { extra = [] } = {}) {
     if (region === 'au') {
-      const feeds = Object.keys(sources).map((r) => this.feed(r, hours, now));
+      const regions = [
+        ...Object.keys(sources),
+        ...this.extraRegions.filter((r) => extra.includes(r)),
+      ];
+      const feeds = regions.map((r) => this.feed(r, hours, now));
+      // A new state that is not there yet never delays the original five.
+      const core = feeds.slice(0, Object.keys(sources).length);
       const present = feeds.filter(Boolean);
       if (!present.length) return null;
+      const names = Object.keys(STATE_NAMES)
+        .filter((r) => regions.includes(r))
+        .map((r) => STATE_NAMES[r]);
       return {
         region,
         incidents: present
@@ -217,11 +324,11 @@ export class IncidentStore {
           ),
         warnings: present.flatMap((f) => f.warnings),
         source: 'Australian emergency sources',
-        attribution: present.map((f) => f.attribution).join('\n'),
+        attribution: fitAttribution(present.flatMap((f) => f.credits)),
+        credits: present.flatMap((f) => f.credits),
         adviceUrl: 'https://www.australia.gov.au/',
         licenseUrl: 'https://www.australia.gov.au/',
-        coverageNote:
-          'Available coverage: Victoria, ACT, NSW, Queensland and South Australia. Sources differ; not every emergency call is published. NSW and Queensland sources update about every 30 minutes.',
+        coverageNote: `Available coverage: ${names.slice(0, -1).join(', ')} and ${names.at(-1)}. Sources differ; not every emergency call is published. NSW and Queensland sources update about every 30 minutes.`,
         fetchedAt: present
           .map((f) => f.fetchedAt)
           .sort()
@@ -229,23 +336,39 @@ export class IncidentStore {
         sourceUpdated: null,
         historyStartedAt: present.map((f) => f.historyStartedAt).sort()[0],
         historyHours: hours,
-        stale: feeds.some((f) => !f || f.stale),
+        stale: core.some((f) => !f || f.stale),
         staleAfterMs: 300000,
-        sources: Object.keys(sources).map((r) => this.health(r, now)),
+        sources: regions.map((r) => this.health(r, now)),
       };
     }
-    const config = sources[region];
-    if (!config) throw Error('Unknown region');
-    const meta = this.db
-      .prepare('SELECT * FROM sources WHERE region=?')
-      .get(region);
+    const config = allSources[region];
+    if (
+      !config ||
+      regionOf(region) !== region ||
+      (optionalSources[region] && !this.optional.includes(region))
+    )
+      throw Error('Unknown region');
+    const metaOf = this.db.prepare('SELECT * FROM sources WHERE region=?');
+    const meta = metaOf.get(region);
     if (!meta?.fetched_at) return null;
+    // Optional sources inside this state that are switched on and current.
+    // One that stopped answering is left out whole: nothing tells the app
+    // that a road feed is late, so an old crash must not stay "live".
+    const extras = this.optional
+      .filter((key) => key !== region && regionOf(key) === region)
+      .map((key) => ({ key, config: allSources[key], meta: metaOf.get(key) }))
+      .filter(
+        (x) =>
+          x.meta?.fetched_at &&
+          now - Date.parse(x.meta.fetched_at) <= x.config.staleAfter,
+      );
     const cutoff = new Date(now - hours * 3600000).toISOString();
-    const records = this.db
-      .prepare(
-        'SELECT * FROM incidents WHERE region=? AND (listed=1 OR last_seen>=?)',
-      )
-      .all(region, cutoff);
+    const select = this.db.prepare(
+      'SELECT * FROM incidents WHERE region=? AND (listed=1 OR last_seen>=?)',
+    );
+    const records = [region, ...extras.map((x) => x.key)].flatMap((key) =>
+      select.all(key, cutoff),
+    );
     const incidents = [],
       warnings = [];
     for (const record of records) {
@@ -265,19 +388,31 @@ export class IncidentStore {
           Date.parse(a.created || a.updated || a.firstSeen) ||
         a.id.localeCompare(b.id),
     );
+    const own =
+      config.attribution +
+      (region === 'sa' ? ' Sourced ' + meta.fetched_at.slice(0, 10) + '.' : '');
     return {
       region,
       incidents,
       warnings,
       source: config.name,
-      attribution:
-        config.attribution +
-        (region === 'sa'
-          ? ' Sourced ' + meta.fetched_at.slice(0, 10) + '.'
-          : ''),
+      attribution: [own, ...extras.map((x) => x.config.attribution)].join('\n'),
+      // Who to credit per row: `sourceFeed` on a row from an optional
+      // source is its key here. The first entry is the state's own source.
+      credits: [{ key: region, config }, ...extras].map((x) => ({
+        sourceFeed: x.key,
+        region,
+        name: x.config.name,
+        attribution: x.key === region ? own : x.config.attribution,
+        licenseUrl: x.config.licenseUrl,
+        adviceUrl: x.config.adviceUrl,
+      })),
       licenseUrl: config.licenseUrl,
       adviceUrl: config.adviceUrl,
-      coverageNote: config.coverageNote || null,
+      coverageNote:
+        [config.coverageNote, ...extras.map((x) => x.config.coverageNote)]
+          .filter(Boolean)
+          .join(' ') || null,
       fetchedAt: meta.fetched_at,
       sourceUpdated: meta.updated_at,
       historyStartedAt: meta.started_at,

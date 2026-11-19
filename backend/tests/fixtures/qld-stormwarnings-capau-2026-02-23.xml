@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EDXLDistribution xmlns="urn:oasis:names:tc:emergency:EDXL:DE:1.0">
+	<distributionID>Emergency Management Queensland CAP-au Feed</distributionID>
+	<senderID>sender@example.invalid</senderID>
+	<dateTimeSent>2026-02-23T09:07:06+10:00</dateTimeSent>
+	<distributionStatus>Actual</distributionStatus>
+	<distributionType>Report</distributionType>
+	<combinedConfidentiality>UNCLASSIFIED AND NOT SENSITIVE</combinedConfidentiality>
+	<language>en-AU</language>
+	<targetArea>
+		<subdivision>AU-QLD</subdivision>
+	</targetArea>
+	<contentObject xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">
+		<xmlContent>
+			<embeddedXMLContent>
+				<cap:alert>
+					<cap:identifier>TR_210226_1700</cap:identifier>
+					<cap:sender>sender@example.invalid</cap:sender>
+					<cap:sent>2026-02-21T17:00:00+10:00</cap:sent>
+					<cap:status>Actual</cap:status>
+					<cap:msgType>Alert</cap:msgType>
+					<cap:scope>Public</cap:scope>
+					<cap:code>urn:oasis:names:tc:emergency:cap:1.2:profile:CAP-AU:1.0</cap:code>
+					<cap:info>
+						<cap:language>en-AU</cap:language>
+						<cap:category>Met</cap:category>
+						<cap:event>Flood</cap:event>
+						<cap:responseType>Monitor</cap:responseType>
+						<cap:urgency>Expected</cap:urgency>
+						<cap:severity>Severe</cap:severity>
+						<cap:certainty>Likely</cap:certainty>
+						<cap:eventCode>
+							<cap:valueName>Event Code</cap:valueName>
+							<cap:value>flood</cap:value>
+						</cap:eventCode>
+						<cap:expires>2026-02-22T17:00:00+10:00</cap:expires>
+						<cap:senderName>Queensland Police Service</cap:senderName>
+						<cap:headline>WATCH AND ACT - MONITOR CONDITIONS - Burdekin LGA - Flood - Issued at 5:00pm, Saturday 21 February 2026</cap:headline>
+						<cap:description>The Burdekin Local Disaster Management Group advises people in the Burdekin Local Government Area to MONITOR CONDITIONS for possible MINOR flooding on the Burdekin River at Inkerman Bridge. 
+The Bureau of Meteorology advises the Burdekin River at Inkerman Bridge is currently below the MINOR flood level and may reach the MINOR flood level (7.00 m) from Sunday morning. 
+The Burdekin River at Inkerman Bridge (Burdekin Bridge) is currently at 6.05 m and rising slowly, below the minor flood level. The Burdekin River at Inkerman Bridge (Burdekin Bridge) may exceed the minor flood level (7.00 m) Sunday morning. The river may reach around 7.50 m during Monday, with minor flooding. Further rises are possible.
+Further showers and thunderstorms are forecast across the catchment over the next few days, which may cause additional river level rises across the Burdekin River catchment. The situation is being monitored, and this warning will be updated as required.
+For emergency help in floods and storms, call the QLD SES on 132 500 or download the SES Assistance QLD App. In life threatening situations, call Triple Zero (000) immediately.</cap:description>
+						<cap:instruction>• Find out how to get ready for a flood at the Get Ready Queensland website (Get Prepared).
+• Never drive, walk, ride through, play or swim in flood water. If it’s flooded, forget it. 
+• Consider the consequences of road and bridge closures. Damage to roads, bridges or buildings caused by flooding and landslip may exist in your area. Consider the need to make alternate arrangements for work, children, and travel.
+• Drive to conditions and remain alert. Be aware of road hazards including mud, debris, and water in low lying areas.
+• Obey all signs about road closures and instructions from emergency services.
+• Tell friends, family, and neighbours in the area.</cap:instruction>
+						<cap:web>https://www.disaster.qld.gov.au/</cap:web>
+						<cap:parameter>
+							<cap:valueName>Location</cap:valueName>
+							<cap:value>Burdekin LGA</cap:value>
+						</cap:parameter>
+						<cap:parameter>
+							<cap:valueName>Status</cap:valueName>
+							<cap:value>Actual</cap:value>
+						</cap:parameter>
+						<cap:parameter>
+							<cap:valueName>AlertLevel</cap:valueName>
+							<cap:value>Watch and Act</cap:value>
+						</cap:parameter>
+						<cap:parameter>
+							<cap:valueName>ControlAuthority</cap:valueName>
+							<cap:value>Queensland Police Service</cap:value>
+						</cap:parameter>
+						<cap:parameter>
+							<cap:valueName>Hazard</cap:valueName>
+							<cap:value>Flood</cap:value>
+						</cap:parameter>
+						<cap:resource>
+							<cap:resourceDesc>map</cap:resourceDesc>
+							<cap:mimeType>text/html</cap:mimeType>
+							<cap:uri>https://www.disaster.qld.gov.au/</cap:uri>
+						</cap:resource>
+						<cap:area>
+							<cap:areaDesc>Burdekin LGA</cap:areaDesc>
+							<cap:polygon>-19.7849057931279,146.922053124996 -19.7858749593884,146.926516320797 -19.7842596790114,146.934412744137 -19.7810290691164,146.939219262691 -19.7787676032087,146.944369104001 -19.7771522507648,146.950548913571 -19.7729522577753,146.951578881833 -19.7661674199193,146.957072045894 -19.7632595438736,146.964281823726 -19.7619671374989,146.980074670407 -19.7597054011409,146.988314416501 -19.7348241850697,146.999300744625 -19.7296535756435,147.003763940426 -19.7849057931279,146.922053124996</cap:polygon>
+							<cap:circle>-19.737921077297901,147.2545264122902 0.5</cap:circle>
+							<cap:geocode>
+								<cap:valueName>http://www.iso.org/iso/country_codes.html</cap:valueName>
+								<cap:value>AU-QLD</cap:value>
+							</cap:geocode>
+						</cap:area>
+					</cap:info>
+				</cap:alert>
+			</embeddedXMLContent>
+		</xmlContent>
+	</contentObject>
+	<contentObject xmlns:cap="urn:oasis:names:tc:emergency:cap:1.2">
+		<xmlContent>
+			<embeddedXMLContent>
+				<cap:alert>
+					<cap:identifier>RJ_050226_0800</cap:identifier>
+					<cap:sender>sender@example.invalid</cap:sender>
+					<cap:sent>2026-02-19T09:45:00+10:00</cap:sent>
+					<cap:status>Actual</cap:status>
+					<cap:msgType>Alert</cap:msgType>
+					<cap:scope>Public</cap:scope>
+					<cap:code>urn:oasis:names:tc:emergency:cap:1.2:profile:CAP-AU:1.0</cap:code>
+					<cap:info>
+						<cap:language>en-AU</cap:language>
+						<cap:category>Met</cap:category>
+						<cap:event>Flood</cap:event>
+						<cap:responseType>Monitor</cap:responseType>
+						<cap:urgency>Future</cap:urgency>
+						<cap:severity>Minor</cap:severity>
+						<cap:certainty>Possible</cap:certainty>
+						<cap:eventCode>
+							<cap:valueName>Event Code</cap:valueName>
+							<cap:value>flood</cap:value>
+						</cap:eventCode>
+						<cap:expires>2026-02-20T09:45:00+10:00</cap:expires>
+						<cap:senderName>Queensland Police Service</cap:senderName>
+						<cap:headline>ADVICE - DO NOT ENTER FLOOD WATER - Croydon (LGA) - Flood - Issued at 9:45am, Thursday 19 February 2026</cap:headline>
+						<cap:description>Croydon Shire Council advises people in the following locations(s):
+• Croydon Local Government Area
+
+to STAY INFORMED of the flooding in the Local Government Area. 
+
+For non-life-threatening flood and storm emergency assistance, contact SES on 132500, 132500.qld.gov.au, or the SES Assistance Qld app on Android or iOS. In a life-threatening situation, call Triple Zero (000) immediately.</cap:description>
+						<cap:instruction>• Adhere to road closures.
+• Slow down around roadworks.
+• Find out how to get ready for a flood at  the Get Ready Queensland website (Get Prepared).
+• Never drive, walk, ride through, play or swim in flood water. If it’s flooded, forget it. 
+• Consider the consequences of road and bridge closures. Damage to roads, bridges or buildings caused by flooding and landslip may exist in your area. Consider the need to make alternate arrangements for work, children, and travel.
+• Drive to conditions and remain alert. Be aware of road hazards including mud, debris, and water in low lying areas.
+• Obey all signs about road closures and instructions from emergency services.
+• Use sandbags to block toilets, sinks and drains to stop sewerage backflow.
+• Tell friends, family, and neighbours in the area.
+
+If you find it hard to move quickly or have special or medical needs:
+• Use your Person-Centred Emergency Plan (P-CEP) now if you have one. 
+• Make sure you have enough medicine for at least one week.
+• If anyone in your house uses powered medical equipment, like a dialysis machine or ventilator, decide now where you will go in case you lose power.
+• Call your support person or service to organise transport if you need to leave.
+• Leaving early is safer than waiting.</cap:instruction>
+						<cap:web>https://www.disaster.qld.gov.au/</cap:web>
+						<cap:parameter>
+							<cap:valueName>Location</cap:valueName>
+							<cap:value>Croydon Local Government Area</cap:value>
+						</cap:parameter>
+						<cap:parameter>
+							<cap:valueName>Status</cap:valueName>
+							<cap:value>Actual</cap:value>
+						</cap:parameter>
+						<cap:parameter>
+							<cap:valueName>AlertLevel</cap:valueName>
+							<cap:value>Advice</cap:value>
+						</cap:parameter>
+						<cap:parameter>
+							<cap:valueName>ControlAuthority</cap:valueName>
+							<cap:value>Queensland Police Service</cap:value>
+						</cap:parameter>
+						<cap:parameter>
+							<cap:valueName>Hazard</cap:valueName>
+							<cap:value>Flood</cap:value>
+						</cap:parameter>
+						<cap:resource>
+							<cap:resourceDesc>map</cap:resourceDesc>
+							<cap:mimeType>text/html</cap:mimeType>
+							<cap:uri>https://www.disaster.qld.gov.au/</cap:uri>
+						</cap:resource>
+						<cap:area>
+							<cap:areaDesc>Croydon Local Government Area</cap:areaDesc>
+							<cap:polygon>-19.6896786464949,143.249995861206 -19.6356869529646,142.601115856324 -19.5480330657916,142.609355602418 -19.546091849619,142.592532787476 -19.4033486603565,142.603862438355 -19.388128261181,142.39683881775 -19.4017295366243,142.396152172242 -19.4004342260359,142.373149547731 -19.1265695773776,142.400958690797 -19.1226770875395,142.354266796266 -19.147976631803,142.352550182496 -19.1356516970012,142.23685041443 -19.1502469141451,142.23513380066 -19.6896786464949,143.249995861206</cap:polygon>
+							<cap:circle>-18.194343700955535,142.09789809529678 0.5</cap:circle>
+							<cap:geocode>
+								<cap:valueName>http://www.iso.org/iso/country_codes.html</cap:valueName>
+								<cap:value>AU-QLD</cap:value>
+							</cap:geocode>
+						</cap:area>
+					</cap:info>
+				</cap:alert>
+			</embeddedXMLContent>
+		</xmlContent>
+	</contentObject>
+</EDXLDistribution>
