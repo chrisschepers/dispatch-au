@@ -67,10 +67,10 @@ const TABS: Record<TabNaam, { label: string; icoon: IcoonNaam; gekozen: IcoonNaa
   instellingen: { label: 'Settings', icoon: 'tabInstellingen', gekozen: 'tabInstellingenActief' },
 };
 
-/** De volgorde van de echte balk: zoeken op iOS achteraan, op Android als derde. */
+/** De volgorde van de echte balk: zoeken op iOS achteraan, op Android geen zoektab. */
 const VOLGORDE: TabNaam[] = isIOS
   ? ['buurt', 'kaart', 'instellingen', 'zoeken']
-  : ['buurt', 'kaart', 'zoeken', 'instellingen'];
+  : ['buurt', 'kaart', 'instellingen'];
 
 /** systemGray: de niet-gekozen tabs onder iOS 26, net als in navigatie.tsx. */
 const SYSTEEMGRIJS = '#8e8e93';
@@ -97,8 +97,8 @@ function TabKnop({ naam, aan, kleur, grootte, stijl, labelStijl }: {
  *   tekstkleur.
  * - Ouder iOS: de volle balk onderin met vier tabs, zoeken achteraan. Gekozen
  *   in het accent, de rest systeemgrijs.
- * - Android: de M3-navigatiebalk op het kaartvlak met vier tabs, zoeken als
- *   derde. Achter het gekozen icoon een indicator van 64×32.
+ * - Android: de M3-navigatiebalk op het kaartvlak met drie tabs, zonder
+ *   zoeken. Achter het gekozen icoon een indicator van 64×32.
  */
 function TabBalk({ actief }: { actief: Exclude<TabNaam, 'zoeken'> }) {
   if (!isIOS) {

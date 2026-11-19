@@ -42,6 +42,9 @@ import { brandToestelStand, grootLabel, type BrandToestel } from '../vluchtData'
 import { rolTekst } from '../vliegtuigData';
 import { ToestelRondje } from '../components/VliegtuigMarker';
 
+/** De site van de app; staat onder elk gedeeld incident. */
+const APP_SITE = 'https://emergenciesnearme.online';
+
 type Rt =RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
 // Detail zit in de stapel van een tabblad, en het kaartje springt naar een
 // ander tabblad: dus beide navigators in één type.
@@ -238,7 +241,9 @@ export default function DetailScreen() {
   async function deel() {
     const plek = plaatsRegel(melding.location, melding.city);
     await Share.share({
-      message: `${v.emoji} ${v.titel}${plek ? ` · ${plek}` : ''}${v.afgelopen ? ' · Ended' : melding.status ? ` · ${melding.status}` : ''}${melding.officialUrl ? `\n${melding.officialUrl}` : ''}`,
+      // Eerst de bron van de dienst, dan waar het vandaan komt: wie het
+      // bericht krijgt, kan de app zelf vinden (19-11).
+      message: `${v.emoji} ${v.titel}${plek ? ` · ${plek}` : ''}${v.afgelopen ? ' · Ended' : melding.status ? ` · ${melding.status}` : ''}${melding.officialUrl ? `\n${melding.officialUrl}` : ''}\n\nShared from Emergencies Near Me\n${APP_SITE}`,
     });
   }
 

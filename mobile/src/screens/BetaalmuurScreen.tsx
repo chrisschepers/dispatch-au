@@ -5,6 +5,9 @@
  * after the intro, and once when a subscription has ended. It can always be
  * closed: the free app keeps working.
  *
+ * With `overzicht` it is the same list for someone who already has Premium
+ * (Settings → What's in Premium): what they pay for, without a buy button.
+ *
  * The amount ALWAYS comes from the store (localised, right currency and GST).
  * No "$9.99" anywhere in the code: a price change in App Store Connect must
  * show up here by itself.
@@ -25,7 +28,7 @@ import { Drukbaar } from '../components/Drukbaar';
 import { Icoon } from '../components/Icoon';
 import type { IcoonNaam } from '../iconen';
 import { IntroSchil, INTRO } from '../components/intro/IntroSchil';
-import { SchermProef } from '../components/intro/Schermpjes';
+import { SchermProef, SchermLijst } from '../components/intro/Schermpjes';
 import { toonRevenueCatPaywall } from '../aankopen';
 import { revenueCatPaywallAan } from '../appConfig';
 import { functiesVoor, titelVoor, type PremiumReden } from '../premium';
@@ -37,7 +40,9 @@ const VOORWAARDEN = Platform.OS === 'ios'
   : `${SITE}/terms`;
 const PRIVACY = `${SITE}/privacy`;
 
-export default function BetaalmuurScreen({ reden, onSluit }: { reden?: PremiumReden; onSluit?: () => void }) {
+export default function BetaalmuurScreen({ reden, onSluit, overzicht }: {
+  reden?: PremiumReden; onSluit?: () => void; overzicht?: boolean;
+}) {
   const {
     toegang, wasActief, product, productGeladen, fout, bezig, koop, herstel,
     winkelNaam, account, beheer,
@@ -47,12 +52,13 @@ export default function BetaalmuurScreen({ reden, onSluit }: { reden?: PremiumRe
   // designed in the dashboard the SDK shows its default sheet without Terms of
   // Use and Privacy links (3.1.2); this screen has them.
   useEffect(() => {
+    if (overzicht) return undefined;
     let weg = false;
     revenueCatPaywallAan()
       .then((aan) => { if (aan && !weg) toonRevenueCatPaywall(); })
       .catch(() => {});
     return () => { weg = true; };
-  }, []);
+  }, [overzicht]);
   const Winkel = winkelNaam.charAt(0).toUpperCase() + winkelNaam.slice(1);
 
   const proef = product ? periodeTekst(product.proefPeriode) : null;
@@ -82,6 +88,47 @@ export default function BetaalmuurScreen({ reden, onSluit }: { reden?: PremiumRe
         ? (proef ? `Start ${proef} free` : 'Start free trial')
         : `Subscribe for ${prijsZin}`;
 
+  const lijst = (
+    <View style={styles.functies}>
+      {functies.map((f, i) => (
+        <View key={f.sleutel} style={[styles.functie, !overzicht && i === 0 && reden === f.sleutel && styles.functieUitgelicht]}>
+          <View style={styles.functieIcoon}>
+            <Icoon naam={f.icoon} grootte={20} kleur="#ffffff" />
+          </View>
+          <View style={styles.functieTekstVak}>
+            <Text style={styles.functieTitel}>{f.titel}</Text>
+            <Text style={styles.functieTekst}>{f.tekst}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+
+  if (overzicht) {
+    return (
+      <IntroSchil
+        scherm={<SchermLijst />}
+        titel="You have Premium"
+        tekst={
+          <View>
+            <Text style={styles.tekst}>Everything below is yours, on top of the free map and official warnings.</Text>
+            {lijst}
+          </View>
+        }
+        onTerug={onSluit}
+        knop="Done"
+        onKnop={() => onSluit?.()}
+        onder={
+          <View style={styles.onder}>
+            <Drukbaar style={styles.tekstKnop} rol="link" onPress={() => { void beheer(); }} trillen={false}>
+              <Text style={styles.herstel}>Manage subscription</Text>
+            </Drukbaar>
+          </View>
+        }
+      />
+    );
+  }
+
   return (
     <IntroSchil
       scherm={<SchermProef prijsZin={prijsZin} proefTekst={proef ?? 'The trial'} />}
@@ -100,19 +147,7 @@ export default function BetaalmuurScreen({ reden, onSluit }: { reden?: PremiumRe
                 : 'The map and official warnings stay free. Premium adds everything below.'}
           </Text>
           {/* What you get, with the reason you came here for on top. */}
-          <View style={styles.functies}>
-            {functies.map((f, i) => (
-              <View key={f.sleutel} style={[styles.functie, i === 0 && reden === f.sleutel && styles.functieUitgelicht]}>
-                <View style={styles.functieIcoon}>
-                  <Icoon naam={f.icoon} grootte={20} kleur="#ffffff" />
-                </View>
-                <View style={styles.functieTekstVak}>
-                  <Text style={styles.functieTitel}>{f.titel}</Text>
-                  <Text style={styles.functieTekst}>{f.tekst}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
+          {lijst}
         </View>
       }
       onTerug={onSluit}

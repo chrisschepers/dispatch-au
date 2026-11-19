@@ -7,9 +7,11 @@
  * melding verdween. Nu de echte balk van het platform: op iOS de
  * UITabBarController (met Liquid Glass vanaf iOS 26), op Android de M3
  * BottomNavigationView. Detail zit in elke stapel, dus de balk blijft staan
- * als je een melding opent (HIG 7.5). Zoeken is een eigen tabblad: op iOS
- * achteraan, zodat iOS 26 hem los naast de balk kan zetten; op Android als
- * derde, vóór Instellingen.
+ * als je een melding opent (HIG 7.5). Zoeken is op iOS een eigen tabblad,
+ * achteraan, zodat iOS 26 hem los naast de balk kan zetten. Android heeft
+ * geen zoektab (19-11, zoals Alarmeringen P2000): de M3-balk kent geen losse
+ * zoekknop, dus daar opent het vergrootglas bovenin Nearby het zoekscherm in
+ * de stapel van Buurt.
  */
 import React from 'react';
 import { DynamicColorIOS, PlatformColor } from 'react-native';
@@ -191,6 +193,8 @@ function BuurtStapel() {
   return (
     <Stapel.Navigator screenOptions={kop}>
       <Stapel.Screen name="Buurt" component={BuurtScreen} options={{ title: 'Nearby', headerShown: false }} />
+      {/* Android: zoeken achter het vergrootglas bovenin Nearby. */}
+      {!isIOS && <Stapel.Screen name="Zoeken" component={ZoekScreen} options={{ title: 'Search' }} />}
       <Stapel.Screen name="Detail" component={DetailScreen} getId={detailId} options={detailOpties} />
       <Stapel.Screen name="Vliegtuig" component={VliegtuigScreen} options={{ ...blad, ...ritBlad }} />
     </Stapel.Navigator>
@@ -265,25 +269,20 @@ function androidLaag({ children }: { children: React.ReactNode }) {
 export function TabNavigatie() {
   const C = useThema();
 
-  // Zoeken staat op iOS achteraan (iOS 26 kan hem dan los naast de balk
-  // zetten) en op Android als derde. Op iOS geen eigen icoon of label: dan
-  // tekent het systeem zijn eigen zoekknop.
+  // Zoeken staat alleen op iOS in de balk, achteraan (iOS 26 kan hem dan
+  // los naast de balk zetten). Geen eigen icoon of label: dan tekent het
+  // systeem zijn eigen zoekknop.
   const zoekTab = (
     <Tab.Screen
       name="ZoekTab"
       component={ZoekStapel}
-      options={{
-        title: 'Search',
-        tabBarRole: isIOS ? 'search' : undefined,
-        tabBarIcon: isIOS ? undefined : { type: 'image', source: { uri: 'tab_zoeken' } },
-        lazy: true,
-      }}
+      options={{ title: 'Search', tabBarRole: 'search', lazy: true }}
     />
   );
 
   return (
     <Tab.Navigator
-      // Android-terug vanuit Kaart, Zoeken of Instellingen gaat eerst naar Buurt.
+      // Android-terug vanuit Kaart of Instellingen gaat eerst naar Buurt.
       backBehavior="firstRoute"
       screenLayout={isIOS ? undefined : androidLaag}
       screenOptions={{
@@ -297,8 +296,8 @@ export function TabNavigatie() {
         tabBarInactiveTintColor: isIOS ? (isIOS26 ? undefined : PlatformColor('systemGray')) : C.textSecondary,
         tabBarActiveIndicatorColor: C.accentSoft,
         tabBarRippleColor: C.rimpel,
-        // Met vier tabbladen verbergt 'auto' de labels van de niet-gekozen
-        // tabs; M3 wil ze altijd zien.
+        // 'auto' kan de labels van de niet-gekozen tabs verbergen; M3 wil ze
+        // altijd zien.
         tabBarLabelVisibilityMode: 'labeled',
         // Android: M3 labelMedium (500). Zonder deze stijl geeft bottom-tabs
         // het gewone gewicht door en vervangt react-native-screens het
@@ -323,7 +322,6 @@ export function TabNavigatie() {
         component={KaartStapel}
         options={{ title: 'Map', tabBarIcon: tabIcoon('tabKaart', 'tabKaartActief', 'tab_kaart'), lazy: true }}
       />
-      {!isIOS && zoekTab}
       <Tab.Screen
         name="InstellingenTab"
         component={InstellingenStapel}
