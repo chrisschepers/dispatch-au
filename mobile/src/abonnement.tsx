@@ -1,8 +1,8 @@
 /**
  * Jaarabonnement Premium. Tot 19-11-2026 stond de hele app achter de
  * betaalmuur; nu is de app gratis en ontgrendelt het abonnement de
- * Premium-functies (premium.ts, premiumPoort.tsx). Voor nu alleen iOS, via
- * de App Store en RevenueCat (winkels.ts).
+ * Premium-functies (premium.ts, premiumPoort.tsx). Via de App Store en sinds
+ * 20-11-2026 ook Google Play, beide via RevenueCat (winkels.ts).
  *
  * Faalt zacht aan de goede kant: is er geen werkende winkel (oude build, web,
  * geen sleutel), dan is er geen muur. Is de winkel even onbereikbaar, dan geldt

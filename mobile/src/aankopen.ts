@@ -13,9 +13,11 @@ import { ENTITLEMENT } from './abonnementRegels';
  */
 export const RC_SLEUTEL = Platform.select({
   ios: 'appl_oYZfSGyMstyaSVaRZzGKTpIIrhp',
-  // Google Play key (goog_ErnPHiWYIaqXdXcqmvtYRcKmHgy) goes in after the
-  // closed test: testers need the app without a paywall.
-  android: '',
+  // Google Play since 20-11-2026 (keuze Chris: gratis + Premium + reclame,
+  // ook op Android). Play: premium_year, basisabonnement "jaarlijks"
+  // (AUD 9,99) met aanbieding proef-3-dagen; RevenueCat: premium_year:jaarlijks
+  // in het $rc_annual-pakket van het default-aanbod.
+  android: 'goog_ErnPHiWYIaqXdXcqmvtYRcKmHgy',
   default: '',
 }) as string;
 

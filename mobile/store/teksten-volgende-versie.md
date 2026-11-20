@@ -86,7 +86,7 @@ de reclame).
 **Short description** (80): `See the warning area on the map, and whether your place is inside it.`
 
 **Full description:** dezelfde tekst als de App Store hierboven, met deze verschillen:
-- het blok PREMIUM en de alinea over betalen weglaten zolang Android geen aankopen heeft (nu is daar alles ontgrendeld);
+- het blok PREMIUM blijft staan (Android verkoopt Premium sinds 20-11); in de alinea over betalen "Apple Account" vervangen door: `Premium is a yearly subscription with a free trial. Payment goes through your Google Play account, and the subscription renews every year unless you cancel. Manage or cancel it in Google Play > Payments & subscriptions.`;
 - de regel over meldingen alleen opnemen als de build push heeft (vanaf build 12);
 - het blok "Sources" met de vijf .gov.au-links uit `play/beschrijving-en-AU-productie.txt` onderaan laten staan: dat eiste Google op 26-10.
 
