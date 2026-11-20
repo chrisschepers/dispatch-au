@@ -37,6 +37,8 @@ import { Icoon } from '../components/Icoon';
 import { DienstChip } from '../components/DienstChip';
 import { useInhoudMaat } from '../inhoudMaat';
 import { PUSH_BESCHIKBAAR } from '../pushBeschikbaar';
+import { Reclame } from '../components/Reclame';
+import { reclameNa } from '../reclameRegels';
 
 type Nav = NativeStackNavigationProp<{ Detail: { melding: Melding }; Zoeken: undefined }>;
 
@@ -231,6 +233,14 @@ export default function BuurtScreen() {
     }
     return groepen;
   }, [zichtbaar]);
+
+  // Free version: an ad after every eighth incident, never next to a Watch
+  // and Act or Emergency Warning (reclameRegels.ts). Premium sees none:
+  // <Reclame> then renders nothing.
+  const reclameNaId = useMemo(
+    () => reclameNa(zichtbaar, (r) => niveauVan(r.m), (r) => r.m.id),
+    [zichtbaar],
+  );
 
   /**
    * De kop scrollt mee met de lijst in plaats van er vast boven te staan
@@ -438,7 +448,10 @@ export default function BuurtScreen() {
           </View>
         )}
         renderItem={({ item }) => (
-          <MeldingRij m={item.m} km={item.km} onPress={() => navigation.navigate('Detail', { melding: item.m })} />
+          <>
+            <MeldingRij m={item.m} km={item.km} onPress={() => navigation.navigate('Detail', { melding: item.m })} />
+            {reclameNaId.has(item.m.id) && <Reclame plek="lijst" />}
+          </>
         )}
       />
     </SafeAreaView>

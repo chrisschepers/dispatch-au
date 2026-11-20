@@ -11,12 +11,12 @@ h1{font-size:28px;margin:0 0 4px}h2{font-size:19px;margin:28px 0 6px}p,li{color:
 @media (prefers-color-scheme:dark){body{background:#000;color:#f2f2f7}p,li{color:#c7c7cc}}
 </style></head><body>
 <h1>Privacy policy</h1>
-<p class="d">Emergencies Near Me · last updated 1 November 2026</p>
+<p class="d">Emergencies Near Me · last updated 20 November 2026</p>
 
 <p>Emergencies Near Me shows emergency incidents published by Australian
 emergency services and can alert you about incidents near you. We collect as
-little as possible: no account, no name, no email address, no advertising and
-no tracking across apps.</p>
+little as possible: no account, no name, no email address and no tracking
+across apps. The free version shows ads from Google; Premium has none.</p>
 
 <h2>What we store</h2>
 <ul>
@@ -35,9 +35,27 @@ never tracks your location in the background.</li>
 </ul>
 
 <h2>What we do not do</h2>
-<p>We do not sell your data or share it for advertising, and we do not build
-a location history. Location is stored as a single point that is
-overwritten when it changes.</p>
+<p>We do not sell your data or share the data above for advertising, and we
+do not build a location history. Location is stored as a single point that
+is overwritten when it changes.</p>
+
+<h2>Ads in the free version</h2>
+<p>Without Premium the app shows a few ads from Google AdMob: between the
+incidents in the list and at the bottom of an incident, never next to a
+Watch and Act or an Emergency Warning. We ask Google for non-personalised
+ads only, so the ads are not based on your interests or on what you do in
+other apps. The app does not ask to track you, and on Android it does not
+read your advertising ID.</p>
+<p>To show and measure an ad, Google's software in the app sends Google
+information such as your IP address (from which an approximate location can
+be derived), the type of device and app version, and whether you saw or
+tapped the ad. It also uses this to prevent fraud. Our server does not share
+your alert location or settings with Google. In Europe, the app first asks
+for your consent through Google's consent message; you can change your
+choice later under Ad privacy choices in Settings. See
+<a href="https://policies.google.com/technologies/partner-sites">how Google uses information from apps that use its services</a>
+and <a href="https://policies.google.com/privacy">Google's privacy policy</a>.
+With Premium the app loads no ads at all.</p>
 
 <h2>Subscriptions</h2>
 <p>Payments are handled by Apple or Google. We use RevenueCat to check whether your
@@ -68,7 +86,8 @@ location.</li>
 <li><b>Links</b> to directions, Street View or an emergency service's website
 open in your maps app or browser, only when you tap them.</li>
 </ul>
-<p>The app has no analytics or crash-reporting tools. Apple and Google may
+<p>Apart from the ads described above, the app has no analytics or
+crash-reporting tools. Apple and Google may
 share anonymous crash reports with us if you allowed that in your phone's
 settings. Our website loads its font from Google Fonts.</p>
 <p>As with any internet service, our host and the services above see your IP

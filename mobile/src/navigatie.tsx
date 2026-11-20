@@ -61,7 +61,8 @@ export type StapelParams = {
   Kaart: { lat?: number; lon?: number; id?: string; t?: number; overzicht?: number } | undefined;
   Zoeken: undefined;
   Instellingen: undefined;
-  Detail: { melding: Melding };
+  /** vanAlert: opened by tapping an alert (meldingOpenen.ts); then no ad under it. */
+  Detail: { melding: Melding; vanAlert?: boolean };
   Groep: { leden: Melding[] };
   KaartFilters: undefined;
   KaartLagen: undefined;

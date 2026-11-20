@@ -39,6 +39,7 @@ FREE
 • Victoria, New South Wales, Queensland, South Australia and the ACT in one app
 
 PREMIUM
+• No ads
 • An alert for every incident near you, often before there is an official warning
 • Watch 5 extra places in any state: home, the beach house, your parents
 • Follow the aircraft: which water bombers work a fire, their flights of the past week, and an alert when a large air tanker takes off
@@ -56,10 +57,24 @@ Privacy Policy: https://emergenciesnearme.online/privacy
 
 **Abonnement in App Store Connect** (`premium_year`)
 - Display name: `Emergencies Near Me Premium`
-- Description (55): `Every incident, 5 extra places, aircraft and boats`
+- Description (55): `No ads, every incident, 5 extra places, aircraft`
 
 **Notitie voor App Review** (aanvullen bij indienen):
-`The app is now free to use. The subscription unlocks optional features (Settings > Emergencies Near Me Premium). The Premium screen opens once after the introduction and can be closed with "Not now".`
+`The app is now free to use. The free version shows non-personalised Google AdMob banners between incidents and at the bottom of an incident, never next to a Watch and Act or Emergency Warning; the app does not ask for tracking. The subscription removes the ads and unlocks optional features (Settings > Emergencies Near Me Premium). The Premium screen opens once after the introduction and can be closed with "Not now".`
+
+**App Privacy in App Store Connect** (bij indienen bijwerken, 20-11): door de
+reclame komt erbij, allemaal "niet gekoppeld aan de gebruiker", niet voor
+tracking, doel "Advertenties van derden": Locatie > Globale locatie (IP),
+Identificatoren > Apparaat-ID, Gebruiksgegevens > Productinteractie en
+Advertentiegegevens, Diagnostiek > Prestatiegegevens.
+
+**Google Play** (vóór de eerste upload met reclame): App-inhoud >
+Advertenties = "Ja, mijn app bevat advertenties"; Gegevensveiligheid erbij:
+Locatie (geschatte), Apparaat- of andere ID's, App-activiteit
+(app-interacties) en App-info en -prestaties, verzameld en gedeeld (met
+Google) voor Advertenties of marketing en Fraudepreventie; tijdelijk
+verwerkt: nee; verplicht (de gratis versie laadt de reclame).
+Advertentie-ID: nee (AD_ID staat geblokkeerd in app.config.ts).
 
 ## Google Play (en-AU)
 

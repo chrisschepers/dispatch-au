@@ -15,18 +15,27 @@ export const MAX_EXTRA_PLEKKEN = 5;
 
 export interface Plek { naam: string; lat: number; lon: number }
 
-export type PremiumReden = 'intro' | 'incidenten' | 'plekken' | 'straal' | 'landelijk' | 'vliegtuigen' | 'geluid' | 'verlopen';
+export type PremiumReden = 'intro' | 'reclame' | 'incidenten' | 'plekken' | 'straal' | 'landelijk' | 'vliegtuigen' | 'geluid' | 'verlopen';
 
 export interface PremiumFunctie {
   sleutel: Exclude<PremiumReden, 'intro' | 'verlopen'>;
   /** Naam in iconen.ts. */
-  icoon: 'meldingen' | 'plaats' | 'blusvliegtuig' | 'perDienst' | 'noodwaarschuwing';
+  icoon: 'geenReclame' | 'meldingen' | 'plaats' | 'blusvliegtuig' | 'perDienst' | 'noodwaarschuwing';
   titel: string;
   tekst: string;
 }
 
-/** The order is the order on the paywall: the strongest reason first. */
+/**
+ * The order is the order on the paywall. No ads on top (20-11, keuze Chris:
+ * the ads in the free version are there to make Premium attractive), then the
+ * strongest reason.
+ */
 export const PREMIUM_FUNCTIES: PremiumFunctie[] = [
+  {
+    sleutel: 'reclame', icoon: 'geenReclame',
+    titel: 'No ads',
+    tekst: 'The whole app without ads, between the incidents and under them.',
+  },
   {
     sleutel: 'incidenten', icoon: 'meldingen',
     titel: 'An alert for every incident',
@@ -62,6 +71,7 @@ export function functiesVoor(reden: PremiumReden | undefined): PremiumFunctie[] 
 
 export function titelVoor(reden: PremiumReden | undefined, heeftProef: boolean): string {
   if (reden === 'verlopen') return 'Your Premium has ended';
+  if (reden === 'reclame') return 'Remove ads with Premium';
   const f = PREMIUM_FUNCTIES.find((x) => x.sleutel === reden);
   if (f) return `${f.titel} is part of Premium`;
   return heeftProef ? 'Try Premium free' : 'Get more with Premium';
