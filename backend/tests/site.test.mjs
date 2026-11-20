@@ -53,6 +53,14 @@ void test('the website serves its pages, sitemap and assets next to the API', as
       await (await fetch(base + '/robots.txt')).text(),
       /Disallow: \/v1\//,
     );
+    // AdMob checks this line before it lifts the limit on ads (20-11).
+    const appAds = await fetch(base + '/app-ads.txt');
+    assert.equal(appAds.status, 200);
+    assert.match(appAds.headers.get('content-type'), /^text\/plain/);
+    assert.equal(
+      await appAds.text(),
+      'google.com, pub-8756987324755075, DIRECT, f08c47fec0942fa0\n',
+    );
     const icon = await fetch(base + '/assets/icon.png');
     assert.equal(icon.headers.get('content-type'), 'image/png');
     assert.equal((await fetch(base + '/assets/../server.mjs')).status, 404);

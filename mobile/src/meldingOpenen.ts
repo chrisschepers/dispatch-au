@@ -39,7 +39,8 @@ async function openMelding(messageId: string): Promise<void> {
     // Ligt op de kaart het blad met meldingen op één plek open, dan dat eerst
     // dicht (gericht aan de stapel van de kaart), anders opent Detail in het blad.
     if (sluitBladIn) navRef.dispatch({ ...StackActions.pop(), target: sluitBladIn });
-    navRef.dispatch(CommonActions.navigate(tab, { screen: 'Detail', params: { melding } }));
+    // vanAlert: opened from an alert, so no ad under it (reclameRegels.ts).
+    navRef.dispatch(CommonActions.navigate(tab, { screen: 'Detail', params: { melding, vanAlert: true } }));
   } catch {
     // Melding niet op te halen (offline, of verwijderd): dan blijft de app
     // gewoon op het overzicht staan in plaats van een leeg scherm te tonen.

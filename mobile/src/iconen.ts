@@ -51,6 +51,7 @@ export const ICONEN = {
   noodwaarschuwing: { ios: 'exclamationmark.octagon.fill', android: 'alert-octagon' },
   perDienst: { ios: 'slider.horizontal.3', android: 'tune-variant' },
   abonnement: { ios: 'creditcard.fill', android: 'credit-card-outline' },
+  geenReclame: { ios: 'nosign', android: 'advertisements-off' },
   beoordelen: { ios: 'star.fill', android: 'star' },
   privacy: { ios: 'hand.raised.fill', android: 'shield-lock-outline' },
   voorwaarden: { ios: 'doc.text.fill', android: 'file-document-outline' },

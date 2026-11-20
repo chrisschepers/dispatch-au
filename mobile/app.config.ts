@@ -24,7 +24,7 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
-    buildNumber: '16',
+    buildNumber: '17',
     // iPhone only: App Review tests on an iPad, and an iPhone-only app runs
     // there in compatibility mode without needing an iPad layout or screenshots.
     supportsTablet: false,
@@ -39,8 +39,9 @@ const config: ExpoConfig = {
     // there; without it the build still works, just without push.
     ...(process.env.GOOGLE_SERVICES_FILE ? { googleServicesFile: process.env.GOOGLE_SERVICES_FILE } : {}),
     permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION', 'POST_NOTIFICATIONS'],
-    // No ads and no background work: keep these out of the manifest, so the
-    // Play data safety form stays simple.
+    // No background work, and no advertising ID: the ads in the free version
+    // are non-personalised only (src/advertenties.ts). Keep these out of the
+    // manifest, so the Play declarations stay simple.
     blockedPermissions: [
       'android.permission.FOREGROUND_SERVICE',
       'android.permission.ACCESS_BACKGROUND_LOCATION',
@@ -127,6 +128,17 @@ const config: ExpoConfig = {
           'Your location is used to show emergency incidents near you, only while you use the app.',
         isAndroidBackgroundLocationEnabled: false,
         isAndroidForegroundServiceEnabled: false,
+      },
+    ],
+    // Google AdMob for the ads in the free version (20-11, src/advertenties.ts).
+    // App IDs are public and belong in the app; same AdMob account as
+    // Alarmeringen P2000. Measurement waits until the consent step has run.
+    [
+      'react-native-google-mobile-ads',
+      {
+        iosAppId: 'ca-app-pub-8756987324755075~7168726658',
+        androidAppId: 'ca-app-pub-8756987324755075~6472215945',
+        delayAppMeasurementInit: true,
       },
     ],
     ...(mapsKey

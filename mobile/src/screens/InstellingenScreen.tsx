@@ -38,6 +38,7 @@ import type { IcoonNaam } from '../iconen';
 import { openRecensiePagina } from '../recensie';
 import { useAbonnement } from '../abonnement';
 import { usePremium } from '../premiumPoort';
+import { usePrivacykeuze } from '../advertenties';
 import { MAX_EXTRA_PLEKKEN, metPlek, geldigePlekken, type PremiumReden } from '../premium';
 import { BRONNEN, extraBronnen } from '../bronnen';
 import { haalFeed } from '../api';
@@ -82,6 +83,8 @@ export default function InstellingenScreen() {
   const kaartStijl = useKaartStijl();
   const { inst, zet, zetVeel } = useInstellingen();
   const { premium, vraag, toonOverzicht } = usePremium();
+  // Europe: Google's consent message needs a way back to it (advertenties.ts).
+  const privacykeuze = usePrivacykeuze();
   // Een Premium-schakelaar zonder Premium: niet omzetten, maar laten zien wat
   // je ervoor krijgt. Staat hij aan (van een eerdere proef), dan mag hij uit.
   const metSlot = (reden: PremiumReden, wissel: (v: boolean) => void) => (v: boolean) => {
@@ -795,6 +798,15 @@ export default function InstellingenScreen() {
           rol="link"
           rechts={<Icoon naam="extern" grootte={18} kleur={C.textMuted} />}
         />
+        {privacykeuze.nodig && (
+          <Rij
+            icoon="privacy" tegelKleur={systeemKleur('systemGray')} scheiding
+            titel="Ad privacy choices"
+            sub="Change what you agreed to for ads"
+            onPress={privacykeuze.toon}
+            rol="button"
+          />
+        )}
         <Rij
           icoon="voorwaarden" tegelKleur={systeemKleur('systemGray')} scheiding
           titel="Terms of Use"

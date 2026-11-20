@@ -12,6 +12,13 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sources } from './feeds.mjs';
 import { PRIVACY_HTML } from './privacy.mjs';
+
+/**
+ * Authorised sellers of the ads in the app (IAB app-ads.txt). The publisher
+ * ID is public: it is the same Google AdMob account as Alarmeringen P2000.
+ */
+export const APP_ADS_TXT =
+  'google.com, pub-8756987324755075, DIRECT, f08c47fec0942fa0\n';
 import { places } from './places.mjs';
 import {
   SITE,
@@ -486,6 +493,15 @@ export function renderSite(pathname, store, articles) {
         sitemapPlaces(store, m[1]),
       ),
     );
+  // app-ads.txt (20-11): AdMob checks it on the developer website from the
+  // store listing before it lifts the limit on ads for the free version.
+  if (pathname === '/app-ads.txt')
+    return {
+      status: 200,
+      type: 'text/plain; charset=utf-8',
+      body: APP_ADS_TXT,
+      cache: 'public, max-age=3600',
+    };
   if (pathname === '/robots.txt')
     return {
       status: 200,

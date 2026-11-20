@@ -25,6 +25,8 @@ import { useInstellingen } from '../instellingen';
 import { bepaalPlekSnel } from '../locatie';
 import { binnenGebied, binnenTekst, heeftVlak } from '../gebied';
 import { niveauVan } from '../kaartFilter';
+import { Reclame } from '../components/Reclame';
+import { reclameOnderMelding } from '../reclameRegels';
 import {
   vertaalMelding, tijdTekst, nettePlaats, plaatsRegel, afstandTekst, plaatsOnnauwkeurig,
 } from '../vertaal';
@@ -45,7 +47,7 @@ import { ToestelRondje } from '../components/VliegtuigMarker';
 /** De site van de app; staat onder elk gedeeld incident. */
 const APP_SITE = 'https://emergenciesnearme.online';
 
-type Rt =RouteProp<{ Detail: { melding: Melding } }, 'Detail'>;
+type Rt = RouteProp<{ Detail: { melding: Melding; vanAlert?: boolean } }, 'Detail'>;
 // Detail zit in de stapel van een tabblad, en het kaartje springt naar een
 // ander tabblad: dus beide navigators in één type.
 type Nav = CompositeNavigationProp<
@@ -79,7 +81,7 @@ export default function DetailScreen() {
   const C = useThema();
   const styles = useStijlen(maak_styles);
   const kaartStijl = useKaartStijl();
-  const { melding: begin } = useRoute<Rt>().params;
+  const { melding: begin, vanAlert } = useRoute<Rt>().params;
   const navigation = useNavigation<Nav>();
   // Op een breed scherm een kolom in het midden in plaats van rand tot rand.
   const { marge, kolom } = useInhoudMaat();
@@ -506,6 +508,11 @@ export default function DetailScreen() {
           follow the advice of the agency.
         </Text>
       </View>
+
+      {/* Free version: one ad at the very bottom, after everything about the
+          incident. Not under a Watch and Act or Emergency Warning, and not
+          when the incident opened from an alert (reclameRegels.ts). */}
+      {reclameOnderMelding(niveauVan(melding), vanAlert === true) && <Reclame plek="detail" />}
 
     </ScrollView>
   );

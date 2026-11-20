@@ -47,7 +47,10 @@ test('places: valid, named, no doubles, at most five', () => {
 test('the paywall puts the reason someone came for on top', () => {
   assert.equal(functiesVoor('plekken')[0].sleutel, 'plekken');
   assert.equal(functiesVoor('plekken').length, PREMIUM_FUNCTIES.length);
-  assert.equal(functiesVoor(undefined)[0].sleutel, 'incidenten');
+  // No ads first (20-11), then the strongest reason.
+  assert.equal(functiesVoor(undefined)[0].sleutel, 'reclame');
+  assert.equal(functiesVoor(undefined)[1].sleutel, 'incidenten');
+  assert.equal(titelVoor('reclame', true), 'Remove ads with Premium');
   assert.match(titelVoor('plekken', true), /extra places is part of Premium/);
   assert.equal(titelVoor('intro', true), 'Try Premium free');
   assert.equal(titelVoor('intro', false), 'Get more with Premium');
