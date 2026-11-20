@@ -24,7 +24,7 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
-    buildNumber: '16',
+    buildNumber: '17',
     // iPhone only: App Review tests on an iPad, and an iPhone-only app runs
     // there in compatibility mode without needing an iPad layout or screenshots.
     supportsTablet: false,
