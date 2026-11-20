@@ -19,9 +19,11 @@ interface Ctx {
   vraag: (reden?: PremiumReden) => void;
   /** Voor wie Premium heeft: hetzelfde overzicht, zonder koopknop. */
   toonOverzicht: () => void;
+  /** Het Premium-scherm staat open; de reclamevragen wachten daarop (advertenties.ts). */
+  schermOpen: boolean;
 }
 
-const PoortContext = createContext<Ctx>({ premium: true, vraag: () => {}, toonOverzicht: () => {} });
+const PoortContext = createContext<Ctx>({ premium: true, vraag: () => {}, toonOverzicht: () => {}, schermOpen: false });
 
 export function usePremium(): Ctx {
   return useContext(PoortContext);
@@ -42,7 +44,7 @@ export function PremiumPoort({ children }: { children: React.ReactNode }) {
   useEffect(() => { if (premium) setReden(null); }, [premium]);
 
   return (
-    <PoortContext.Provider value={{ premium, vraag, toonOverzicht }}>
+    <PoortContext.Provider value={{ premium, vraag, toonOverzicht, schermOpen: overzicht || reden !== null }}>
       {children}
       <Modal
         visible={overzicht}

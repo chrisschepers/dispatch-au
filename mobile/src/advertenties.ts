@@ -4,10 +4,15 @@
  * Where they may go is in reclameRegels.ts; the block itself in
  * components/Reclame.tsx.
  *
- * - Google AdMob, same account as Alarmeringen P2000. Non-personalised only:
- *   no tracking question on iOS, no advertising ID on Android (blocked in
- *   app.config.ts), and the privacy policy stays short.
- * - Google's consent message (UMP) first; outside Europe it asks nothing.
+ * - Google AdMob, same account as Alarmeringen P2000.
+ * - Personalised where allowed (20-11, keuze Chris: "gepersonaliseerd dus
+ *   tracking aan"): Google's consent message (UMP) first, which asks nothing
+ *   outside Europe; then on iPhone Apple's tracking question, always, also
+ *   after a "no" in the consent message (Apple rejected P2000 1.5.0 on
+ *   5.1.1(iv) when it skipped the question). Personalised only with every yes
+ *   (magPersonaliseren in reclameRegels.ts), otherwise non-personalised.
+ * - The questions wait until the Premium screen is closed, so they never
+ *   pile up on top of it after the introduction.
  * - Fails soft: no native module (Expo Go), no network or a consent error
  *   means no ad, never a broken screen.
  * - Development builds always use Google's test units: real units in a dev
@@ -16,6 +21,8 @@
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { useAbonnement } from './abonnement';
+import { usePremium } from './premiumPoort';
+import { magPersonaliseren } from './reclameRegels';
 
 type Ads = typeof import('react-native-google-mobile-ads');
 
@@ -55,27 +62,59 @@ export function eenheidVoor(plek: ReclamePlek): string | null {
   return Platform.OS === 'ios' ? EENHEDEN[plek].ios : EENHEDEN[plek].android;
 }
 
-let toestemming: Promise<boolean> | null = null;
+export interface Toestemming {
+  /** Ads may be requested at all. */
+  mag: boolean;
+  /** Personalised ads allowed (consent message and tracking question). */
+  gepersonaliseerd: boolean;
+}
+
+let toestemming: Promise<Toestemming> | null = null;
+
+/** Apple's tracking question; null when the module is missing or it fails. */
+async function vraagTracking(): Promise<string | null> {
+  if (Platform.OS !== 'ios') return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const tt = require('expo-tracking-transparency') as typeof import('expo-tracking-transparency');
+    const r = await tt.requestTrackingPermissionsAsync();
+    return r.status;
+  } catch {
+    return null;
+  }
+}
 
 /**
- * Consent once per app start, then the SDK. true = ads may be requested.
- * An error counts as yes (non-personalised, as before); only an explicit
- * "no ads" from the SDK says no.
+ * Consent once per app start, then the SDK. An error in the consent step
+ * counts as "ads yes, non-personalised"; only an explicit "no ads" from the
+ * SDK says no.
  */
-export function zorgVoorToestemming(): Promise<boolean> {
+export function zorgVoorToestemming(): Promise<Toestemming> {
   if (toestemming) return toestemming;
   toestemming = (async () => {
     const m = laadAds();
-    if (!m) return false;
+    if (!m) return { mag: false, gepersonaliseerd: false };
     let mag = true;
+    let gdpr: boolean | null = null;
+    let eersteKeuze: boolean | null = null;
     try {
       const info = await m.AdsConsent.gatherConsent();
       mag = (info as { canRequestAds?: boolean })?.canRequestAds ?? true;
+      gdpr = await m.AdsConsent.getGdprApplies();
+      if (gdpr) {
+        try {
+          eersteKeuze = (await m.AdsConsent.getUserChoices()).selectPersonalisedAds === true;
+        } catch {
+          eersteKeuze = false;
+        }
+      }
     } catch {
       // No network or no message: non-personalised ads as usual.
     }
+    // Always after the consent message, whatever was chosen there.
+    const att = await vraagTracking();
     try { await m.default().initialize(); } catch {}
-    return mag;
+    return { mag, gepersonaliseerd: magPersonaliseren({ ios: Platform.OS === 'ios', gdpr, eersteKeuze, att }) };
   })();
   return toestemming;
 }
@@ -86,7 +125,7 @@ export function zorgVoorToestemming(): Promise<boolean> {
  * in Settings stays away. Only asked after the consent step has run.
  */
 export function usePrivacykeuze(): { nodig: boolean; toon: () => void } {
-  const reclame = useReclame();
+  const { tonen: reclame } = useReclame();
   const [nodig, setNodig] = useState(false);
   useEffect(() => {
     if (!reclame) { setNodig(false); return; }
@@ -104,17 +143,19 @@ export function usePrivacykeuze(): { nodig: boolean; toon: () => void } {
 /**
  * Show ads here? Only in a build that sells Premium, to someone without it,
  * and only once the store has answered: a paying user on a new phone must not
- * see an ad flash by while RevenueCat is still checking.
+ * see an ad flash by while RevenueCat is still checking. The consent questions
+ * wait until the Premium screen is closed.
  */
-export function useReclame(): boolean {
+export function useReclame(): { tonen: boolean; gepersonaliseerd: boolean } {
   const { vereist, premium, toegang } = useAbonnement();
+  const { schermOpen } = usePremium();
   const kandidaat = vereist && !premium && toegang !== 'onbekend' && laadAds() !== null;
-  const [mag, setMag] = useState(false);
+  const [t, setT] = useState<Toestemming | null>(null);
   useEffect(() => {
-    if (!kandidaat) return;
+    if (!kandidaat || schermOpen) return;
     let weg = false;
-    zorgVoorToestemming().then((m) => { if (!weg) setMag(m); });
+    zorgVoorToestemming().then((r) => { if (!weg) setT(r); });
     return () => { weg = true; };
-  }, [kandidaat]);
-  return kandidaat && mag;
+  }, [kandidaat, schermOpen]);
+  return { tonen: kandidaat && t?.mag === true, gepersonaliseerd: t?.gepersonaliseerd === true };
 }

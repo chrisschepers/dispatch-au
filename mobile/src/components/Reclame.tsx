@@ -22,12 +22,12 @@ import { Drukbaar } from './Drukbaar';
 const MAX_HOOGTE: Record<ReclamePlek, number> = { lijst: 100, detail: 250 };
 
 export function Reclame({ plek }: { plek: ReclamePlek }) {
-  const tonen = useReclame();
+  const { tonen, gepersonaliseerd } = useReclame();
   if (!tonen) return null;
-  return <ReclameBlok plek={plek} />;
+  return <ReclameBlok plek={plek} gepersonaliseerd={gepersonaliseerd} />;
 }
 
-function ReclameBlok({ plek }: { plek: ReclamePlek }) {
+function ReclameBlok({ plek, gepersonaliseerd }: { plek: ReclamePlek; gepersonaliseerd: boolean }) {
   const styles = useStijlen(maak_styles);
   const kaartStijl = useKaartStijl();
   const { vraag } = usePremium();
@@ -69,7 +69,8 @@ function ReclameBlok({ plek }: { plek: ReclamePlek }) {
               size={BannerAdSize.INLINE_ADAPTIVE_BANNER}
               width={breedte}
               maxHeight={MAX_HOOGTE[plek]}
-              requestOptions={{ requestNonPersonalizedAdsOnly: true }}
+              // Personalised only with consent and, on iPhone, "Allow" for tracking.
+              requestOptions={{ requestNonPersonalizedAdsOnly: !gepersonaliseerd }}
               onAdLoaded={() => setStand('ok')}
               onAdFailedToLoad={() => setStand('mislukt')}
             />

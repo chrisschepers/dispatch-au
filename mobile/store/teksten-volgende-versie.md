@@ -60,21 +60,26 @@ Privacy Policy: https://emergenciesnearme.online/privacy
 - Description (55): `No ads, every incident, 5 extra places, aircraft`
 
 **Notitie voor App Review** (aanvullen bij indienen):
-`The app is now free to use. The free version shows non-personalised Google AdMob banners between incidents and at the bottom of an incident, never next to a Watch and Act or Emergency Warning; the app does not ask for tracking. The subscription removes the ads and unlocks optional features (Settings > Emergencies Near Me Premium). The Premium screen opens once after the introduction and can be closed with "Not now".`
+`The app is now free to use. The free version shows Google AdMob banners between incidents and at the bottom of an incident, never next to a Watch and Act or Emergency Warning. Ads are personalised only after the user allows tracking in the App Tracking Transparency prompt, which is shown once before the first ad (after Google's consent message in Europe); otherwise they are non-personalised. The subscription removes the ads and unlocks optional features (Settings > Emergencies Near Me Premium). The Premium screen opens once after the introduction and can be closed with "Not now".`
 
-**App Privacy in App Store Connect** (bij indienen bijwerken, 20-11): door de
-reclame komt erbij, allemaal "niet gekoppeld aan de gebruiker", niet voor
-tracking, doel "Advertenties van derden": Locatie > Globale locatie (IP),
-Identificatoren > Apparaat-ID, Gebruiksgegevens > Productinteractie en
-Advertentiegegevens, Diagnostiek > Prestatiegegevens.
+**App Privacy in App Store Connect** (bij indienen bijwerken; gepersonaliseerd
+met tracking sinds 20-11, keuze Chris):
+- Gebruikt om je te volgen (tracking): Identificatoren > Apparaat-ID
+  (advertentie-ID), Gebruiksgegevens > Advertentiegegevens; doel
+  "Advertenties van derden".
+- Niet gekoppeld aan de gebruiker, niet voor tracking, doel "Advertenties
+  van derden" en "Analyse": Locatie > Globale locatie (IP), Gebruiksgegevens
+  > Productinteractie, Diagnostiek > Prestatiegegevens.
+- De app vraagt ATT; de tekst staat in app.config.ts.
 
 **Google Play** (vóór de eerste upload met reclame): App-inhoud >
-Advertenties = "Ja, mijn app bevat advertenties"; Gegevensveiligheid erbij:
-Locatie (geschatte), Apparaat- of andere ID's, App-activiteit
-(app-interacties) en App-info en -prestaties, verzameld en gedeeld (met
-Google) voor Advertenties of marketing en Fraudepreventie; tijdelijk
-verwerkt: nee; verplicht (de gratis versie laadt de reclame).
-Advertentie-ID: nee (AD_ID staat geblokkeerd in app.config.ts).
+Advertenties = "Ja, mijn app bevat advertenties"; Advertentie-ID = ja,
+voor "Advertenties of marketing" (AD_ID staat sinds 20-11 in de manifest);
+Gegevensveiligheid erbij: Apparaat- of andere ID's, Locatie (geschatte),
+App-activiteit (app-interacties) en App-info en -prestaties, verzameld en
+gedeeld (met Google) voor Advertenties of marketing, Analyse en
+Fraudepreventie; tijdelijk verwerkt: nee; verplicht (de gratis versie laadt
+de reclame).
 
 ## Google Play (en-AU)
 

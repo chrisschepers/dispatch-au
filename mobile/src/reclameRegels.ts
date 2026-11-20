@@ -46,3 +46,26 @@ export function reclameNa<T>(
 export function reclameOnderMelding(niveau: number, vanAlert: boolean): boolean {
   return !vanAlert && niveau < GEVOELIG_VANAF;
 }
+
+/**
+ * Personalised ads (20-11, keuze Chris: "gepersonaliseerd dus tracking aan"),
+ * but only with every yes that applies:
+ * - Europe (GDPR applies): the choice in Google's consent message.
+ * - iPhone: Apple's tracking question (ATT). Without "Allow" no personalised
+ *   ads, whatever the consent message said.
+ * Anything unknown counts as no: then the ads are non-personalised.
+ */
+export function magPersonaliseren(s: {
+  ios: boolean;
+  /** null = unknown (no consent info). */
+  gdpr: boolean | null;
+  /** The "personalised ads" choice from the consent message; null = none. */
+  eersteKeuze: boolean | null;
+  /** iOS tracking status: 'granted' | 'denied' | 'undetermined' | null. */
+  att: string | null;
+}): boolean {
+  if (s.gdpr === null) return false;
+  if (s.gdpr && s.eersteKeuze !== true) return false;
+  if (s.ios && s.att !== 'granted') return false;
+  return true;
+}
