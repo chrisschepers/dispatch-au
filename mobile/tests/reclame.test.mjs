@@ -1,6 +1,22 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { reclameNa, reclameOnderMelding, RECLAME_ELKE } from '../src/reclameRegels.ts';
+import { reclameNa, reclameOnderMelding, magPersonaliseren, RECLAME_ELKE } from '../src/reclameRegels.ts';
+
+test('personalised only with every yes that applies', () => {
+  // Australia on an iPhone: only Apple's tracking question counts.
+  assert.equal(magPersonaliseren({ ios: true, gdpr: false, eersteKeuze: null, att: 'granted' }), true);
+  assert.equal(magPersonaliseren({ ios: true, gdpr: false, eersteKeuze: null, att: 'denied' }), false);
+  assert.equal(magPersonaliseren({ ios: true, gdpr: false, eersteKeuze: null, att: null }), false);
+  // Australia on Android: no extra question (the phone's own ad settings apply).
+  assert.equal(magPersonaliseren({ ios: false, gdpr: false, eersteKeuze: null, att: null }), true);
+  // Europe: the consent message as well.
+  assert.equal(magPersonaliseren({ ios: false, gdpr: true, eersteKeuze: true, att: null }), true);
+  assert.equal(magPersonaliseren({ ios: false, gdpr: true, eersteKeuze: false, att: null }), false);
+  assert.equal(magPersonaliseren({ ios: true, gdpr: true, eersteKeuze: true, att: 'denied' }), false);
+  assert.equal(magPersonaliseren({ ios: true, gdpr: true, eersteKeuze: null, att: 'granted' }), false);
+  // Unknown consent info: non-personalised.
+  assert.equal(magPersonaliseren({ ios: false, gdpr: null, eersteKeuze: null, att: null }), false);
+});
 
 const rij = (id, niveau = 0) => ({ id, niveau });
 const na = (rijen, elke) => [...reclameNa(rijen, (r) => r.niveau, (r) => r.id, elke)];

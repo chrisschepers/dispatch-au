@@ -15,8 +15,9 @@ h1{font-size:28px;margin:0 0 4px}h2{font-size:19px;margin:28px 0 6px}p,li{color:
 
 <p>Emergencies Near Me shows emergency incidents published by Australian
 emergency services and can alert you about incidents near you. We collect as
-little as possible: no account, no name, no email address and no tracking
-across apps. The free version shows ads from Google; Premium has none.</p>
+little as possible: no account, no name and no email address. The free
+version shows ads from Google, personalised only if you allow it; Premium
+has none.</p>
 
 <h2>What we store</h2>
 <ul>
@@ -42,17 +43,23 @@ is overwritten when it changes.</p>
 <h2>Ads in the free version</h2>
 <p>Without Premium the app shows a few ads from Google AdMob: between the
 incidents in the list and at the bottom of an incident, never next to a
-Watch and Act or an Emergency Warning. We ask Google for non-personalised
-ads only, so the ads are not based on your interests or on what you do in
-other apps. The app does not ask to track you, and on Android it does not
-read your advertising ID.</p>
+Watch and Act or an Emergency Warning.</p>
+<p>The ads can be personalised: based on your interests and on what you do
+in other apps and websites, using your device's advertising identifier. That
+only happens when you allow it. On iPhone the app asks whether it may track
+you (Apple's "Allow tracking" question); if you choose "Ask App Not to
+Track", you get non-personalised ads and the advertising identifier is not
+used. On Android the app uses the advertising ID, which you can reset or
+delete in your phone's settings (Google → Ads or Privacy → Ads). In Europe
+the app first asks for your consent through Google's consent message; you
+can change your choice later under Ad privacy choices in Settings. Without
+a yes, the ads are non-personalised.</p>
 <p>To show and measure an ad, Google's software in the app sends Google
-information such as your IP address (from which an approximate location can
-be derived), the type of device and app version, and whether you saw or
-tapped the ad. It also uses this to prevent fraud. Our server does not share
-your alert location or settings with Google. In Europe, the app first asks
-for your consent through Google's consent message; you can change your
-choice later under Ad privacy choices in Settings. See
+information such as the advertising identifier (when allowed, see above),
+your IP address (from which an approximate location can be derived), the
+type of device and app version, and whether you saw or tapped the ad. It
+also uses this to prevent fraud. Our server does not share your alert
+location or settings with Google. See
 <a href="https://policies.google.com/technologies/partner-sites">how Google uses information from apps that use its services</a>
 and <a href="https://policies.google.com/privacy">Google's privacy policy</a>.
 With Premium the app loads no ads at all.</p>

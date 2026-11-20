@@ -24,7 +24,7 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     bundleIdentifier: 'com.chrisschepers.dispatchau',
-    buildNumber: '17',
+    buildNumber: '18',
     // iPhone only: App Review tests on an iPad, and an iPhone-only app runs
     // there in compatibility mode without needing an iPad layout or screenshots.
     supportsTablet: false,
@@ -39,9 +39,10 @@ const config: ExpoConfig = {
     // there; without it the build still works, just without push.
     ...(process.env.GOOGLE_SERVICES_FILE ? { googleServicesFile: process.env.GOOGLE_SERVICES_FILE } : {}),
     permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION', 'POST_NOTIFICATIONS'],
-    // No background work, and no advertising ID: the ads in the free version
-    // are non-personalised only (src/advertenties.ts). Keep these out of the
-    // manifest, so the Play declarations stay simple.
+    // No background work: keep these out of the manifest, so the Play
+    // declarations stay simple. The advertising ID (AD_ID, added by the ads
+    // SDK) stays in since 20-11: personalised ads in the free version
+    // (src/advertenties.ts); Play's advertising ID declaration says yes.
     blockedPermissions: [
       'android.permission.FOREGROUND_SERVICE',
       'android.permission.ACCESS_BACKGROUND_LOCATION',
@@ -49,7 +50,6 @@ const config: ExpoConfig = {
       'android.permission.SYSTEM_ALERT_WINDOW',
       'android.permission.READ_EXTERNAL_STORAGE',
       'android.permission.WRITE_EXTERNAL_STORAGE',
-      'com.google.android.gms.permission.AD_ID',
     ],
     predictiveBackGestureEnabled: true,
     adaptiveIcon: {
@@ -139,6 +139,18 @@ const config: ExpoConfig = {
         iosAppId: 'ca-app-pub-8756987324755075~7168726658',
         androidAppId: 'ca-app-pub-8756987324755075~6472215945',
         delayAppMeasurementInit: true,
+        // Google's own SKAdNetwork ID, for install attribution of
+        // personalised ads on iOS.
+        skAdNetworkItems: ['cstr6suwn9.skadnetwork'],
+      },
+    ],
+    // Apple's tracking question (20-11, personalised ads). Asked once, after
+    // Google's consent message, only to someone without Premium who gets ads.
+    [
+      'expo-tracking-transparency',
+      {
+        userTrackingPermission:
+          'This lets the ads in the free version match your interests. You will not see more ads because of it, and Premium has none.',
       },
     ],
     ...(mapsKey
