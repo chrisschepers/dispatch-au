@@ -31,8 +31,9 @@ export function canonicalVIC(row) {
     ? `vic:incident:${row.sourceId}`
     : row.id;
 }
-// Only explicit shared CAD identifiers are merged. Proximity/name matching could
-// silently combine separate calls at the same address.
+// Here only explicit shared CAD identifiers are merged. Repeats of one call
+// under different identifiers are left out later, by a strict rule on title,
+// street, distance and time (IncidentStore.withoutTwins).
 export function normalizeVICIdentity(feed) {
   const unique = new Map();
   for (const r of feed.incidents) {

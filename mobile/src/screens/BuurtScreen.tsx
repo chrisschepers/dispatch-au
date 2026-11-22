@@ -80,7 +80,12 @@ export default function BuurtScreen() {
     if (kijkPlek && !extraPlekken.some((p) => p.naam === kijkPlek.naam && p.lat === kijkPlek.lat)) setKijkPlek(null);
   }, [kijkPlek, extraPlekken]);
 
-  const laad = useCallback(async () => {
+  // Hoeveel rijen er nu staan: een stille verversing haalt er minstens zoveel
+  // op, anders springt de lijst terug naar boven terwijl je terug scrolt.
+  const aantalRef = useRef(0);
+  aantalRef.current = rijen.length;
+
+  const laad = useCallback(async (stil = false) => {
     try {
       // Eerst de plek die we al weten, anders wacht dit scherm tot zes seconden
       // op een verse GPS-fix voordat het ook maar begint met ophalen (melding
@@ -104,18 +109,19 @@ export default function BuurtScreen() {
         disciplines: inst.lijstDiensten,
         straalPerDienst: inst.straalPerDienst,
         zonderVenster: true,
-        limietPerVenster: 60,
+        limietPerVenster: stil ? Math.max(60, aantalRef.current) : 60,
         strikt: true,
       });
       const metAfstand = ms.map((m) => ({ m, km: afstandKm(plek.lat, plek.lon, m) }));
       metAfstand.sort((a, b) => +new Date(b.m.timestamp) - +new Date(a.m.timestamp));
       setRijen(metAfstand);
-      setEindeBereikt(ms.length === 0);
+      if (!stil) setEindeBereikt(ms.length === 0);
       setFout(false);
     } catch {
       // Netwerkfout: de oude lijst blijft staan. Is er geen, dan toont de
-      // lege lijst de foutkaart met 'Try again'.
-      setFout(true);
+      // lege lijst de foutkaart met 'Try again'. Een stille verversing zwijgt:
+      // de live-pil laat al zien dat de verbinding weg is.
+      if (!stil) setFout(true);
     }
     setLaden(false);
   }, [inst, kijkPlek]);
@@ -184,6 +190,11 @@ export default function BuurtScreen() {
     if (km == null || km > straalVoor(m.discipline, inst.straalKm, inst.straalPerDienst)) return;
     if (verversTimer.current) clearTimeout(verversTimer.current);
     verversTimer.current = setTimeout(() => { verversTimer.current = null; laad(); }, 1200);
+  }, () => {
+    // Elke ronde (per minuut): de lijst opnieuw uit de verse feed, ook als er
+    // niets bij kwam. Zonder dit bleef een rij op "Responding" staan terwijl
+    // het detail al "Ended" zei, en liep "4 min" niet mee (toesteltest 22-11).
+    if (navigation.isFocused() && !verversTimer.current) void laad(true);
   });
   useEffect(() => () => { if (verversTimer.current) clearTimeout(verversTimer.current); }, []);
 

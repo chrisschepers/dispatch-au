@@ -24,6 +24,15 @@ const STATE_NAMES = {
 // it lies within this distance and started within this time of it.
 const SAME_CRASH_KM = 0.5;
 const SAME_CRASH_MS = 30 * 60_000;
+// Victoria's dispatch system opens a call per agency and per repeated alarm:
+// one fire then shows as four rows with the same title and street, minutes
+// apart. Rows are the same call when all of this holds.
+const SAME_CALL_KM = 1;
+const SAME_CALL_MS = 15 * 60_000;
+// How long a row that left the list still hides its repeats. Victoria can
+// keep a repeat listed for hours after the first row is gone; without this
+// it would come back as a new call, with an alert.
+const SAME_CALL_MEMORY_MS = 24 * 3600_000;
 
 // The app rejects a feed whose attribution is longer than 1000 characters.
 // The five states always fit. Optional sources are added in full while they
@@ -271,6 +280,87 @@ export class IncidentStore {
     return incidents.length === feed.incidents.length
       ? feed
       : { ...feed, incidents };
+  }
+  /**
+   * Victoria only: drops the rows that repeat a call we already show. The
+   * same call = the same title and the same street and suburb, within 1 km
+   * and with call times at most 15 minutes apart. A row without a street
+   * ("Tree Down, Harrietville") is never merged: in a storm those are
+   * different trees. The row we knew first stays, so nothing that was shown
+   * or alerted disappears; the repeat is left out and forgotten. Call before
+   * ingest and push.
+   */
+  withoutTwins(region, feed) {
+    if (region !== 'vic' || feed.stale) return feed;
+    const now = Date.parse(feed.receivedAt || feed.fetchedAt) || Date.now();
+    const keyOf = (r) =>
+      r.kind === 'incident' &&
+      Array.isArray(r.point) &&
+      Number.isFinite(Date.parse(r.created || '')) &&
+      typeof r.title === 'string' &&
+      typeof r.location === 'string' &&
+      r.location.includes(',')
+        ? `${r.title.trim().toLowerCase()}|${r.location.trim().toLowerCase()}`
+        : null;
+    const known = new Map(
+      this.db
+        .prepare(
+          'SELECT id, payload, first_seen FROM incidents WHERE region=? AND (listed=1 OR last_seen>=?)',
+        )
+        .all(region, new Date(now - SAME_CALL_MEMORY_MS).toISOString())
+        .map((r) => [r.id, r]),
+    );
+    const inFeed = new Set();
+    const all = [];
+    for (const source of feed.incidents) {
+      const row = { ...source, id: canonicalVIC(source) };
+      inFeed.add(row.id);
+      const key = keyOf(row);
+      if (key)
+        all.push({ row, key, seen: known.get(row.id)?.first_seen ?? '9' });
+    }
+    for (const [id, r] of known) {
+      if (inFeed.has(id)) continue;
+      const row = JSON.parse(r.payload);
+      const key = keyOf(row);
+      if (key) all.push({ row, key, seen: r.first_seen });
+    }
+    // What we knew first comes first; on a tie the earliest call.
+    all.sort(
+      (a, b) =>
+        a.seen.localeCompare(b.seen) ||
+        a.row.created.localeCompare(b.row.created) ||
+        a.row.id.localeCompare(b.row.id),
+    );
+    const calls = new Map();
+    const twins = new Set();
+    for (const { row, key } of all) {
+      const at = Date.parse(row.created);
+      const list = calls.get(key) ?? [];
+      calls.set(key, list);
+      const call = list.find(
+        (c) =>
+          distanceKm(row.point, c.point) <= SAME_CALL_KM &&
+          at >= c.from - SAME_CALL_MS &&
+          at <= c.to + SAME_CALL_MS,
+      );
+      if (!call) {
+        list.push({ point: row.point, from: at, to: at });
+        continue;
+      }
+      call.from = Math.min(call.from, at);
+      call.to = Math.max(call.to, at);
+      if (inFeed.has(row.id)) twins.add(row.id);
+    }
+    if (!twins.size) return feed;
+    const forget = this.db.prepare(
+      'DELETE FROM incidents WHERE id=? AND region=?',
+    );
+    for (const id of twins) forget.run(id, region);
+    return {
+      ...feed,
+      incidents: feed.incidents.filter((r) => !twins.has(canonicalVIC(r))),
+    };
   }
   health(region, now = Date.now()) {
     if (!allSources[region]) throw Error('Unknown region');

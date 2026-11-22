@@ -242,8 +242,7 @@ export function createServer(
       // only with FIRE_DANGER_ENABLED on. With lat and lon: the district that
       // point lies in; without: every district.
       if (url.pathname === '/v1/fire-danger') {
-        if (!fireDanger)
-          return send(503, { error: 'Fire danger unavailable' });
+        if (!fireDanger) return send(503, { error: 'Fire danger unavailable' });
         res.setHeader('Cache-Control', 'public, max-age=300');
         const q = url.searchParams;
         if (!q.has('lat') && !q.has('lon')) return send(200, fireDanger.all());
@@ -491,6 +490,8 @@ async function main() {
       // A crash a fire service in the same state already lists is left out.
       if (allSources[region].traffic && !stopping)
         feed = store.withoutDuplicates(region, feed);
+      // Victoria lists one call several times; the repeats are left out.
+      if (!stopping) feed = store.withoutTwins(region, feed);
       skippedByRegion.set(
         region,
         feed.skipped ? { ...feed.skipped, at: new Date().toISOString() } : null,
