@@ -13,11 +13,17 @@ export type LiveStatus = 'verbonden' | 'verbinden' | 'offline';
 
 const ELKE_MS = 60_000;
 
-export function useLive(opNieuw: (m: Melding) => void): LiveStatus {
+/**
+ * `opRonde`: na elke geslaagde ronde behalve de eerste. Daarmee houdt een
+ * lijst ook zijn statussen en tijden bij; `opNieuw` meldt alleen wat erbij kwam.
+ */
+export function useLive(opNieuw: (m: Melding) => void, opRonde?: () => void): LiveStatus {
   const [status, setStatus] = useState<LiveStatus>('verbinden');
   const gezien = useRef<Set<string> | null>(null);
   const terug = useRef(opNieuw);
   terug.current = opNieuw;
+  const naRonde = useRef(opRonde);
+  naRonde.current = opRonde;
 
   useEffect(() => {
     let weg = false;
@@ -31,6 +37,7 @@ export function useLive(opNieuw: (m: Melding) => void): LiveStatus {
         // First round only learns what is already there; no flood on start.
         if (gezien.current) {
           for (const m of meldingen) if (!gezien.current.has(m.id)) terug.current(m);
+          naRonde.current?.();
         }
         gezien.current = ids;
       } catch {
