@@ -140,7 +140,7 @@ const AANBOD_KEY = 'dispatch.premiumAanbod.v1';
  */
 function PremiumAanbod() {
   const abonnement = useAbonnement();
-  const { vraag } = usePremium();
+  const { vraag, meldAanbodBeslist } = usePremium();
   const gedaan = useRef(false);
   useEffect(() => {
     if (gedaan.current || !abonnement.vereist || abonnement.premium) return;
@@ -148,11 +148,20 @@ function PremiumAanbod() {
     gedaan.current = true;
     const soort = abonnement.wasActief ? 'verlopen' : 'intro';
     AsyncStorage.getItem(AANBOD_KEY).then((v) => {
-      if (v === soort) return;
-      AsyncStorage.setItem(AANBOD_KEY, soort).catch(() => {});
-      vraag(soort);
-    }).catch(() => {});
-  }, [abonnement.vereist, abonnement.premium, abonnement.toegang, abonnement.productGeladen, abonnement.wasActief, vraag]);
+      if (v !== soort) {
+        AsyncStorage.setItem(AANBOD_KEY, soort).catch(() => {});
+        vraag(soort);
+      }
+      // Het scherm staat er nu, of het komt niet: de reclame mag verder.
+      meldAanbodBeslist();
+    }).catch(() => meldAanbodBeslist());
+  }, [abonnement.vereist, abonnement.premium, abonnement.toegang, abonnement.productGeladen, abonnement.wasActief, vraag, meldAanbodBeslist]);
+  // Laadt het product niet (geen netwerk, winkel hapert), dan komt het
+  // scherm ook niet uit zichzelf: na acht seconden mag de reclame verder.
+  useEffect(() => {
+    const t = setTimeout(meldAanbodBeslist, 8000);
+    return () => clearTimeout(t);
+  }, [meldAanbodBeslist]);
   return null;
 }
 
