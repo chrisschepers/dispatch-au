@@ -21,9 +21,17 @@ interface Ctx {
   toonOverzicht: () => void;
   /** Het Premium-scherm staat open; de reclamevragen wachten daarop (advertenties.ts). */
   schermOpen: boolean;
+  /**
+   * Is al besloten of het Premium-scherm uit zichzelf opent (na het
+   * startscherm of na een afgelopen abonnement)? Tot dan wachten de
+   * toestemmingsvragen van de reclame, anders valt Apple's tracking-vraag
+   * over het Premium-scherm heen (simulatortest build 19, 22-11).
+   */
+  aanbodBeslist: boolean;
+  meldAanbodBeslist: () => void;
 }
 
-const PoortContext = createContext<Ctx>({ premium: true, vraag: () => {}, toonOverzicht: () => {}, schermOpen: false });
+const PoortContext = createContext<Ctx>({ premium: true, vraag: () => {}, toonOverzicht: () => {}, schermOpen: false, aanbodBeslist: true, meldAanbodBeslist: () => {} });
 
 export function usePremium(): Ctx {
   return useContext(PoortContext);
@@ -34,6 +42,8 @@ export function PremiumPoort({ children }: { children: React.ReactNode }) {
   const [reden, setReden] = useState<PremiumReden | null>(null);
   const [overzicht, setOverzicht] = useState(false);
   const toonOverzicht = useCallback(() => setOverzicht(true), []);
+  const [aanbodBeslist, setAanbodBeslist] = useState(false);
+  const meldAanbodBeslist = useCallback(() => setAanbodBeslist(true), []);
 
   const vraag = useCallback((r: PremiumReden = 'intro') => {
     if (premium || !vereist) return;
@@ -44,7 +54,7 @@ export function PremiumPoort({ children }: { children: React.ReactNode }) {
   useEffect(() => { if (premium) setReden(null); }, [premium]);
 
   return (
-    <PoortContext.Provider value={{ premium, vraag, toonOverzicht, schermOpen: overzicht || reden !== null }}>
+    <PoortContext.Provider value={{ premium, vraag, toonOverzicht, schermOpen: overzicht || reden !== null, aanbodBeslist, meldAanbodBeslist }}>
       {children}
       <Modal
         visible={overzicht}

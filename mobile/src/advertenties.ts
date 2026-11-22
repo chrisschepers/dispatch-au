@@ -148,14 +148,14 @@ export function usePrivacykeuze(): { nodig: boolean; toon: () => void } {
  */
 export function useReclame(): { tonen: boolean; gepersonaliseerd: boolean } {
   const { vereist, premium, toegang } = useAbonnement();
-  const { schermOpen } = usePremium();
+  const { schermOpen, aanbodBeslist } = usePremium();
   const kandidaat = vereist && !premium && toegang !== 'onbekend' && laadAds() !== null;
   const [t, setT] = useState<Toestemming | null>(null);
   useEffect(() => {
-    if (!kandidaat || schermOpen) return;
+    if (!kandidaat || schermOpen || !aanbodBeslist) return;
     let weg = false;
     zorgVoorToestemming().then((r) => { if (!weg) setT(r); });
     return () => { weg = true; };
-  }, [kandidaat, schermOpen]);
+  }, [kandidaat, schermOpen, aanbodBeslist]);
   return { tonen: kandidaat && t?.mag === true, gepersonaliseerd: t?.gepersonaliseerd === true };
 }
