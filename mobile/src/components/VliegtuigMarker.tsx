@@ -4,19 +4,23 @@
  * Zelfde vorm als de heli's in de grote app, zodat wie beide kent het meteen
  * herkent.
  *
- * Geen vloeiend doorvliegen zoals daar: de posities zijn hier tot drie
- * minuten oud (de backend vraagt zo vaak op), en vooruit rekenen over drie
- * minuten zet een helikopter die gaat hangen kilometers verkeerd. Zonder
+ * Vloeiend doorvliegen (23-11, wens Chris: "dat je hem ook echt ziet
+ * bewegen"): de backend geeft elke 10 s een positie, en daartussen trekt de
+ * marker die elke seconde door op koers en snelheid (vooruit, hooguit 30 s).
+ * Bij "minder beweging" niet: dan verspringt hij per verversing. Zonder
  * signaal (STIL_NA_MIN) wordt het rondje gedempt: laatst bekende plek.
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Marker } from 'react-native-maps';
 import Svg, { Ellipse, Line, Path, Rect } from 'react-native-svg';
 import { opKleur } from '../kleur';
 import {
-  GROEP_VAN_ROL, LUCHT_GROEPEN, rolTekst, hoogteTekst, type Vliegtuig,
+  GROEP_VAN_ROL, LUCHT_GROEPEN, rolTekst, hoogteTekst, vooruit, VOORUIT_MAX_S, VOORUIT_MIN_KTS,
+  type Vliegtuig,
 } from '../vliegtuigData';
+import { leeftijdSec } from '../vliegtuigen';
+import { useMinderBeweging } from '../thema';
 
 const KLEUR = Object.fromEntries(LUCHT_GROEPEN.map((g) => [g.key, g.kleur])) as Record<string, string>;
 
@@ -75,6 +79,27 @@ export function ToestelRondje({ v, maat = 32, stil = false, draai = true }: {
   );
 }
 
+/**
+ * De plek van het toestel op dit moment: elke seconde een stukje verder
+ * zolang het vliegt en de positie vers is.
+ */
+function usePlek(v: Vliegtuig, stil: boolean): { latitude: number; longitude: number } {
+  const rustig = useMinderBeweging();
+  const vliegt = !stil && !rustig && !v.onGround && v.track != null
+    && v.gsKts != null && v.gsKts >= VOORUIT_MIN_KTS;
+  const [, tik] = useState(0);
+  useEffect(() => {
+    if (!vliegt) return;
+    const timer = setInterval(() => {
+      // Voorbij de grens verandert er niets meer: dan ook niet opnieuw tekenen.
+      const oud = leeftijdSec(v.seenAt);
+      if (oud != null && oud <= VOORUIT_MAX_S + 1) tik((n) => n + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [vliegt, v.seenAt]);
+  return vliegt ? vooruit(v, leeftijdSec(v.seenAt)) : { latitude: v.lat, longitude: v.lon };
+}
+
 function VliegtuigMarkerInner({ v, stil, tracksViewChanges, onPress }: {
   v: Vliegtuig;
   /** Geen recente positie (zonderSignaal); de kaart rekent dat uit bij elke verversing. */
@@ -84,9 +109,10 @@ function VliegtuigMarkerInner({ v, stil, tracksViewChanges, onPress }: {
 }) {
   const android = Platform.OS === 'android';
   const hoogte = hoogteTekst(v);
+  const plek = usePlek(v, stil);
   return (
     <Marker
-      coordinate={{ latitude: v.lat, longitude: v.lon }}
+      coordinate={plek}
       anchor={{ x: 0.5, y: 0.5 }}
       tracksViewChanges={tracksViewChanges}
       // Boven de meldingen: een toestel boven een brand hoort niet onder de
@@ -113,7 +139,8 @@ export const VliegtuigMarker = React.memo(VliegtuigMarkerInner, (a, b) =>
   a.tracksViewChanges === b.tracksViewChanges && a.stil === b.stil
   && a.onPress === b.onPress
   && a.v.lat === b.v.lat && a.v.lon === b.v.lon && a.v.track === b.v.track
-  && a.v.seenAt === b.v.seenAt && a.v.role === b.v.role);
+  && a.v.seenAt === b.v.seenAt && a.v.role === b.v.role
+  && a.v.gsKts === b.v.gsKts && a.v.onGround === b.v.onGround);
 
 const styles = StyleSheet.create({
   tikvlak: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },

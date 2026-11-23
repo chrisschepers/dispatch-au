@@ -262,14 +262,43 @@ export function beschikbareGroepen(rollen: readonly VliegRol[] | null): LuchtGro
   return LUCHT_GROEPEN.filter((g) => groepen.has(g.key));
 }
 
+/** Verder dan dit rekent de kaart niet vooruit: daarna blijft het toestel staan. */
+export const VOORUIT_MAX_S = 30;
+/** Onder deze snelheid hangt of taxiet een toestel: dan geen vooruit rekenen. */
+export const VOORUIT_MIN_KTS = 30;
+
+/**
+ * Waar het toestel nu ongeveer is: de laatste positie, `sec` seconden
+ * doorgetrokken op koers en snelheid. Zo glijdt het over de kaart in plaats
+ * van elke 10 s te verspringen. Alleen in de lucht en met vaart; nooit verder
+ * dan VOORUIT_MAX_S, zodat een toestel zonder nieuw signaal niet doorvliegt.
+ */
+export function vooruit(
+  v: Pick<Vliegtuig, 'lat' | 'lon' | 'gsKts' | 'track' | 'onGround'>,
+  sec: number | null,
+): { latitude: number; longitude: number } {
+  const hier = { latitude: v.lat, longitude: v.lon };
+  if (sec == null || !(sec > 0) || v.onGround || v.track == null) return hier;
+  if (v.gsKts == null || v.gsKts < VOORUIT_MIN_KTS) return hier;
+  const meter = v.gsKts * 0.514444 * Math.min(sec, VOORUIT_MAX_S);
+  const koers = (v.track * Math.PI) / 180;
+  const perGraad = 111_320;
+  const breedte = Math.cos((v.lat * Math.PI) / 180);
+  if (breedte < 0.01) return hier;
+  return {
+    latitude: v.lat + (meter * Math.cos(koers)) / perGraad,
+    longitude: v.lon + (meter * Math.sin(koers)) / (perGraad * breedte),
+  };
+}
+
 /** Minuten sinds de laatste positie. */
 export function minutenStil(v: Pick<Vliegtuig, 'seenAt'>, nu = Date.now()): number {
   return Math.max(0, Math.floor((nu - Date.parse(v.seenAt)) / 60_000));
 }
 
 /**
- * Langer dan dit geen positie: "no signal". De backend vraagt elke 3 minuten
- * op, dus een positie van 4 minuten oud is gewoon de vorige ronde.
+ * Langer dan dit geen positie: "no signal". Ruim genomen: buiten bereik van
+ * een ontvanger valt een toestel minutenlang weg zonder dat er iets mis is.
  */
 export const STIL_NA_MIN = 8;
 

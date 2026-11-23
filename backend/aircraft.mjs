@@ -63,10 +63,11 @@ export function aircraftPrimary(env = process.env) {
     : "adsbfi";
 }
 // With adsb.fi first (1 request a second, no day limit): the layer every
-// 30 s while someone looks, flights every minute with one in the air and
+// 10 s while someone looks (23-11-2026, was 30 s: a helicopter then seemed to
+// stand still on the map; a round is at most 3 requests, 1.1 s apart), flights every minute with one in the air and
 // every 2 minutes otherwise. That is about 720 to 1,440 requests a day without
 // a viewer, a few a minute with one; far below its limit.
-export const FI_PACE = { cadence: 30_000, watchActive: 60_000, watchIdle: 2 * 60_000 };
+export const FI_PACE = { cadence: 10_000, watchActive: 60_000, watchIdle: 2 * 60_000 };
 const USER_AGENT = "EmergenciesNearMe/1.0 (+https://emergenciesnearme.com.au)";
 // adsb.lol documents no limit on the hex list, so this stays at a modest 150.
 const CHUNK = 150;

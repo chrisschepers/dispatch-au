@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   parseLuchtBeeld, beschikbareGroepen, inLagen, zonderSignaal, minutenStil, rolTekst,
-  hoogteTekst, snelheidTekst, STANDAARD_LUCHT, GROEP_VAN_ROL, LUCHT_GROEPEN,
+  hoogteTekst, snelheidTekst, vooruit, VOORUIT_MAX_S, STANDAARD_LUCHT, GROEP_VAN_ROL, LUCHT_GROEPEN,
 } from '../src/vliegtuigData.ts';
 
 const NU = Date.parse('2026-11-08T22:00:00Z');
@@ -92,4 +92,26 @@ test('plain words for the aircraft', () => {
   assert.equal(hoogteTekst({ altFt: 1500, onGround: false }), '1,500 ft');
   assert.equal(hoogteTekst({ altFt: null, onGround: true }), 'On the ground');
   assert.equal(snelheidTekst({ gsKts: 120 }), '120 kn · 222 km/h');
+});
+
+test('a flying aircraft is drawn ahead on its course, never past the limit', () => {
+  // 120 kn due east for 10 s is about 617 m: no change in latitude.
+  const p = vooruit(rij(), 10);
+  assert.ok(Math.abs(p.latitude - -33.9) < 1e-9);
+  const meter = (p.longitude - 151.2) * 111_320 * Math.cos((33.9 * Math.PI) / 180);
+  assert.ok(Math.abs(meter - 617.3) < 1, String(meter));
+  // No newer signal: it stops at the limit instead of flying on.
+  assert.deepEqual(vooruit(rij(), 600), vooruit(rij(), VOORUIT_MAX_S));
+  // South: latitude goes down.
+  assert.ok(vooruit(rij({ track: 180 }), 10).latitude < -33.9);
+});
+
+test('hovering, on the ground or without a clock: the last position as it is', () => {
+  const hier = { latitude: -33.9, longitude: 151.2 };
+  assert.deepEqual(vooruit(rij({ gsKts: 12 }), 10), hier);
+  assert.deepEqual(vooruit(rij({ gsKts: null }), 10), hier);
+  assert.deepEqual(vooruit(rij({ onGround: true }), 10), hier);
+  assert.deepEqual(vooruit(rij({ track: null }), 10), hier);
+  assert.deepEqual(vooruit(rij(), null), hier);
+  assert.deepEqual(vooruit(rij(), -5), hier);
 });
