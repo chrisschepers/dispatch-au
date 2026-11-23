@@ -478,8 +478,9 @@ async function main() {
     dashboard,
     fireDanger,
   );
-  // Keeps the 3-minute rhythm while someone has the layer open.
-  setInterval(() => void aircraft.tick(), 30_000).unref();
+  // Keeps the rhythm while someone has the layer open (every 10 s with
+  // adsb.fi first). A tick that is not due returns at once.
+  setInterval(() => void aircraft.tick(), 5_000).unref();
   // Rebuilds the fleet from NAFC and the aircraft lists once a day.
   setInterval(() => void aircraft.refreshFleetIfDue(), 15 * 60_000).unref();
   let stopping = false;
