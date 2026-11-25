@@ -19,7 +19,7 @@
  * Restore and manage are always there: someone on a new phone, or who wants
  * to cancel, must be able to do that here, even when the store returns nothing.
  */
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Alert, Linking, Platform } from 'react-native';
 import { useAbonnement } from '../abonnement';
 import { F } from '../theme';
@@ -29,8 +29,6 @@ import { Icoon } from '../components/Icoon';
 import type { IcoonNaam } from '../iconen';
 import { IntroSchil, INTRO } from '../components/intro/IntroSchil';
 import { SchermProef, SchermLijst } from '../components/intro/Schermpjes';
-import { toonRevenueCatPaywall } from '../aankopen';
-import { revenueCatPaywallAan } from '../appConfig';
 import { functiesVoor, titelVoor, type PremiumReden } from '../premium';
 
 const SITE = 'https://emergenciesnearme.online';
@@ -47,18 +45,8 @@ export default function BetaalmuurScreen({ reden, onSluit, overzicht }: {
     toegang, wasActief, product, productGeladen, fout, bezig, koop, herstel,
     winkelNaam, account, beheer,
   } = useAbonnement();
-  // Once per visit: the RevenueCat paywall over this screen, but only when the
-  // backend switch is on (appConfig.ts, revenueCatPaywall). Without a paywall
-  // designed in the dashboard the SDK shows its default sheet without Terms of
-  // Use and Privacy links (3.1.2); this screen has them.
-  useEffect(() => {
-    if (overzicht) return undefined;
-    let weg = false;
-    revenueCatPaywallAan()
-      .then((aan) => { if (aan && !weg) toonRevenueCatPaywall(); })
-      .catch(() => {});
-    return () => { weg = true; };
-  }, [overzicht]);
+  // The RevenueCat paywall no longer opens over this screen: premiumPoort.tsx
+  // shows it instead of this one when the backend switch is on (25-11).
   const Winkel = winkelNaam.charAt(0).toUpperCase() + winkelNaam.slice(1);
 
   const proef = product ? periodeTekst(product.proefPeriode) : null;

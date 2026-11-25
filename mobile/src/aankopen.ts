@@ -4,7 +4,7 @@
  * without a paywall. A broken payment module must never block alerts.
  */
 import { Platform } from 'react-native';
-import { ENTITLEMENT } from './abonnementRegels';
+import { ENTITLEMENT, rcUitkomst, type RcUitkomst } from './abonnementRegels';
 
 /**
  * Public RevenueCat SDK key of the Emergencies Near Me project (Project →
@@ -49,29 +49,33 @@ export async function startAankopen(): Promise<void> {
 }
 
 /**
- * The paywall designed in the RevenueCat dashboard, shown as a sheet over our
- * own paywall. Same approach as Alarmeringen P2000: change the wall without a
- * new build, and A/B test it.
+ * The paywall designed in the RevenueCat dashboard. Same approach as
+ * Alarmeringen P2000: change the wall without a new build, and A/B test it.
  *
- * Our own BetaalmuurScreen stays underneath, so every outcome is safe: no
- * paywall configured yet, the module missing, an error or a close tap all
- * leave the own wall in view. A purchase reaches abonnement.tsx through the
- * CustomerInfo listener and the wall disappears.
+ * Since 25-11 it opens on its own, not over our own wall: first the own wall
+ * and then this one sliding over it looked like two paywalls (Chris). The
+ * answer says what happened, so premiumPoort.tsx can fall back to the own wall
+ * when this one could not be shown. A purchase reaches abonnement.tsx through
+ * the CustomerInfo listener.
  *
  * Only called when the backend switch revenueCatPaywall is on (appConfig.ts,
  * 01-11-2026): with no paywall designed in the dashboard the SDK falls back to
  * its default template, which lacks Terms of Use and Privacy links (3.1.2).
  */
-export async function toonRevenueCatPaywall(): Promise<void> {
-  if (!kopenMogelijk()) return;
+export async function toonRevenueCatPaywall(): Promise<RcUitkomst> {
+  if (!kopenMogelijk()) return 'niet';
   await startAankopen();
-  if (!ingericht) return;
+  if (!ingericht) return 'niet';
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const RevenueCatUI = require('react-native-purchases-ui').default;
-    await RevenueCatUI.presentPaywallIfNeeded({
+    const r = await RevenueCatUI.presentPaywallIfNeeded({
       requiredEntitlementIdentifier: ENTITLEMENT,
       displayCloseButton: true,
     });
-  } catch { /* old build or native error: the own wall stays */ }
+    return rcUitkomst(r);
+  } catch {
+    return 'niet';            // old build or native error: the own wall instead
+  }
 }
+
