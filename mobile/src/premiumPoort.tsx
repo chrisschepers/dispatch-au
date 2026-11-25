@@ -7,11 +7,13 @@
  * vanuit een blad (kaartlagen, toestel) en direct na het startscherm kunnen
  * openen.
  */
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Modal } from 'react-native';
 import { useAbonnement } from './abonnement';
 import type { PremiumReden } from './premium';
 import BetaalmuurScreen from './screens/BetaalmuurScreen';
+import { toonRevenueCatPaywall } from './aankopen';
+import { revenueCatPaywallAan } from './appConfig';
 
 interface Ctx {
   premium: boolean;
@@ -45,16 +47,35 @@ export function PremiumPoort({ children }: { children: React.ReactNode }) {
   const [aanbodBeslist, setAanbodBeslist] = useState(false);
   const meldAanbodBeslist = useCallback(() => setAanbodBeslist(true), []);
 
+  // De RevenueCat-muur staat open (of wordt geopend): telt als scherm open.
+  const [rcOpen, setRcOpen] = useState(false);
+  const rcBezig = useRef(false);
+
   const vraag = useCallback((r: PremiumReden = 'intro') => {
-    if (premium || !vereist) return;
-    setReden(r);
+    if (premium || !vereist || rcBezig.current) return;
+    // Staat de RevenueCat-muur aan (appConfig.ts), dan die direct, en de eigen
+    // muur alleen als hij niet getoond kon worden. Eerst de eigen muur en
+    // daar de RevenueCat-muur overheen oogde als twee betaalmuren (25-11).
+    rcBezig.current = true;
+    void (async () => {
+      let uitkomst: 'getoond' | 'niet' | 'heeft' = 'niet';
+      try {
+        if (await revenueCatPaywallAan()) {
+          setRcOpen(true);
+          uitkomst = await toonRevenueCatPaywall();
+        }
+      } catch { uitkomst = 'niet'; }
+      rcBezig.current = false;
+      setRcOpen(false);
+      if (uitkomst === 'niet') setReden(r);
+    })();
   }, [premium, vereist]);
 
   // Gekocht of hersteld: het scherm gaat vanzelf dicht.
   useEffect(() => { if (premium) setReden(null); }, [premium]);
 
   return (
-    <PoortContext.Provider value={{ premium, vraag, toonOverzicht, schermOpen: overzicht || reden !== null, aanbodBeslist, meldAanbodBeslist }}>
+    <PoortContext.Provider value={{ premium, vraag, toonOverzicht, schermOpen: overzicht || reden !== null || rcOpen, aanbodBeslist, meldAanbodBeslist }}>
       {children}
       <Modal
         visible={overzicht}

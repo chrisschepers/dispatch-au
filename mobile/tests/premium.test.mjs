@@ -81,3 +81,10 @@ test('a paying user keeps Premium while the store has not answered', () => {
   assert.equal(isPremium(true, 'geen', true), false);
   assert.equal(isPremium(true, 'wacht', true), false);
 });
+
+test('RevenueCat paywall: only when it could not be shown does the own wall open', async () => {
+  const { rcUitkomst } = await import('../src/abonnementRegels.ts');
+  for (const r of ['CANCELLED', 'PURCHASED', 'RESTORED']) assert.equal(rcUitkomst(r), 'getoond');
+  assert.equal(rcUitkomst('NOT_PRESENTED'), 'heeft');
+  for (const r of ['ERROR', undefined, null, 'iets nieuws']) assert.equal(rcUitkomst(r), 'niet');
+});

@@ -89,3 +89,17 @@ export function proefVanIntro(
   const m = /^P(\d+)([DWMY])$/.exec(intro.period);
   return m ? `P${Number(m[1]) * intro.cycles}${m[2]}` : null;
 }
+
+/**
+ * What happened with the RevenueCat paywall: 'getoond' when someone saw it
+ * (closed, bought or restored), 'niet' when it could not be shown and the own
+ * wall should open instead. NOT_PRESENTED means the store already sees
+ * Premium: nothing to sell, so no own wall either.
+ */
+export type RcUitkomst = 'getoond' | 'niet' | 'heeft';
+
+export function rcUitkomst(r: unknown): RcUitkomst {
+  if (r === 'CANCELLED' || r === 'PURCHASED' || r === 'RESTORED') return 'getoond';
+  if (r === 'NOT_PRESENTED') return 'heeft';
+  return 'niet';
+}
