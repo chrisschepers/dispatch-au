@@ -30,6 +30,7 @@ import { BrandendIcoon, BotsingIcoon, VlammenIcoon, type BrandendObject } from '
 import { opKaart, feedUren, filterActief, periodeVoluit, isAfgelopen, niveauVan } from '../kaartFilter';
 import { kaartVlakken, vlakKleur, heeftVlak } from '../gebied';
 import { useKaartKeuze } from '../kaartKeuze';
+import { usePremium } from '../premiumPoort';
 import { useLuchtBeeld } from '../vliegtuigen';
 import { inLagen, zonderSignaal, type Vliegtuig } from '../vliegtuigData';
 import { VliegtuigMarker } from '../components/VliegtuigMarker';
@@ -183,6 +184,7 @@ function KaartMetMeldingen() {
   const styles = useStijlen(maak_styles);
   const { inst } = useInstellingen();
   const keuze = useKaartKeuze();
+  const { premium } = usePremium();
   const navigation = useNavigation<Nav>();
   // Alleen ophalen en verversen zolang de kaart echt in beeld is: niet onder
   // Detail of een blad, en niet in een ander tabblad.
@@ -435,7 +437,9 @@ function KaartMetMeldingen() {
 
   // Overheidsvliegtuigen (08-11): alleen ophalen als er een luchtlaag aan staat
   // en de kaart in beeld is (vliegtuigen.ts).
-  const luchtAan = Object.values(keuze.lucht).some(Boolean);
+  // Premium sinds 25-11 (KaartLagenScreen): zonder Premium geen vliegtuigen
+  // en geen vaartuigen op de kaart, en ook niets ophalen.
+  const luchtAan = premium && Object.values(keuze.lucht).some(Boolean);
   const luchtBeeld = useLuchtBeeld(luchtAan && inBeeld);
   const toestellen = React.useMemo(
     () => (luchtAan && luchtBeeld ? inLagen(luchtBeeld.vliegtuigen, keuze.lucht) : []),
@@ -465,7 +469,7 @@ function KaartMetMeldingen() {
   // Vaartuigen (13-11): alleen ophalen als er een waterlaag aan staat en de
   // kaart in beeld is (vaartuigen.ts); elk verzoek telt bij de backend als
   // "er kijkt iemand". Een laag die de backend niet (meer) heeft, tekent niets.
-  const waterAan = Object.values(keuze.water).some(Boolean);
+  const waterAan = premium && Object.values(keuze.water).some(Boolean);
   const waterBeeld = useVaartBeeld(waterAan && inBeeld);
   const vaartuigen = React.useMemo(() => {
     if (!waterAan || !waterBeeld) return [];

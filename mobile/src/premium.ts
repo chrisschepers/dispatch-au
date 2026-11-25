@@ -48,8 +48,8 @@ export const PREMIUM_FUNCTIES: PremiumFunctie[] = [
   },
   {
     sleutel: 'vliegtuigen', icoon: 'blusvliegtuig',
-    titel: 'Follow the aircraft and rescue boats',
-    tekst: 'See which water bombers work a fire, their flights of the past week, and get an alert when a large air tanker takes off.',
+    titel: 'Aircraft and rescue boats on the map',
+    tekst: 'Water bombers, rescue helicopters, the Flying Doctor and rescue boats live on the map. See which aircraft work a fire, their flights of the past week, and get an alert when a large air tanker takes off.',
   },
   {
     sleutel: 'straal', icoon: 'perDienst',
@@ -77,8 +77,16 @@ export function titelVoor(reden: PremiumReden | undefined, heeftProef: boolean):
   return heeftProef ? 'Try Premium free' : 'Get more with Premium';
 }
 
+/**
+ * The services in diensten.ts, by key. Kept here as well because this file
+ * stays free of react-native; tests/premium.test.mjs checks they match.
+ */
+export const ALLE_DIENSTSLEUTELS = ['Fire', 'Ambulance', 'Rescue', 'Storm', 'Hazmat', 'Other'];
+
 /** The settings that count for alerts. */
 export interface MeldingInstellingen {
+  /** Which services you get alerts for; choosing them is Premium (25-11). */
+  disciplines?: string[];
   alleenGroot: boolean;
   straalPerDienst: Record<string, number>;
   gripAlarm: boolean;
@@ -90,8 +98,9 @@ export interface MeldingInstellingen {
 }
 
 /**
- * What goes to the server. Without Premium: official warnings only, one
- * radius, no extra places. The settings themselves stay as they were on the
+ * What goes to the server. Without Premium: official warnings only, for every
+ * service (choosing services is Premium since 25-11, so a service switched off
+ * during a trial must not silence its warnings), one radius, no extra places. The settings themselves stay as they were on the
  * phone, so everything is back the moment someone subscribes (again).
  */
 export function effectief<T extends MeldingInstellingen>(inst: T, premium: boolean): T {
@@ -99,6 +108,7 @@ export function effectief<T extends MeldingInstellingen>(inst: T, premium: boole
   return {
     ...inst,
     alleenGroot: true,
+    ...(inst.disciplines ? { disciplines: [...ALLE_DIENSTSLEUTELS] } : {}),
     straalPerDienst: {},
     gripAlarm: false,
     blusvliegtuigen: false,

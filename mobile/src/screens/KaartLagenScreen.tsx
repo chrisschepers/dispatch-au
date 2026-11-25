@@ -10,6 +10,10 @@
  * Geeft de backend geen vaartuigen (oudere versie, of de route faalt), dan
  * staat het kopje er niet. Het blad schuift, want met beide groepen past het
  * niet meer op elk scherm.
+ *
+ * Sinds 25-11 (keuze Chris) zijn alle lagen in de lucht en op het water
+ * Premium: zonder Premium staan ze half doorzichtig met een slotje en opent
+ * een tik de betaalmuur. De ondergrond blijft gratis.
  */
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -30,6 +34,8 @@ import { Segment, BladKop } from '../components/Segment';
 import { Schakelaar } from '../components/Schakelaar';
 import { Drukbaar } from '../components/Drukbaar';
 import { tikSchakel } from '../trilling';
+import { usePremium } from '../premiumPoort';
+import { Icoon } from '../components/Icoon';
 
 type Nav = NativeStackNavigationProp<StapelParams, 'KaartLagen'>;
 
@@ -38,16 +44,24 @@ export default function KaartLagenScreen() {
   const kaartStijl = useKaartStijl();
   const navigation = useNavigation<Nav>();
   const keuze = useKaartKeuze();
+  const { premium, vraag } = usePremium();
+  const opSlot = !premium;
+  // Zonder Premium staat elke laag uit, ook een die tijdens de proef aan stond;
+  // de keuze zelf blijft bewaard voor als iemand (weer) Premium neemt.
+  const wissel = (zet: (v: boolean) => void) => (v: boolean) => {
+    if (!premium) { vraag('vliegtuigen'); return; }
+    zet(v);
+  };
   // Ook hier ophalen: het aantal per laag, en welke lagen er zijn.
   const beeld = useLuchtBeeld(true);
   const groepen = beschikbareGroepen(beeld?.rollen ?? null);
   const aantal = (g: LuchtGroep) => beeld?.vliegtuigen.filter((v) => GROEP_VAN_ROL[v.role] === g).length ?? null;
-  const iets = groepen.some((g) => keuze.lucht[g.key]);
+  const iets = premium && groepen.some((g) => keuze.lucht[g.key]);
   // Vaartuigen: ook hier ophalen, voor de lagen die er zijn en het aantal per laag.
   const water = useVaartBeeld(true);
   const waterLagen = beschikbareWaterLagen(water);
   const aantalWater = (s: VaartSoort) => water?.vaartuigen.filter((v) => v.soort === s).length ?? null;
-  const ietsWater = waterLagen.some((l) => keuze.water[l.key]);
+  const ietsWater = premium && waterLagen.some((l) => keuze.water[l.key]);
   const waterMelding = !water || waterLagen.length === 0 ? null
     : !water.aan ? 'Vessel positions are not available at the moment.'
       : water.pauzeTot ? `Vessel positions are paused until ${new Date(water.pauzeTot).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}.`
@@ -86,9 +100,10 @@ export default function KaartLagenScreen() {
             key={g.key}
             groep={g}
             telling={aantal(g.key)}
-            aan={keuze.lucht[g.key]}
+            aan={premium && keuze.lucht[g.key]}
             scheiding={i > 0}
-            onWissel={(v) => zetKaartKeuze({ lucht: { ...keuze.lucht, [g.key]: v } })}
+            opSlot={opSlot}
+            onWissel={wissel((v) => zetKaartKeuze({ lucht: { ...keuze.lucht, [g.key]: v } }))}
           />
         ))}
       </View>
@@ -106,9 +121,10 @@ export default function KaartLagenScreen() {
                 key={l.key}
                 groep={l}
                 telling={aantalWater(l.key)}
-                aan={keuze.water[l.key]}
+                aan={premium && keuze.water[l.key]}
                 scheiding={i > 0}
-                onWissel={(v) => zetKaartKeuze({ water: { ...keuze.water, [l.key]: v } })}
+                opSlot={opSlot}
+                onWissel={wissel((v) => zetKaartKeuze({ water: { ...keuze.water, [l.key]: v } }))}
               />
             ))}
           </View>
@@ -136,29 +152,34 @@ export default function KaartLagenScreen() {
  * een schakelaar. Dezelfde regels als de rijen in Instellingen: op Android is
  * de hele rij de schakelaar (M3), op iOS draagt de Switch naam en uitleg.
  */
-function LaagRij({ groep: g, telling, aan, scheiding, onWissel }: {
+function LaagRij({ groep: g, telling, aan, scheiding, opSlot, onWissel }: {
   groep: { label: string; sub: string; kleur: string; icoon: MciNaam };
   telling: number | null;
   aan: boolean;
   scheiding: boolean;
+  /** Premium zonder Premium: half doorzichtig met een slotje. */
+  opSlot: boolean;
   onWissel: (v: boolean) => void;
 }) {
   const C = useThema();
   const styles = useStijlen(maak_styles);
   const titel = telling != null && telling > 0 ? `${g.label} (${telling})` : g.label;
+  const dim = opSlot ? styles.opSlot : null;
+  const hint = opSlot ? `${g.sub}. Needs Premium` : g.sub;
   const inhoud = (
     <>
-      <View style={[styles.tegel, { backgroundColor: isIOS ? g.kleur : 'transparent' }]}>
+      <View style={[styles.tegel, { backgroundColor: isIOS ? g.kleur : 'transparent' }, dim]}>
         <MaterialCommunityIcons name={g.icoon} size={isIOS ? 18 : 24} color={isIOS ? '#fff' : g.kleur} />
       </View>
-      <View style={styles.midden} accessibilityElementsHidden={isIOS}>
+      <View style={[styles.midden, dim]} accessibilityElementsHidden={isIOS}>
         <Text style={styles.label}>{titel}</Text>
         <Text style={styles.sub}>{g.sub}</Text>
       </View>
+      {opSlot ? <Icoon naam="slot" grootte={16} kleur={C.textSecondary} /> : null}
       {isIOS
-        ? <Schakelaar value={aan} onValueChange={onWissel} label={titel} hint={g.sub} />
+        ? <View style={dim}><Schakelaar value={aan} onValueChange={onWissel} label={titel} hint={hint} /></View>
         : (
-          <View pointerEvents="none">
+          <View pointerEvents="none" style={dim}>
             <Schakelaar value={aan} onValueChange={onWissel} verborgenVoorLezer />
           </View>
         )}
@@ -173,7 +194,7 @@ function LaagRij({ groep: g, telling, aan, scheiding, onWissel }: {
       rol="switch"
       aan={aan}
       label={titel}
-      hint={g.sub}
+      hint={hint}
       trillen={false}
       onPress={() => {
         tikSchakel(!aan);
@@ -199,6 +220,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
     ? { width: 30, height: 30, borderRadius: 8, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' }
     : { width: 24, alignItems: 'center', justifyContent: 'center' },
   midden: { flex: 1 },
+  opSlot: { opacity: 0.4 },
   label: { ...T.body, fontSize: 16, color: C.textPrimary },
   sub: { ...T.klein, color: C.textSecondary, marginTop: 2 },
   waarschuwing: { ...T.klein, color: C.textPrimary, marginTop: 10, marginHorizontal: 4 },

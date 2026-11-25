@@ -63,6 +63,7 @@ export const ICONEN = {
   wacht: { ios: 'clock', android: 'clock-outline' },
   fout: { ios: 'exclamationmark.circle', android: 'alert-circle-outline' },
   ontgrendeld: { ios: 'lock.open.fill', android: 'lock-open-variant' },
+  slot: { ios: 'lock.fill', android: 'lock' },
   inbegrepen: { ios: 'checkmark.circle.fill', android: 'check-circle' },
   signaal: { ios: 'cellularbars', android: 'signal-cellular-3' },
   wifi: { ios: 'wifi', android: 'wifi' },

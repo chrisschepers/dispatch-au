@@ -343,6 +343,7 @@ export default function InstellingenScreen() {
                     aan: premium ? inst.alleenGroot : true,
                     wissel: (v) => { if (!premium) { vraag('incidenten'); return; } zet('alleenGroot', v); },
                   }}
+                  opSlot={!premium}
                 />
                 {/* Brandgevaar (19-11): gratis, want het is een officiële
                     waarschuwing. Geldt voor elke plek die je volgt. */}
@@ -361,6 +362,7 @@ export default function InstellingenScreen() {
                     ? 'When one heads to a bushfire within your Fire radius'
                     : 'Switch on Fire under "Alerts for" to get these'}
                   schakelaar={{ aan: premium && inst.blusvliegtuigen, wissel: metSlot('vliegtuigen', toggleBlusvliegtuigen) }}
+                  opSlot={!premium}
                 />
               </>
             )}
@@ -374,6 +376,7 @@ export default function InstellingenScreen() {
               titel="Emergency Warnings anywhere"
               sub="An alert for every Emergency Warning in Australia"
               schakelaar={{ aan: premium && inst.gripAlarm, wissel: metSlot('landelijk', toggleGrip) }}
+              opSlot={!premium}
             />
           </View>
         </>
@@ -421,6 +424,7 @@ export default function InstellingenScreen() {
           titel="Set per service"
           sub="For example bushfires 100 km and road crashes 10 km"
           schakelaar={{ aan: perDienstAan, wissel: metSlot('straal', zetPerDienst) }}
+          opSlot={!premium}
         />
         {perDienstAan && DIENSTEN.map((d) => {
           const km = live[d.key] ?? straalVoor(d.key, inst.straalKm, inst.straalPerDienst);
@@ -470,6 +474,21 @@ export default function InstellingenScreen() {
           <GroepKop>Alerts for</GroepKop>
           <View style={kaartStijl}>
             {DIENSTEN.map((d, i) => {
+              // Zonder Premium (25-11): per dienst kiezen hoort bij Premium.
+              // De officiële waarschuwingen komen dan voor elke dienst
+              // (premium.ts, effectief), dus de schakelaars staan aan.
+              if (!premium) {
+                return (
+                  <Rij
+                    key={d.key}
+                    icoon={{ dienst: d }} tegelKleur={d.kleur} scheiding={i > 0}
+                    titel={d.label}
+                    sub="Official warnings only"
+                    schakelaar={{ aan: true, wissel: () => vraag('incidenten') }}
+                    opSlot
+                  />
+                );
+              }
               const aan = inst.disciplines.includes(d.key);
               const km = straalVoor(d.key, inst.straalKm, inst.straalPerDienst);
               return (
@@ -490,6 +509,7 @@ export default function InstellingenScreen() {
                 titel="Road crashes from traffic services"
                 sub="Many a day in a city. Crashes the fire service attends always come under Rescue"
                 schakelaar={{ aan: premium && inst.verkeersongevallen, wissel: metSlot('incidenten', (v) => zet('verkeersongevallen', v)) }}
+                opSlot={!premium}
               />
             )}
           </View>
@@ -870,7 +890,7 @@ function GroepKop({ children }: { children: string }) {
  * zwijgt dan voor VoiceOver, anders hoor je alles twee keer.
  */
 function Rij({
-  icoon, tegelKleur, titel, sub, subKleur, rechts, onPress, scheiding, label, rol, uitgeklapt, schakelaar,
+  icoon, tegelKleur, titel, sub, subKleur, rechts, onPress, scheiding, label, rol, uitgeklapt, schakelaar, opSlot,
 }: {
   icoon: IcoonNaam | { dienst: Dienst }; tegelKleur: ColorValue; titel: string; sub?: string; subKleur?: string;
   rechts?: React.ReactNode; onPress?: () => void; scheiding?: boolean; label?: string;
@@ -879,17 +899,25 @@ function Rij({
   /** Rij die iets eronder openklapt: de schermlezer zegt of het open is. */
   uitgeklapt?: boolean;
   schakelaar?: { aan: boolean; wissel: (v: boolean) => void };
+  /**
+   * Premium zonder Premium (wens Chris 25-11): de rij half doorzichtig met een
+   * slotje, zodat meteen te zien is dat hij er niet bij hoort. Tikken blijft
+   * werken en toont de betaalmuur (via de wissel van de schakelaar).
+   */
+  opSlot?: boolean;
 }) {
   const C = useThema();
   const styles = useStijlen(maak_styles);
+  const dim = opSlot ? styles.opSlot : null;
+  const hintTekst = opSlot ? [sub, 'Needs Premium'].filter(Boolean).join('. ') : sub;
   const voor = isIOS ? (
-    <View style={[styles.tegeltje, { backgroundColor: tegelKleur }]}>
+    <View style={[styles.tegeltje, { backgroundColor: tegelKleur }, dim]}>
       {typeof icoon === 'string'
         ? <Icoon naam={icoon} grootte={17} kleur="#fff" />
         : <DienstIcoon dienst={icoon.dienst} grootte={17} kleur="#fff" />}
     </View>
   ) : (
-    <View style={styles.voorIcoon}>
+    <View style={[styles.voorIcoon, dim]}>
       {typeof icoon === 'string'
         ? <Icoon naam={icoon} grootte={24} kleur={C.textSecondary} />
         : <DienstIcoon dienst={icoon.dienst} grootte={24} kleur={tegelKleur} />}
@@ -898,19 +926,27 @@ function Rij({
   let achter = rechts;
   if (schakelaar) {
     achter = isIOS
-      ? <Schakelaar value={schakelaar.aan} onValueChange={schakelaar.wissel} label={titel} hint={sub} />
+      ? <View style={dim}><Schakelaar value={schakelaar.aan} onValueChange={schakelaar.wissel} label={titel} hint={hintTekst} /></View>
       : (
         // De rij vangt de tik, dus de rimpel loopt over de hele rij; het
         // schuifje is alleen te zien, niet aan te raken of voor te lezen.
-        <View pointerEvents="none">
+        <View pointerEvents="none" style={dim}>
           <Schakelaar value={schakelaar.aan} onValueChange={schakelaar.wissel} verborgenVoorLezer />
         </View>
       );
   }
+  if (opSlot) {
+    achter = (
+      <View style={styles.slotVak}>
+        <Icoon naam="slot" grootte={16} kleur={C.textSecondary} />
+        {achter}
+      </View>
+    );
+  }
   const inhoud = (
     <>
       {voor}
-      <View style={styles.rijMidden} accessibilityElementsHidden={isIOS && !!schakelaar}>
+      <View style={[styles.rijMidden, dim]} accessibilityElementsHidden={isIOS && !!schakelaar}>
         <Text style={styles.label}>{titel}</Text>
         {sub ? <Text style={[styles.hint, subKleur ? { color: subKleur, fontWeight: F.weightSemibold } : null]}>{sub}</Text> : null}
       </View>
@@ -928,7 +964,7 @@ function Rij({
         rol="switch"
         aan={aan}
         label={titel}
-        hint={sub}
+        hint={hintTekst}
         trillen={false}
         onPress={() => {
           tikSchakel(!aan);
@@ -986,5 +1022,7 @@ const maak_styles = (C: Palet) => StyleSheet.create({
   rijMidden: { flex: 1 },
   schuifVak: { paddingHorizontal: 16, paddingBottom: 10 },
   rechtsWaarde: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  opSlot: { opacity: 0.4 },
+  slotVak: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   idTekst: { ...T.klein, color: C.textSecondary, marginTop: 2, fontVariant: ['tabular-nums'] },
 });

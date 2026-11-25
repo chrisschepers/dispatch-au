@@ -35,14 +35,13 @@ FREE
 • "You are inside this warning area" for where you are or a place you pick
 • Alerts for official warnings at your place
 • Every incident the agencies publish, in a list and on the map: bushfires, floods, storms, road crashes and hazmat
-• Water bombers, rescue helicopters and rescue boats on the map
 • Victoria, New South Wales, Queensland, South Australia and the ACT in one app
 
 PREMIUM
 • No ads
 • An alert for every incident near you, often before there is an official warning
 • Watch 5 extra places in any state: home, the beach house, your parents
-• Follow the aircraft: which water bombers work a fire, their flights of the past week, and an alert when a large air tanker takes off
+• Aircraft and rescue boats live on the map: water bombers, rescue helicopters, the Flying Doctor and marine rescue. See which aircraft work a fire, their flights of the past week, and get an alert when a large air tanker takes off
 • Your own distance per service: bushfires from 100 km, road crashes only within 10. Fewer alerts, and none you did not want
 • Emergency Warnings anywhere in Australia
 
