@@ -43,6 +43,7 @@ import { haalBrandToestellen } from '../vluchten';
 import { brandToestelStand, grootLabel, type BrandToestel } from '../vluchtData';
 import { rolTekst } from '../vliegtuigData';
 import { ToestelRondje } from '../components/VliegtuigMarker';
+import { usePremium } from '../premiumPoort';
 
 /** De site van de app; staat onder elk gedeeld incident. */
 const APP_SITE = 'https://emergenciesnearme.online';
@@ -79,6 +80,7 @@ function openStraatbeeld(lat: number, lon: number) {
 
 export default function DetailScreen() {
   const C = useThema();
+  const { premium, vraag } = usePremium();
   const styles = useStijlen(maak_styles);
   const kaartStijl = useKaartStijl();
   const { melding: begin, vanAlert } = useRoute<Rt>().params;
@@ -433,7 +435,16 @@ export default function DetailScreen() {
       {toestellen.length > 0 && (
         <View style={[kaartStijl, styles.blok]}>
           <Text style={styles.blokKop} accessibilityRole="header">Aircraft at this fire</Text>
-          {toestellen.map((b, i) => {
+          {/* Premium sinds 25-11 (zoals de kaartlagen): zonder Premium alleen
+              hoeveel toestellen er waren, met een tik naar de betaalmuur. */}
+          {!premium ? (
+            <Drukbaar style={styles.rij} markeer onPress={() => vraag('vliegtuigen')} hint="Shows what Premium adds">
+              <Icoon naam="slot" grootte={18} kleur={C.textSecondary} style={styles.rijIcoon} />
+              <Text style={[styles.rijSub, { flex: 1 }]}>
+                {toestellen.length === 1 ? '1 aircraft' : `${toestellen.length} aircraft`} worked this fire in the last 24 hours. See which, and where they flew, with Premium.
+              </Text>
+            </Drukbaar>
+          ) : toestellen.map((b, i) => {
             const soort = [grootLabel(b.toestel), rolTekst(b.toestel), b.toestel.model].filter(Boolean).join(' · ');
             const stand = brandToestelStand(b);
             return (

@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   PREMIUM_FUNCTIES, functiesVoor, titelVoor, effectief, geldigePlekken, metPlek, isPremium, MAX_EXTRA_PLEKKEN,
+  ALLE_DIENSTSLEUTELS,
 } from '../src/premium.ts';
+import { readFileSync } from 'node:fs';
 
 const inst = {
   alleenGroot: false, straalPerDienst: { Fire: 100 }, gripAlarm: true, blusvliegtuigen: true, verkeersongevallen: true, brandgevaarMelding: true,
@@ -31,6 +33,20 @@ test('with Premium everything goes as set', () => {
   assert.equal(e.alleenGroot, false);
   assert.deepEqual(e.straalPerDienst, { Fire: 100 });
   assert.equal(e.extraPlekken.length, 1);
+});
+
+test('without Premium the warnings come for every service; with Premium your own choice', () => {
+  const metKeuze = { ...inst, disciplines: ['Storm'] };
+  assert.deepEqual(effectief(metKeuze, false).disciplines, ALLE_DIENSTSLEUTELS);
+  assert.deepEqual(effectief(metKeuze, true).disciplines, ['Storm']);
+  assert.deepEqual(metKeuze.disciplines, ['Storm']);
+});
+
+test('the service keys match diensten.ts', () => {
+  // diensten.ts imports the theme (react-native), so read the source.
+  const bron = readFileSync(new URL('../src/diensten.ts', import.meta.url), 'utf8');
+  const sleutels = [...bron.matchAll(/\{ key: '([^']+)'/g)].map((m) => m[1]);
+  assert.deepEqual(sleutels, ALLE_DIENSTSLEUTELS);
 });
 
 test('places: valid, named, no doubles, at most five', () => {
